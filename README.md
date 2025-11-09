@@ -1,43 +1,61 @@
-# Mintlify Starter Kit
+# ManyPI Documentation
 
-Use the starter kit to get your docs deployed and ready to customize.
+Welcome to the official ManyPI documentation! This comprehensive guide will help you get started with ManyPI's web data aggregation platform and make the most out of its powerful features.
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+## What is ManyPI?
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+TLDR: With ManyPI, you can turn any website into a type-save API.
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
+ManyPI is a powerful web data aggregator that allows you to extract structured data from any website with ease. With our intuitive API and powerful features, you can collect, process, and analyze web data at scale.
 
-## Development
+## Getting Started
 
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
+New to ManyPI? Start here:
 
-```
-npm i -g mint
-```
+- [Quick Start Guide](./getting-started/quick-start.mdx) - Get up and running in minutes
+- [Installation Guide](./getting-started/installation.mdx) - Set up ManyPI in your environment
+- [Configuration](./getting-started/configuration.mdx) - Configure ManyPI for your needs
+- [Your First Scraper](./guides/creating-scrapers.mdx) - Learn how to create your first web scraper
 
-Run the following command at the root of your documentation, where your `docs.json` is located:
+## API Reference
 
-```
-mint dev
-```
+Complete reference for ManyPI's API:
 
-View your local preview at `http://localhost:3000`.
+- [Authentication](./api-reference/authentication.mdx) - How to authenticate with the API
+- [Scraping API](./api-reference/scraping.mdx) - Reference for the scraping endpoints
+- [Rate Limiting](./api-reference/rate-limiting.mdx) - Understand API rate limits
 
-## Publishing changes
+## Guides
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
+Learn how to make the most of ManyPI:
 
-## Need help?
+- [First Steps](./guides/first-steps.mdx) - Your journey with ManyPI begins here
+- [Creating Scrapers](./guides/creating-scrapers.mdx) - Build custom web scrapers
+- [Advanced Usage](./guides/advanced-usage.mdx) - Advanced techniques and patterns
+- [Best Practices](./guides/best-practices.mdx) - Recommended practices for reliable scraping
 
-### Troubleshooting
+## FAQ & Help
 
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
+Find answers to common questions:
 
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+- [General Questions](./faq/general.mdx) - Common questions about ManyPI
+- [Troubleshooting](./troubleshooting/common-issues.mdx) - Solutions to common issues
+- [API Status](https://status.manypi.com) - Check the status of ManyPI's services
+
+## Support & Community
+
+We're here to help you succeed with ManyPI:
+
+- [Help Center](https://help.manypi.com) - Detailed guides and tutorials
+- [Community Forum](https://community.manypi.com) - Get help from the ManyPI community
+- [Contact Support](mailto:support@manypi.com) - Email our support team
+- [Status Page](https://status.manypi.com) - Check service status
+- [Changelog](https://changelog.manypi.com) - Latest updates and releases
+
+## Contributing
+
+Interested in contributing to ManyPI's documentation? Check out our [Contributing Guide](https://github.com/manypi/docs/blob/main/CONTRIBUTING.md) to get started.
+
+## License
+
+© 2025 ManyPI. All rights reserved. [Terms of Service](https://manypi.com/terms) | [Privacy Policy](https://manypi.com/privacy)

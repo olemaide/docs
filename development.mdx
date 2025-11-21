@@ -1,94 +1,57 @@
 ---
-title: 'Development'
-description: 'Preview changes locally to update your docs'
+title: "Development"
+description: "The ManyPI API works with all major programming languages."
 ---
 
 <Info>
   **Prerequisites**:
-  - Node.js version 19 or higher
-  - A docs repository with a `docs.json` file
+
+  - A ManyPI API key ([obtain here](https://app.manypi.com/dashboard/api-access)).
+  - An active ManyPI subscription.
 </Info>
 
-Follow these steps to install and run Mintlify on your operating system.
+Follow these steps to implement ManyPI in your application or workflow.
 
 <Steps>
-<Step title="Install the Mintlify CLI">
+  <Step title="Set up your scraper">
+    Visit the ManyPI Dashboard and click **“Create Scraper.”**\
+    Enter the URL of the webpage you want to convert into an API, then confirm.
 
-```bash
-npm i -g mint
-```
-</Step>
+    Next, describe the data you want to extract—for example:\
+    **“Retrieve all product names and prices for items currently in stock.”**
 
-<Step title="Preview locally">
+    Our AI will generate a type-safe JSON schema based on your requirements. After you confirm it, we’ll automatically create a new API endpoint.
+  </Step>
+  <Step title="Get your API endpoint">
+    Once your scraper is set up, you’ll receive a custom API endpoint that you can use to run data extractions. The route will look like this:
 
-Navigate to your docs directory where your `docs.json` file is located, and run the following command:
+    ```bash
+    https://app.manypi.com/api/scrape/your-endpoit-id-here
+    ```
+  </Step>
+  <Step title="Use your API endpoint">
+    Now you can use cURL to integrate your new API into any environment, application or workflow that supports REST APIs. Use it with your API key:
 
-```bash
-mint dev
-```
-
-A local preview of your documentation will be available at `http://localhost:3000`.
-
-</Step>
+    ```bash
+    curl -X POST 'https://app.manypi.com/api/scrape/your-endpoit-id-here' 
+    -H 'Authorization: Bearer YOUR_API_KEY' 
+    -H 'Content-Type: application/json' 
+    -d '{"url":"https://example.com"}'
+    ```
+  </Step>
 </Steps>
 
-## Custom ports
+## Getting responses
 
-By default, Mintlify uses port 3000. You can customize the port Mintlify runs on by using the `--port` flag. For example, to run Mintlify on port 3333, use this command:
-
-```bash
-mint dev --port 3333
-```
-
-If you attempt to run Mintlify on a port that's already in use, it will use the next available port:
-
-```md
-Port 3000 is already in use. Trying 3001 instead.
-```
-
-## Mintlify versions
-
-Please note that each CLI release is associated with a specific version of Mintlify. If your local preview does not align with the production version, please update the CLI:
-
-```bash
-npm mint update
-```
-
-## Validating links
-
-The CLI can assist with validating links in your documentation. To identify any broken links, use the following command:
-
-```bash
-mint broken-links
-```
-
-## Deployment
-
-If the deployment is successful, you should see the following:
-
-<Frame>
-  <img src="/images/checks-passed.png" alt="Screenshot of a deployment confirmation message that says All checks have passed." style={{ borderRadius: '0.5rem' }} />
-</Frame>
-
-## Code formatting
-
-We suggest using extensions on your IDE to recognize and format MDX. If you're a VSCode user, consider the [MDX VSCode extension](https://marketplace.visualstudio.com/items?itemName=unifiedjs.vscode-mdx) for syntax highlighting, and [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) for code formatting.
-
-## Troubleshooting
+By default, responses are processed synchronously, and each request has a 60-second timeout.
 
 <AccordionGroup>
-  <Accordion title='Error: Could not load the "sharp" module using the darwin-arm64 runtime'>
+  <Accordion title="Error: Insufficient credits">
+    This means your account has run out of credits, which are required to run extraction tasks (your scrapers). Each extraction uses a certain amount of credits based on the volume of data processed and the compute required by our AI and extraction engine.
 
-    This may be due to an outdated version of node. Try the following:
-    1. Remove the currently-installed version of the CLI: `npm remove -g mint`
-    2. Upgrade to Node v19 or higher.
-    3. Reinstall the CLI: `npm i -g mint`
-  </Accordion>
-
-  <Accordion title="Issue: Encountering an unknown error">
-  
-    Solution: Go to the root of your device and delete the `~/.mintlify` folder. Then run `mint dev` again.
+    1. Upgrade to a higher (paid) plan.
+    2. Purchase add-on credits (if on a paid plan).
   </Accordion>
 </AccordionGroup>
 
-Curious about what changed in the latest CLI version? Check out the [CLI changelog](https://www.npmjs.com/package/mintlify?activeTab=versions).
+Curious about what changed in the latest version? Check out the [changelog](https://manypi.com/changelog).

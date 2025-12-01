@@ -22,7 +22,7 @@
     }
   ],
   "paths": {
-    "/scrape": {
+    "/api/scrape/[scraperId]": {
       "post": {
         "summary": "Execute a scraper",
         "description": "Runs a configured scraper to extract structured data from a target URL. The scraper uses AI to intelligently extract data matching your defined schema.",

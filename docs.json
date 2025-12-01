@@ -3,11 +3,11 @@
   "theme": "mint",
   "name": "ManyPI Docs",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#2c3748",
+    "light": "#1b202c",
+    "dark": "#4a5568"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "/manypi-icon.svg",
   "navigation": {
     "tabs": [
       {
@@ -22,27 +22,12 @@
             ]
           },
           {
-            "group": "Customization",
+            "group": "Features",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
-            ]
-          },
-          {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "features/authentication",
+              "features/website-to-api",
+              "features/type-safety",
+              "features/rate-limiting"
             ]
           }
         ]
@@ -57,12 +42,9 @@
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Endpoints",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api-reference/endpoint/scrape"
             ]
           }
         ]
@@ -71,8 +53,8 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
+          "anchor": "Changelog",
+          "href": "https://manypi.com/changelog",
           "icon": "book-open-cover"
         },
         {
@@ -84,8 +66,8 @@
     }
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/logo/manypi-logo.webp",
+    "dark": "/logo/manypi-logo.webp"
   },
   "navbar": {
     "links": [

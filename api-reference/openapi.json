@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "ManyPi Scraping API",
+    "title": "ManyPI Scraping API",
     "description": "AI-powered web scraping API that extracts structured data from any website. Create custom scrapers with natural language prompts and get clean, schema-validated JSON responses.",
     "version": "1.0.0",
     "contact": {
@@ -364,7 +364,7 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "API Key",
-        "description": "API key authentication. Generate your API key in the ManyPi dashboard under 'API Access'. Include it in the Authorization header as: `Authorization: Bearer YOUR_API_KEY`"
+        "description": "API key authentication. Generate your API key in the ManyPI dashboard under 'API Access'. Include it in the Authorization header as: `Authorization: Bearer YOUR_API_KEY`"
       }
     }
   }

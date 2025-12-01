@@ -364,7 +364,7 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "API Key",
-        "description": "API key authentication. Generate your API key in the ManyPi dashboard under Settings > API Keys. Include it in the Authorization header as: `Authorization: Bearer YOUR_API_KEY`"
+        "description": "API key authentication. Generate your API key in the ManyPi dashboard under 'API Access'. Include it in the Authorization header as: `Authorization: Bearer YOUR_API_KEY`"
       }
     }
   }

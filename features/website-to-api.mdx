@@ -1,0 +1,565 @@
+---
+title: "Turn Any Website Into an API"
+description: "Transform unstructured web data into clean, structured APIs in minutes with AI-powered scraping"
+---
+
+## Overview
+
+ManyPI lets you convert any website into a reliable, structured API without writing complex scraping code. Simply describe what data you want, and our AI handles the rest.
+
+<Info>
+  **Perfect for:** E-commerce monitoring, lead generation, content aggregation, market research, and any scenario where you need structured data from websites.
+</Info>
+
+---
+
+## How it works
+
+<Steps>
+  <Step title="Create a scraper">
+    Define what data you want to extract using natural language or a JSON schema.
+  </Step>
+  <Step title="AI extracts the data">
+    Our AI intelligently navigates the page and extracts exactly what you specified.
+  </Step>
+  <Step title="Get structured JSON">
+    Receive clean, validated data in your defined format via API or dashboard.
+  </Step>
+  <Step title="Integrate anywhere">
+    Use the API in your applications, automation workflows, or data pipelines.
+  </Step>
+</Steps>
+
+---
+
+## Real-world examples
+
+### Example 1: E-commerce product API
+
+**Goal:** Monitor competitor prices and product availability.
+
+<Tabs>
+  <Tab title="1. Describe what you want">
+    ```text Prompt
+    Extract product information from this e-commerce page:
+    - Product title
+    - Current price in USD
+    - Original price if on sale
+    - Star rating (out of 5)
+    - Number of reviews
+    - Availability status (in stock or out of stock)
+    - Main product image URL
+    ```
+  </Tab>
+  
+  <Tab title="2. Generated schema">
+    ```json Schema
+    {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Product name"
+        },
+        "currentPrice": {
+          "type": "number",
+          "description": "Current price in USD"
+        },
+        "originalPrice": {
+          "type": "number",
+          "description": "Original price before discount"
+        },
+        "rating": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "reviewCount": {
+          "type": "integer"
+        },
+        "inStock": {
+          "type": "boolean"
+        },
+        "imageUrl": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": ["title", "currentPrice", "inStock"]
+    }
+    ```
+  </Tab>
+  
+  <Tab title="3. API response">
+    ```json Response
+    {
+      "success": true,
+      "data": {
+        "title": "Wireless Bluetooth Headphones - Noise Cancelling",
+        "currentPrice": 79.99,
+        "originalPrice": 129.99,
+        "rating": 4.5,
+        "reviewCount": 1234,
+        "inStock": true,
+        "imageUrl": "https://example.com/images/headphones.jpg"
+      },
+      "metadata": {
+        "scraperId": "550e8400-e29b-41d4-a716-446655440000",
+        "timestamp": "2024-01-15T10:30:00.000Z",
+        "creditsCost": 1500
+      }
+    }
+    ```
+  </Tab>
+  
+  <Tab title="4. Use in your app">
+    ```javascript Integration
+    // Monitor prices every hour
+    async function checkCompetitorPrices() {
+      const products = [
+        'https://competitor.com/product/123',
+        'https://competitor.com/product/456',
+        'https://competitor.com/product/789'
+      ];
+      
+      for (const url of products) {
+        const response = await fetch(
+          'https://app.manypi.com/api/scrape/YOUR_SCRAPER_ID',
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer YOUR_API_KEY',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ url })
+          }
+        );
+        
+        const { data } = await response.json();
+        
+        // Check if price dropped
+        if (data.currentPrice < data.originalPrice) {
+          await notifyPriceDrop(data);
+        }
+        
+        // Store in database
+        await saveToDatabase(data);
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+### Example 2: Job listings API
+
+**Goal:** Aggregate job postings from multiple career sites.
+
+<Tabs>
+  <Tab title="1. Describe what you want">
+    ```text Prompt
+    Extract job listing information:
+    - Job title
+    - Company name
+    - Location (city and state/country)
+    - Salary range if available
+    - Job type (full-time, part-time, contract, remote)
+    - Posted date
+    - Application deadline if shown
+    - Required skills (as an array)
+    - Job description summary
+    ```
+  </Tab>
+  
+  <Tab title="2. API response">
+    ```json Response
+    {
+      "success": true,
+      "data": {
+        "title": "Senior Full Stack Developer",
+        "company": "Tech Innovations Inc.",
+        "location": "San Francisco, CA",
+        "salaryRange": "$120,000 - $180,000",
+        "jobType": "Full-time, Remote",
+        "postedDate": "2024-01-10",
+        "applicationDeadline": "2024-02-10",
+        "skills": [
+          "React",
+          "Node.js",
+          "TypeScript",
+          "PostgreSQL",
+          "AWS"
+        ],
+        "description": "We're looking for an experienced full stack developer to join our growing team..."
+      }
+    }
+    ```
+  </Tab>
+  
+  <Tab title="3. Aggregate multiple sources">
+    ```python Python
+    import requests
+    from datetime import datetime
+    
+    # Different scrapers for different job sites
+    scrapers = {
+        'linkedin': 'scraper-id-1',
+        'indeed': 'scraper-id-2',
+        'glassdoor': 'scraper-id-3'
+    }
+    
+    def aggregate_jobs(search_urls):
+        all_jobs = []
+        
+        for source, scraper_id in scrapers.items():
+            for url in search_urls[source]:
+                response = requests.post(
+                    f'https://app.manypi.com/api/scrape/{scraper_id}',
+                    headers={
+                        'Authorization': 'Bearer YOUR_API_KEY',
+                        'Content-Type': 'application/json'
+                    },
+                    json={'url': url}
+                )
+                
+                data = response.json()
+                if data['success']:
+                    job = data['data']
+                    job['source'] = source
+                    job['scraped_at'] = datetime.now().isoformat()
+                    all_jobs.append(job)
+        
+        return all_jobs
+    
+    # Use in your job board
+    jobs = aggregate_jobs({
+        'linkedin': ['https://linkedin.com/jobs/search?q=developer'],
+        'indeed': ['https://indeed.com/jobs?q=developer'],
+        'glassdoor': ['https://glassdoor.com/Job/developer-jobs.htm']
+    })
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+### Example 3: News article API
+
+**Goal:** Create a content aggregation feed from multiple news sources.
+
+<Tabs>
+  <Tab title="1. Describe what you want">
+    ```text Prompt
+    Extract article information from news websites:
+    - Article headline
+    - Author name
+    - Publication date and time
+    - Article category/section
+    - Full article text
+    - Featured image URL
+    - Tags or keywords
+    - Estimated reading time
+    ```
+  </Tab>
+  
+  <Tab title="2. Build a content feed">
+    ```javascript Node.js
+    const express = require('express');
+    const app = express();
+    
+    // Your custom news API endpoint
+    app.get('/api/news/:category', async (req, res) => {
+      const { category } = req.params;
+      
+      // URLs for different news sources
+      const sources = [
+        `https://newssite1.com/${category}`,
+        `https://newssite2.com/${category}`,
+        `https://newssite3.com/${category}`
+      ];
+      
+      const articles = [];
+      
+      for (const url of sources) {
+        const response = await fetch(
+          'https://app.manypi.com/api/scrape/YOUR_SCRAPER_ID',
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.MANYPI_API_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ url })
+          }
+        );
+        
+        const { data } = await response.json();
+        articles.push(data);
+      }
+      
+      // Sort by publication date
+      articles.sort((a, b) => 
+        new Date(b.publicationDate) - new Date(a.publicationDate)
+      );
+      
+      res.json({ articles });
+    });
+    
+    app.listen(3000);
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Best practices
+
+<AccordionGroup>
+  <Accordion icon="bullseye" title="Be specific in your prompts">
+    **Good:** "Extract product title, price in USD format, star rating out of 5, and boolean availability status"
+    
+    **Bad:** "Get product info"
+    
+    Specific prompts lead to more accurate schemas and better extraction results.
+  </Accordion>
+  
+  <Accordion icon="vial" title="Test with multiple pages">
+    Test your scraper on 3-5 different pages from the same site to ensure consistency:
+    
+    - Different product types
+    - Pages with missing data (out of stock, no reviews)
+    - Pages with special formatting
+    
+    This helps catch edge cases before production use.
+  </Accordion>
+  
+  <Accordion icon="shield-halved" title="Handle missing data gracefully">
+    Not all pages have all fields. Make optional fields nullable in your schema:
+    
+    ```json
+    {
+      "properties": {
+        "price": { "type": "number" },
+        "salePrice": { 
+          "type": ["number", "null"],
+          "description": "Only present during sales"
+        }
+      }
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="arrows-rotate" title="Implement retry logic">
+    Websites can be temporarily unavailable. Add retry logic to your integration:
+    
+    ```javascript
+    async function scrapeWithRetry(url, maxRetries = 3) {
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          const response = await fetch(/* ... */);
+          if (response.ok) return await response.json();
+        } catch (error) {
+          if (i === maxRetries - 1) throw error;
+          await sleep(1000 * (i + 1)); // Exponential backoff
+        }
+      }
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="database" title="Cache results when appropriate">
+    For data that doesn't change frequently, implement caching:
+    
+    ```javascript
+    const cache = new Map();
+    const CACHE_TTL = 3600000; // 1 hour
+    
+    async function getCachedData(url) {
+      const cached = cache.get(url);
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        return cached.data;
+      }
+      
+      const data = await scrapeUrl(url);
+      cache.set(url, { data, timestamp: Date.now() });
+      return data;
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="bell" title="Set up monitoring">
+    Use email notifications to stay informed:
+    
+    1. Go to **Integrations** in your dashboard
+    2. Enable email notifications for your scraper
+    3. Get notified when scrapes complete or fail
+    4. Monitor credit usage and set up alerts
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Common patterns
+
+### Pattern 1: Scheduled scraping
+
+Run scrapers on a schedule using cron jobs or cloud functions:
+
+<CodeGroup>
+
+```javascript Node.js + Cron
+const cron = require('node-cron');
+
+// Run every day at 9 AM
+cron.schedule('0 9 * * *', async () => {
+  console.log('Starting daily scrape...');
+  
+  const urls = await getUrlsToScrape();
+  
+  for (const url of urls) {
+    await scrapeAndStore(url);
+  }
+  
+  console.log('Daily scrape complete');
+});
+```
+
+```python Python + Schedule
+import schedule
+import time
+
+def daily_scrape():
+    print("Starting daily scrape...")
+    urls = get_urls_to_scrape()
+    
+    for url in urls:
+        scrape_and_store(url)
+    
+    print("Daily scrape complete")
+
+# Run every day at 9 AM
+schedule.every().day.at("09:00").do(daily_scrape)
+
+while True:
+    schedule.run_pending()
+    time.sleep(60)
+```
+
+</CodeGroup>
+
+### Pattern 2: Webhook integration
+
+Trigger scrapes from external events:
+
+```javascript Express.js
+app.post('/webhook/new-product', async (req, res) => {
+  const { productUrl } = req.body;
+  
+  // Scrape the new product
+  const response = await fetch(
+    'https://app.manypi.com/api/scrape/YOUR_SCRAPER_ID',
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.MANYPI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ url: productUrl })
+    }
+  );
+  
+  const { data } = await response.json();
+  
+  // Process and store
+  await processNewProduct(data);
+  
+  res.json({ success: true });
+});
+```
+
+### Pattern 3: Batch processing
+
+Process multiple URLs efficiently:
+
+```python Python
+import asyncio
+import aiohttp
+
+async def scrape_batch(urls, scraper_id, api_key):
+    async with aiohttp.ClientSession() as session:
+        tasks = []
+        
+        for url in urls:
+            task = scrape_url(session, url, scraper_id, api_key)
+            tasks.append(task)
+        
+        results = await asyncio.gather(*tasks)
+        return results
+
+async def scrape_url(session, url, scraper_id, api_key):
+    async with session.post(
+        f'https://app.manypi.com/api/scrape/{scraper_id}',
+        headers={
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        },
+        json={'url': url}
+    ) as response:
+        return await response.json()
+
+# Usage
+urls = ['url1', 'url2', 'url3', ...]
+results = asyncio.run(scrape_batch(urls, 'scraper-id', 'api-key'))
+```
+
+---
+
+## Limitations and considerations
+
+<Warning>
+  **Respect robots.txt and terms of service**
+  
+  Always check a website's robots.txt file and terms of service before scraping. Some sites explicitly prohibit automated access.
+</Warning>
+
+<Info>
+  **Rate limiting**
+  
+  Be mindful of request frequency. Excessive requests can:
+  - Get your IP blocked
+  - Overload target servers
+  - Consume credits quickly
+  
+  Implement reasonable delays between requests (1-2 seconds minimum).
+</Info>
+
+<Note>
+  **Dynamic content**
+  
+  ManyPi handles JavaScript-rendered content automatically. However, some sites use advanced anti-bot measures. Contact support if you encounter issues with specific sites.
+</Note>
+
+---
+
+## Next steps
+
+<CardGroup cols={2}>
+
+<Card title="API Reference" icon="code" href="/api-reference">
+  Explore the complete API documentation
+</Card>
+
+<Card title="Create a scraper" icon="plus" href="https://app.manypi.com/dashboard/scrapers">
+  Start building your first API
+</Card>
+
+<Card title="View examples" icon="book" href="/examples">
+  See more real-world use cases
+</Card>
+
+<Card title="Get support" icon="life-ring" href="mailto:support@manypi.com">
+  Need help? We're here for you
+</Card>
+
+</CardGroup>

@@ -1,16 +1,19 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "OpenAPI Plant Store",
-    "description": "A sample API that uses a plant store as an example to demonstrate features in the OpenAPI specification",
-    "license": {
-      "name": "MIT"
-    },
-    "version": "1.0.0"
+    "title": "ManyPi Scraping API",
+    "description": "AI-powered web scraping API that extracts structured data from any website. Create custom scrapers with natural language prompts and get clean, schema-validated JSON responses.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "ManyPi Support",
+      "email": "support@manypi.com",
+      "url": "https://manypi.com"
+    }
   },
   "servers": [
     {
-      "url": "http://sandbox.mintlify.com"
+      "url": "https://app.manypi.com",
+      "description": "Production server"
     }
   ],
   "security": [
@@ -19,134 +22,215 @@
     }
   ],
   "paths": {
-    "/plants": {
-      "get": {
-        "description": "Returns all plants from the system that the user has access to",
+    "/api/scrape/{scraperId}": {
+      "post": {
+        "summary": "Execute a scraper",
+        "description": "Runs a configured scraper to extract structured data from a target URL. The scraper uses AI to intelligently extract data matching your defined schema.",
+        "operationId": "executeScraper",
+        "tags": ["Scraping"],
         "parameters": [
           {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of results to return",
+            "name": "scraperId",
+            "in": "path",
+            "description": "Unique identifier of the scraper to execute. Find this in your dashboard under Scrapers.",
+            "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "uuid",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
             }
           }
         ],
+        "requestBody": {
+          "description": "Optional configuration for the scraping request",
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScrapeRequest"
+              },
+              "examples": {
+                "basic": {
+                  "summary": "Basic scrape request",
+                  "value": {
+                    "url": "https://example.com/product/123"
+                  }
+                },
+                "withOptions": {
+                  "summary": "Request with custom options",
+                  "value": {
+                    "url": "https://example.com/product/123",
+                    "options": {
+                      "timeout": 30000,
+                      "retries": 3
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "Plant response",
+            "description": "Scraping completed successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Plant"
+                  "$ref": "#/components/schemas/ScrapeResponse"
+                },
+                "examples": {
+                  "productScrape": {
+                    "summary": "Product data extraction",
+                    "value": {
+                      "success": true,
+                      "data": {
+                        "title": "Wireless Bluetooth Headphones",
+                        "price": "$79.99",
+                        "rating": 4.5,
+                        "reviews": 1234,
+                        "inStock": true,
+                        "description": "Premium noise-cancelling headphones with 30-hour battery life"
+                      },
+                      "metadata": {
+                        "scraperId": "550e8400-e29b-41d4-a716-446655440000",
+                        "timestamp": "2024-01-15T10:30:00.000Z",
+                        "tokensUsed": 1500,
+                        "creditsCost": 1500,
+                        "creditsRemaining": 8500
+                      }
+                    }
                   }
                 }
               }
             }
           },
           "400": {
-            "description": "Unexpected error",
+            "description": "Bad request - Invalid parameters or configuration",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "Creates a new plant in the store",
-        "requestBody": {
-          "description": "Plant to add to the store",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewPlant"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "plant response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Plant"
+                },
+                "examples": {
+                  "invalidUrl": {
+                    "summary": "Invalid URL provided",
+                    "value": {
+                      "success": false,
+                      "error": "Invalid URL format",
+                      "errorType": "validation_error"
+                    }
+                  }
                 }
               }
             }
           },
-          "400": {
-            "description": "unexpected error",
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "missingKey": {
+                    "summary": "API key not provided",
+                    "value": {
+                      "success": false,
+                      "error": "API key is required",
+                      "errorType": "authentication_error"
+                    }
+                  },
+                  "invalidKey": {
+                    "summary": "Invalid API key",
+                    "value": {
+                      "success": false,
+                      "error": "Invalid API key",
+                      "errorType": "authentication_error"
+                    }
+                  }
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/plants/{id}": {
-      "delete": {
-        "description": "Deletes a single plant based on the ID supplied",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "ID of plant to delete",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Plant deleted",
-            "content": {}
           },
-          "400": {
-            "description": "unexpected error",
+          "403": {
+            "description": "Forbidden - Insufficient credits or permissions",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "insufficientCredits": {
+                    "summary": "Not enough credits",
+                    "value": {
+                      "success": false,
+                      "error": "Insufficient credits to perform this operation",
+                      "errorType": "insufficient_credits"
+                    }
+                  }
                 }
               }
             }
-          }
-        }
-      }
-    }
-  },
-  "webhooks": {
-    "/plant/webhook": {
-      "post": {
-        "description": "Information about a new plant added to the store",
-        "requestBody": {
-          "description": "Plant added to the store",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewPlant"
+          },
+          "404": {
+            "description": "Not found - Scraper does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "scraperNotFound": {
+                    "summary": "Scraper not found",
+                    "value": {
+                      "success": false,
+                      "error": "Scraper not found",
+                      "errorType": "not_found"
+                    }
+                  }
+                }
               }
             }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Return a 200 status to indicate that the data was received successfully"
+          },
+          "429": {
+            "description": "Too many requests - Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "rateLimited": {
+                    "summary": "Rate limit exceeded",
+                    "value": {
+                      "success": false,
+                      "error": "Rate limit exceeded. Please try again later.",
+                      "errorType": "rate_limit_error"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error - Something went wrong on our end",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "serverError": {
+                    "summary": "Internal server error",
+                    "value": {
+                      "success": false,
+                      "error": "An unexpected error occurred. Please try again.",
+                      "errorType": "internal_error"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -154,55 +238,122 @@
   },
   "components": {
     "schemas": {
-      "Plant": {
-        "required": [
-          "name"
-        ],
+      "ScrapeRequest": {
         "type": "object",
         "properties": {
-          "name": {
-            "description": "The name of the plant",
-            "type": "string"
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Target URL to scrape. Must be a valid HTTP/HTTPS URL.",
+            "example": "https://example.com/product/123"
           },
-          "tag": {
-            "description": "Tag to specify the type",
-            "type": "string"
-          }
-        }
-      },
-      "NewPlant": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Plant"
-          },
-          {
-            "required": [
-              "id"
-            ],
+          "options": {
             "type": "object",
+            "description": "Optional configuration for the scraping request",
             "properties": {
-              "id": {
-                "description": "Identification number of the plant",
+              "timeout": {
                 "type": "integer",
-                "format": "int64"
+                "description": "Maximum time to wait for scraping to complete (in milliseconds)",
+                "default": 30000,
+                "minimum": 5000,
+                "maximum": 120000,
+                "example": 30000
+              },
+              "retries": {
+                "type": "integer",
+                "description": "Number of retry attempts if scraping fails",
+                "default": 3,
+                "minimum": 0,
+                "maximum": 5,
+                "example": 3
               }
             }
           }
-        ]
+        }
+      },
+      "ScrapeResponse": {
+        "type": "object",
+        "required": ["success", "data", "metadata"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the scraping operation was successful",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "description": "Extracted data matching your scraper's schema. Structure varies based on your scraper configuration.",
+            "additionalProperties": true,
+            "example": {
+              "title": "Product Name",
+              "price": "$99.99",
+              "rating": 4.5,
+              "inStock": true
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Information about the scraping operation",
+            "required": ["scraperId", "timestamp", "tokensUsed", "creditsCost", "creditsRemaining"],
+            "properties": {
+              "scraperId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "ID of the scraper that was executed",
+                "example": "550e8400-e29b-41d4-a716-446655440000"
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 timestamp of when the scraping was completed",
+                "example": "2024-01-15T10:30:00.000Z"
+              },
+              "tokensUsed": {
+                "type": "integer",
+                "description": "Number of AI tokens consumed during scraping",
+                "example": 1500
+              },
+              "creditsCost": {
+                "type": "integer",
+                "description": "Number of credits deducted for this operation",
+                "example": 1500
+              },
+              "creditsRemaining": {
+                "type": "integer",
+                "description": "Your remaining credit balance after this operation",
+                "example": 8500
+              }
+            }
+          }
+        }
       },
       "Error": {
-        "required": [
-          "error",
-          "message"
-        ],
         "type": "object",
+        "required": ["success", "error", "errorType"],
         "properties": {
-          "error": {
-            "type": "integer",
-            "format": "int32"
+          "success": {
+            "type": "boolean",
+            "description": "Always false for error responses",
+            "example": false
           },
-          "message": {
-            "type": "string"
+          "error": {
+            "type": "string",
+            "description": "Human-readable error message",
+            "example": "Invalid API key"
+          },
+          "errorType": {
+            "type": "string",
+            "description": "Machine-readable error type for programmatic handling",
+            "enum": [
+              "authentication_error",
+              "validation_error",
+              "not_found",
+              "insufficient_credits",
+              "rate_limit_error",
+              "scraping_error",
+              "internal_error"
+            ],
+            "example": "authentication_error"
           }
         }
       }
@@ -210,7 +361,9 @@
     "securitySchemes": {
       "bearerAuth": {
         "type": "http",
-        "scheme": "bearer"
+        "scheme": "bearer",
+        "bearerFormat": "API Key",
+        "description": "API key authentication. Generate your API key in the ManyPi dashboard under Settings > API Keys. Include it in the Authorization header as: `Authorization: Bearer YOUR_API_KEY`"
       }
     }
   }

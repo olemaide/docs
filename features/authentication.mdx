@@ -1,0 +1,582 @@
+---
+title: "Authentication"
+description: "Secure your API requests with Bearer token authentication"
+---
+
+## Overview
+
+ManyPi uses API key authentication with Bearer tokens. All API requests must include a valid API key in the `Authorization` header.
+
+<Info>
+  API keys are tied to your account and provide access to all your scrapers. Keep them secure and never commit them to version control.
+</Info>
+
+---
+
+## Getting your API key
+
+<Steps>
+  <Step title="Navigate to API Keys">
+    Go to **Settings** → **API Keys** in your [dashboard](https://app.manypi.com/dashboard/settings).
+  </Step>
+  
+  <Step title="Create a new key">
+    Click **"Create API Key"** and give it a descriptive name (e.g., "Production Server", "Staging Environment").
+  </Step>
+  
+  <Step title="Copy and store securely">
+    Copy the API key immediately - you won't be able to see it again!
+    
+    <Warning>
+      Store your API key securely. Never commit it to Git or share it publicly.
+    </Warning>
+  </Step>
+</Steps>
+
+---
+
+## Making authenticated requests
+
+### Basic authentication
+
+Include your API key in the `Authorization` header as a Bearer token:
+
+```bash cURL
+curl -X POST \
+  'https://app.manypi.com/api/scrape/YOUR_SCRAPER_ID' \
+  -H 'Authorization: Bearer YOUR_API_KEY' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "url": "https://example.com"
+  }'
+```
+
+### Authentication format
+
+```
+Authorization: Bearer YOUR_API_KEY
+```
+
+- **Scheme:** `Bearer`
+- **Token:** Your API key (no additional encoding needed)
+
+---
+
+## Code examples
+
+<CodeGroup>
+
+```javascript Node.js (fetch)
+const MANYPI_API_KEY = process.env.MANYPI_API_KEY;
+
+async function scrapeUrl(scraperId, url) {
+  const response = await fetch(
+    `https://app.manypi.com/api/scrape/${scraperId}`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${MANYPI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ url })
+    }
+  );
+  
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+  
+  return response.json();
+}
+```
+
+```javascript Node.js (axios)
+const axios = require('axios');
+
+const client = axios.create({
+  baseURL: 'https://app.manypi.com/api',
+  headers: {
+    'Authorization': `Bearer ${process.env.MANYPI_API_KEY}`,
+    'Content-Type': 'application/json'
+  }
+});
+
+async function scrapeUrl(scraperId, url) {
+  const response = await client.post(`/scrape/${scraperId}`, { url });
+  return response.data;
+}
+```
+
+```python Python (requests)
+import os
+import requests
+
+MANYPI_API_KEY = os.environ.get('MANYPI_API_KEY')
+
+def scrape_url(scraper_id, url):
+    response = requests.post(
+        f'https://app.manypi.com/api/scrape/{scraper_id}',
+        headers={
+            'Authorization': f'Bearer {MANYPI_API_KEY}',
+            'Content-Type': 'application/json'
+        },
+        json={'url': url}
+    )
+    
+    response.raise_for_status()
+    return response.json()
+```
+
+```python Python (httpx)
+import os
+import httpx
+
+MANYPI_API_KEY = os.environ.get('MANYPI_API_KEY')
+
+async def scrape_url(scraper_id: str, url: str):
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f'https://app.manypi.com/api/scrape/{scraper_id}',
+            headers={
+                'Authorization': f'Bearer {MANYPI_API_KEY}',
+                'Content-Type': 'application/json'
+            },
+            json={'url': url}
+        )
+        
+        response.raise_for_status()
+        return response.json()
+```
+
+```php PHP
+<?php
+$apiKey = getenv('MANYPI_API_KEY');
+$scraperId = 'YOUR_SCRAPER_ID';
+$url = 'https://example.com';
+
+$ch = curl_init("https://app.manypi.com/api/scrape/{$scraperId}");
+
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    "Authorization: Bearer {$apiKey}",
+    'Content-Type: application/json'
+]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+    'url' => $url
+]));
+
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+if ($httpCode !== 200) {
+    throw new Exception("HTTP Error: {$httpCode}");
+}
+
+$data = json_decode($response, true);
+curl_close($ch);
+
+return $data;
+?>
+```
+
+```go Go
+package main
+
+import (
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "io"
+    "net/http"
+    "os"
+)
+
+type ScrapeRequest struct {
+    URL string `json:"url"`
+}
+
+func scrapeURL(scraperID, url string) (map[string]interface{}, error) {
+    apiKey := os.Getenv("MANYPI_API_KEY")
+    
+    reqBody, _ := json.Marshal(ScrapeRequest{URL: url})
+    
+    req, err := http.NewRequest(
+        "POST",
+        fmt.Sprintf("https://app.manypi.com/api/scrape/%s", scraperID),
+        bytes.NewBuffer(reqBody),
+    )
+    if err != nil {
+        return nil, err
+    }
+    
+    req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", apiKey))
+    req.Header.Set("Content-Type", "application/json")
+    
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        return nil, err
+    }
+    defer resp.Body.Close()
+    
+    body, _ := io.ReadAll(resp.Body)
+    
+    var result map[string]interface{}
+    json.Unmarshal(body, &result)
+    
+    return result, nil
+}
+```
+
+```ruby Ruby
+require 'net/http'
+require 'json'
+require 'uri'
+
+def scrape_url(scraper_id, url)
+  api_key = ENV['MANYPI_API_KEY']
+  uri = URI("https://app.manypi.com/api/scrape/#{scraper_id}")
+  
+  http = Net::HTTP.new(uri.host, uri.port)
+  http.use_ssl = true
+  
+  request = Net::HTTP::Post.new(uri.path)
+  request['Authorization'] = "Bearer #{api_key}"
+  request['Content-Type'] = 'application/json'
+  request.body = { url: url }.to_json
+  
+  response = http.request(request)
+  
+  raise "HTTP Error: #{response.code}" unless response.code == '200'
+  
+  JSON.parse(response.body)
+end
+```
+
+</CodeGroup>
+
+---
+
+## Environment variables
+
+Store your API key in environment variables, never hardcode it:
+
+<Tabs>
+  <Tab title=".env file">
+    ```bash .env
+    MANYPI_API_KEY=your_api_key_here
+    ```
+    
+    <Warning>
+      Add `.env` to your `.gitignore` file!
+    </Warning>
+  </Tab>
+  
+  <Tab title="Node.js">
+    ```javascript
+    // Load from .env file
+    require('dotenv').config();
+    
+    const apiKey = process.env.MANYPI_API_KEY;
+    
+    if (!apiKey) {
+      throw new Error('MANYPI_API_KEY environment variable is required');
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Python">
+    ```python
+    import os
+    from dotenv import load_dotenv
+    
+    # Load from .env file
+    load_dotenv()
+    
+    api_key = os.environ.get('MANYPI_API_KEY')
+    
+    if not api_key:
+        raise ValueError('MANYPI_API_KEY environment variable is required')
+    ```
+  </Tab>
+  
+  <Tab title="Docker">
+    ```yaml docker-compose.yml
+    version: '3.8'
+    services:
+      app:
+        image: your-app
+        environment:
+          - MANYPI_API_KEY=${MANYPI_API_KEY}
+    ```
+  </Tab>
+  
+  <Tab title="Kubernetes">
+    ```yaml
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: manypi-credentials
+    type: Opaque
+    stringData:
+      api-key: your_api_key_here
+    ---
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: scraper-pod
+    spec:
+      containers:
+      - name: app
+        env:
+        - name: MANYPI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: manypi-credentials
+              key: api-key
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Authentication errors
+
+### 401 Unauthorized
+
+**Cause:** Missing or invalid API key
+
+```json
+{
+  "success": false,
+  "error": "Invalid API key",
+  "errorType": "authentication_error"
+}
+```
+
+**Solutions:**
+- Check that the `Authorization` header is present
+- Verify the API key is correct (no extra spaces or characters)
+- Ensure the API key hasn't been deleted or revoked
+- Confirm you're using the `Bearer` scheme
+
+### 403 Forbidden
+
+**Cause:** Valid API key but insufficient permissions or credits
+
+```json
+{
+  "success": false,
+  "error": "Insufficient credits to perform this operation",
+  "errorType": "insufficient_credits"
+}
+```
+
+**Solutions:**
+- Check your credit balance in the dashboard
+- Purchase additional credits or upgrade your plan
+- Verify the scraper belongs to your account
+
+---
+
+## Managing API keys
+
+### Creating multiple keys
+
+Create separate API keys for different purposes:
+
+```
+Production Server    - For your live application
+Staging Environment  - For testing before deployment
+CI/CD Pipeline       - For automated testing
+Development          - For local development
+Partner Integration  - For third-party access
+```
+
+**Benefits:**
+- Isolate rate limits (60 req/min per key)
+- Easier to rotate keys without downtime
+- Better security through separation
+- Track usage by service
+
+### Rotating API keys
+
+<Steps>
+  <Step title="Create new key">
+    Generate a new API key in the dashboard with a descriptive name.
+  </Step>
+  
+  <Step title="Update your application">
+    Deploy the new key to your application (use blue-green deployment or rolling updates).
+  </Step>
+  
+  <Step title="Monitor">
+    Verify the new key is working correctly in production.
+  </Step>
+  
+  <Step title="Revoke old key">
+    Once confirmed, delete the old API key from the dashboard.
+  </Step>
+</Steps>
+
+<Tip>
+  Rotate API keys regularly (every 90 days) as a security best practice.
+</Tip>
+
+### Revoking compromised keys
+
+If an API key is compromised:
+
+1. **Immediately revoke** the key in your dashboard
+2. **Create a new key** and update your application
+3. **Review usage logs** for any suspicious activity
+4. **Monitor credits** for unexpected consumption
+
+---
+
+## Security best practices
+
+<AccordionGroup>
+  <Accordion icon="lock" title="Never commit API keys to Git">
+    ```bash .gitignore
+    # Environment variables
+    .env
+    .env.local
+    .env.*.local
+    
+    # API keys
+    **/api-keys.txt
+    **/credentials.json
+    ```
+    
+    Use environment variables or secret management services instead.
+  </Accordion>
+  
+  <Accordion icon="shield" title="Use secret management services">
+    For production applications, use dedicated secret management:
+    
+    - **AWS Secrets Manager**
+    - **HashiCorp Vault**
+    - **Azure Key Vault**
+    - **Google Secret Manager**
+    - **Doppler**
+    - **1Password Secrets Automation**
+  </Accordion>
+  
+  <Accordion icon="rotate" title="Rotate keys regularly">
+    Set up a rotation schedule:
+    
+    ```javascript
+    // Check key age and warn if old
+    const KEY_MAX_AGE_DAYS = 90;
+    const keyCreatedAt = new Date('2024-01-01');
+    const keyAge = (Date.now() - keyCreatedAt.getTime()) / (1000 * 60 * 60 * 24);
+    
+    if (keyAge > KEY_MAX_AGE_DAYS) {
+      console.warn('API key is older than 90 days. Consider rotating.');
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="eye-slash" title="Limit key exposure">
+    - Don't log API keys
+    - Don't send keys in URLs or query parameters
+    - Don't include keys in client-side code
+    - Use server-side proxies for browser applications
+  </Accordion>
+  
+  <Accordion icon="chart-line" title="Monitor key usage">
+    Track API key usage to detect anomalies:
+    
+    ```javascript
+    // Log API calls for monitoring
+    function logApiCall(keyId, endpoint, success) {
+      console.log({
+        timestamp: new Date().toISOString(),
+        keyId: keyId.substring(0, 8) + '...', // Partial key for identification
+        endpoint,
+        success
+      });
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Testing authentication
+
+### Verify your API key
+
+Test your API key with a simple request:
+
+```bash
+curl -X POST \
+  'https://app.manypi.com/api/scrape/YOUR_SCRAPER_ID' \
+  -H 'Authorization: Bearer YOUR_API_KEY' \
+  -H 'Content-Type: application/json' \
+  -d '{"url": "https://example.com"}' \
+  -v
+```
+
+Look for:
+- ✅ `HTTP/1.1 200 OK` - Authentication successful
+- ❌ `HTTP/1.1 401 Unauthorized` - Invalid API key
+- ❌ `HTTP/1.1 403 Forbidden` - Valid key but insufficient permissions/credits
+
+### Automated testing
+
+```javascript
+describe('API Authentication', () => {
+  it('should authenticate with valid API key', async () => {
+    const response = await fetch(/* ... */, {
+      headers: {
+        'Authorization': `Bearer ${process.env.MANYPI_API_KEY}`
+      }
+    });
+    
+    expect(response.status).toBe(200);
+  });
+  
+  it('should reject invalid API key', async () => {
+    const response = await fetch(/* ... */, {
+      headers: {
+        'Authorization': 'Bearer invalid_key'
+      }
+    });
+    
+    expect(response.status).toBe(401);
+  });
+  
+  it('should reject missing API key', async () => {
+    const response = await fetch(/* ... */);
+    
+    expect(response.status).toBe(401);
+  });
+});
+```
+
+---
+
+## Next steps
+
+<CardGroup cols={2}>
+
+<Card title="Create API key" icon="key" href="https://app.manypi.com/dashboard/settings">
+  Generate your first API key in the dashboard
+</Card>
+
+<Card title="Make your first request" icon="rocket" href="/quickstart">
+  Follow the quickstart guide
+</Card>
+
+<Card title="Rate limiting" icon="gauge" href="/rate-limiting">
+  Learn about rate limits per API key
+</Card>
+
+<Card title="API Reference" icon="code" href="/api-reference">
+  Explore the complete API documentation
+</Card>
+
+</CardGroup>

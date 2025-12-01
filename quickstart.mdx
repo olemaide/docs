@@ -1,80 +1,273 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Extract structured data from any website in minutes with AI-powered scraping"
 ---
 
-## Get started in three steps
+## Get started in two ways
 
-Get your documentation site running locally and make your first customization.
+Choose your preferred method: use the web interface for quick testing or integrate via API for production use.
 
-### Step 1: Set up your local environment
+## Option 1: Web Interface (No Code)
+
+Perfect for testing and one-off scraping tasks.
+
+### Step 1: Create your account
+
+<Steps>
+  <Step title="Sign up">
+    Go to [app.manypi.com](https://app.manypi.com) and create your free account. You'll get 20,000 credits to start.
+  </Step>
+  <Step title="Verify email">
+    Check your inbox and verify your email address to activate your account.
+  </Step>
+</Steps>
+
+### Step 2: Create your first scraper
 
 <AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+  <Accordion icon="wand-magic-sparkles" title="Use AI to generate your scraper">
+    1. Click **"Create Scraper"** in your dashboard
+    2. Enter a target URL (e.g., `https://example.com/product`)
+    3. Describe what data you want to extract in plain English:
+       - "Extract the product title, price, and rating"
+       - "Get all article titles and publication dates"
+       - "Scrape company name, location, and job listings"
+    4. Click **"Generate Schema"** - AI will create the data structure
+    5. Review and adjust the schema if needed
+    6. Click **"Create Scraper"**
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
+    <Tip>Be specific in your prompt for better results. Include field names and data types you expect.</Tip>
   </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
+  
+  <Accordion icon="code" title="Or define schema manually">
+    If you prefer full control, you can manually define your JSON schema:
+
+    ```json
+    {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "price": { "type": "string" },
+        "rating": { "type": "number" },
+        "inStock": { "type": "boolean" }
+      },
+      "required": ["title", "price"]
+    }
+    ```
   </Accordion>
 </AccordionGroup>
 
-### Step 2: Deploy your changes
+### Step 3: Test your scraper
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
+<Steps>
+  <Step title="Run a test">
+    Click **"Run Now"** on your scraper to test it with the target URL.
+  </Step>
+  <Step title="View results">
+    See the extracted data in clean, structured JSON format. Results appear instantly in your dashboard.
+  </Step>
+  <Step title="Refine if needed">
+    If the results aren't perfect, edit your scraper's prompt or schema and test again. Each test only costs credits when successful.
+  </Step>
+</Steps>
+
+<Check>
+  **Success!** You've created and tested your first scraper. Now you can run it anytime from the dashboard.
+</Check>
+
+---
+
+## Option 2: API Integration (Production)
+
+Perfect for automation, scheduled jobs, and production applications.
+
+### Step 1: Get your API key
+
+<Steps>
+  <Step title="Navigate to settings">
+    Go to **Settings** → **API Keys** in your dashboard.
+  </Step>
+  <Step title="Generate key">
+    Click **"Create API Key"**, give it a name, and copy the key. 
     
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    <Warning>Store it securely - you won't be able to see it again!</Warning>
+  </Step>
+</Steps>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+### Step 2: Create a scraper
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+Follow the same process as the web interface to create and test your scraper. You'll need the scraper ID for API calls.
 
-### Step 3: Go live
+<Tip>Find your scraper ID in the dashboard - it's shown in the scraper details.</Tip>
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+### Step 3: Make your first API call
 
-## Next steps
+<CodeGroup>
 
-Now that you have your docs running, explore these key features:
+```bash cURL
+curl -X POST \
+  'https://app.manypi.com/api/scrape/YOUR_SCRAPER_ID' \
+  -H 'Authorization: Bearer YOUR_API_KEY' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "url": "https://example.com/product/123"
+  }'
+```
+
+```javascript Node.js
+const response = await fetch('https://app.manypi.com/api/scrape/YOUR_SCRAPER_ID', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    url: 'https://example.com/product/123'
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://app.manypi.com/api/scrape/YOUR_SCRAPER_ID',
+    headers={
+        'Authorization': 'Bearer YOUR_API_KEY',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'url': 'https://example.com/product/123'
+    }
+)
+
+data = response.json()
+print(data)
+```
+
+```php PHP
+<?php
+$ch = curl_init('https://app.manypi.com/api/scrape/YOUR_SCRAPER_ID');
+
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Authorization: Bearer YOUR_API_KEY',
+    'Content-Type: application/json'
+]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+    'url' => 'https://example.com/product/123'
+]));
+
+$response = curl_exec($ch);
+$data = json_decode($response, true);
+
+print_r($data);
+?>
+```
+
+</CodeGroup>
+
+### Step 4: Handle the response
+
+```json Response
+{
+  "success": true,
+  "data": {
+    "title": "Wireless Bluetooth Headphones",
+    "price": "$79.99",
+    "rating": 4.5,
+    "inStock": true
+  },
+  "metadata": {
+    "scraperId": "550e8400-e29b-41d4-a716-446655440000",
+    "timestamp": "2024-01-15T10:30:00.000Z",
+    "tokensUsed": 1500,
+    "creditsCost": 1500,
+    "creditsRemaining": 8500
+  }
+}
+```
+
+<Check>
+  **You're live!** Your scraper is now integrated and ready for production use.
+</Check>
+
+---
+
+## Common use cases
 
 <CardGroup cols={2}>
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
+<Card title="E-commerce monitoring" icon="cart-shopping">
+  Track competitor prices, product availability, and reviews across multiple sites.
 </Card>
 
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
+<Card title="Lead generation" icon="users">
+  Extract company information, contact details, and job postings from business directories.
 </Card>
 
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
+<Card title="Content aggregation" icon="newspaper">
+  Collect articles, blog posts, and news from multiple sources for your platform.
 </Card>
 
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
+<Card title="Market research" icon="chart-line">
+  Gather product data, pricing trends, and customer sentiment at scale.
 </Card>
 
 </CardGroup>
 
+---
+
+## Next steps
+
+<CardGroup cols={2}>
+
+<Card title="API Reference" icon="code" href="/api-reference">
+  Explore the complete API documentation with all endpoints and parameters.
+</Card>
+
+<Card title="Manage credits" icon="coins" href="https://app.manypi.com/dashboard/billing">
+  View your usage and purchase additional credits as needed.
+</Card>
+
+<Card title="Email notifications" icon="bell" href="https://app.manypi.com/dashboard/integrations">
+  Set up automatic email alerts when scrapers complete.
+</Card>
+
+<Card title="View usage" icon="chart-simple" href="https://app.manypi.com/dashboard/usage">
+  Monitor your credit consumption and scraper performance.
+</Card>
+
+</CardGroup>
+
+---
+
+## Tips for success
+
+<AccordionGroup>
+  <Accordion icon="lightbulb" title="Write clear prompts">
+    Be specific about what data you want. Instead of "get product info", say "extract product title, price in USD, star rating out of 5, and availability status".
+  </Accordion>
+  
+  <Accordion icon="flask" title="Test with multiple URLs">
+    Test your scraper on 2-3 different pages from the same site to ensure it works consistently.
+  </Accordion>
+  
+  <Accordion icon="shield-check" title="Handle errors gracefully">
+    Always check the `success` field in API responses and handle errors appropriately in your code.
+  </Accordion>
+  
+  <Accordion icon="clock" title="Monitor your credits">
+    Keep an eye on your credit usage in the dashboard. Set up alerts to avoid running out during important jobs.
+  </Accordion>
+</AccordionGroup>
+
+---
+
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  **Need help?** Contact us at [support@manypi.com](mailto:support@manypi.com) or check out our [full documentation](https://docs.manypi.com).
 </Note>

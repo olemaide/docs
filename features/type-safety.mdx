@@ -1,0 +1,785 @@
+---
+title: "Type Safety & Schema Validation"
+description: "Get fully typed, validated data from your scrapers with JSON Schema and TypeScript"
+---
+
+## Overview
+
+ManyPi uses JSON Schema to ensure your scraped data is always structured, validated, and type-safe. Define your schema once, and get guaranteed data consistency across all scrapes.
+
+<Info>
+  **Benefits:**
+  - Catch data issues early with validation
+  - Generate TypeScript types automatically
+  - Ensure consistent data structure
+  - Document your API responses
+</Info>
+
+---
+
+## JSON Schema basics
+
+Every ManyPi scraper uses a JSON Schema to define the structure of extracted data.
+
+### Simple example
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Product title"
+    },
+    "price": {
+      "type": "number",
+      "description": "Price in USD"
+    },
+    "inStock": {
+      "type": "boolean",
+      "description": "Availability status"
+    }
+  },
+  "required": ["title", "price"]
+}
+```
+
+This schema guarantees:
+- ✅ `title` is always a string
+- ✅ `price` is always a number
+- ✅ `inStock` is always a boolean
+- ✅ `title` and `price` are always present
+- ✅ `inStock` is optional (not in required array)
+
+---
+
+## Supported data types
+
+### Primitive types
+
+<Tabs>
+  <Tab title="String">
+    ```json
+    {
+      "type": "string",
+      "description": "Any text value",
+      "minLength": 1,
+      "maxLength": 500,
+      "pattern": "^[A-Z].*"  // Optional regex pattern
+    }
+    ```
+    
+    **Examples:** Product names, descriptions, URLs, categories
+  </Tab>
+  
+  <Tab title="Number">
+    ```json
+    {
+      "type": "number",
+      "description": "Numeric value (integer or decimal)",
+      "minimum": 0,
+      "maximum": 10000,
+      "multipleOf": 0.01  // For currency (2 decimal places)
+    }
+    ```
+    
+    **Examples:** Prices, ratings, quantities, percentages
+  </Tab>
+  
+  <Tab title="Integer">
+    ```json
+    {
+      "type": "integer",
+      "description": "Whole numbers only",
+      "minimum": 0,
+      "exclusiveMaximum": 100
+    }
+    ```
+    
+    **Examples:** Review counts, stock quantities, page numbers
+  </Tab>
+  
+  <Tab title="Boolean">
+    ```json
+    {
+      "type": "boolean",
+      "description": "True or false value"
+    }
+    ```
+    
+    **Examples:** In stock, featured, on sale, verified
+  </Tab>
+  
+  <Tab title="Null">
+    ```json
+    {
+      "type": ["string", "null"],
+      "description": "Optional string that can be null"
+    }
+    ```
+    
+    **Use for:** Optional fields that might not exist on all pages
+  </Tab>
+</Tabs>
+
+### Complex types
+
+<Tabs>
+  <Tab title="Array">
+    ```json
+    {
+      "type": "array",
+      "description": "List of items",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "maxItems": 10,
+      "uniqueItems": true
+    }
+    ```
+    
+    **Examples:**
+    ```json Response
+    {
+      "tags": ["electronics", "audio", "wireless"],
+      "images": [
+        "https://example.com/img1.jpg",
+        "https://example.com/img2.jpg"
+      ]
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Object">
+    ```json
+    {
+      "type": "object",
+      "description": "Nested object",
+      "properties": {
+        "street": { "type": "string" },
+        "city": { "type": "string" },
+        "zipCode": { "type": "string" }
+      },
+      "required": ["city"]
+    }
+    ```
+    
+    **Examples:**
+    ```json Response
+    {
+      "address": {
+        "street": "123 Main St",
+        "city": "San Francisco",
+        "zipCode": "94102"
+      }
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Array of Objects">
+    ```json
+    {
+      "type": "array",
+      "description": "List of structured items",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "value": { "type": "number" }
+        },
+        "required": ["name", "value"]
+      }
+    }
+    ```
+    
+    **Examples:**
+    ```json Response
+    {
+      "specifications": [
+        { "name": "Weight", "value": 250 },
+        { "name": "Battery Life", "value": 30 }
+      ]
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Enum">
+    ```json
+    {
+      "type": "string",
+      "enum": ["new", "used", "refurbished"],
+      "description": "Product condition"
+    }
+    ```
+    
+    **Use for:** Fixed set of possible values
+    
+    ```json Response
+    {
+      "condition": "new"  // Must be one of the enum values
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## TypeScript integration
+
+Generate TypeScript types from your JSON Schema for full type safety in your application.
+
+### Using json-schema-to-typescript
+
+<Steps>
+  <Step title="Install the package">
+    ```bash
+    npm install json-schema-to-typescript
+    ```
+  </Step>
+  
+  <Step title="Convert schema to TypeScript">
+    ```typescript generate-types.ts
+    import { compile } from 'json-schema-to-typescript';
+    import fs from 'fs';
+    
+    // Your scraper's JSON Schema
+    const schema = {
+      title: 'Product',
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        price: { type: 'number' },
+        rating: { type: 'number', minimum: 0, maximum: 5 },
+        inStock: { type: 'boolean' },
+        tags: {
+          type: 'array',
+          items: { type: 'string' }
+        }
+      },
+      required: ['title', 'price', 'inStock']
+    };
+    
+    // Generate TypeScript interface
+    compile(schema, 'Product').then(ts => {
+      fs.writeFileSync('types/product.ts', ts);
+    });
+    ```
+  </Step>
+  
+  <Step title="Generated TypeScript types">
+    ```typescript types/product.ts
+    export interface Product {
+      title: string;
+      price: number;
+      rating?: number;
+      inStock: boolean;
+      tags?: string[];
+    }
+    ```
+  </Step>
+  
+  <Step title="Use in your application">
+    ```typescript app.ts
+    import { Product } from './types/product';
+    
+    async function scrapeProduct(url: string): Promise<Product> {
+      const response = await fetch(
+        'https://app.manypi.com/api/scrape/YOUR_SCRAPER_ID',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.MANYPI_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ url })
+        }
+      );
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      
+      // Fully typed!
+      const product: Product = result.data;
+      
+      // TypeScript knows these properties exist
+      console.log(product.title);
+      console.log(product.price);
+      
+      // TypeScript knows this is optional
+      if (product.rating) {
+        console.log(`Rating: ${product.rating}/5`);
+      }
+      
+      return product;
+    }
+    ```
+  </Step>
+</Steps>
+
+---
+
+## Real-world schemas
+
+### E-commerce product
+
+```json
+{
+  "title": "Product",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Product name",
+      "minLength": 1
+    },
+    "brand": {
+      "type": "string",
+      "description": "Brand name"
+    },
+    "currentPrice": {
+      "type": "number",
+      "description": "Current price in USD",
+      "minimum": 0
+    },
+    "originalPrice": {
+      "type": ["number", "null"],
+      "description": "Original price before discount",
+      "minimum": 0
+    },
+    "discount": {
+      "type": ["number", "null"],
+      "description": "Discount percentage",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "rating": {
+      "type": ["number", "null"],
+      "description": "Average rating",
+      "minimum": 0,
+      "maximum": 5
+    },
+    "reviewCount": {
+      "type": "integer",
+      "description": "Number of reviews",
+      "minimum": 0
+    },
+    "inStock": {
+      "type": "boolean",
+      "description": "Availability status"
+    },
+    "condition": {
+      "type": "string",
+      "enum": ["new", "used", "refurbished"],
+      "description": "Product condition"
+    },
+    "images": {
+      "type": "array",
+      "description": "Product image URLs",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      },
+      "minItems": 1
+    },
+    "specifications": {
+      "type": "array",
+      "description": "Product specifications",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "value": { "type": "string" }
+        },
+        "required": ["name", "value"]
+      }
+    },
+    "shipping": {
+      "type": "object",
+      "description": "Shipping information",
+      "properties": {
+        "cost": { "type": "number", "minimum": 0 },
+        "estimatedDays": { "type": "integer", "minimum": 0 },
+        "freeShipping": { "type": "boolean" }
+      }
+    }
+  },
+  "required": [
+    "title",
+    "currentPrice",
+    "inStock"
+  ]
+}
+```
+
+### Job listing
+
+```json
+{
+  "title": "JobListing",
+  "type": "object",
+  "properties": {
+    "jobTitle": {
+      "type": "string",
+      "description": "Job position title"
+    },
+    "company": {
+      "type": "string",
+      "description": "Company name"
+    },
+    "location": {
+      "type": "object",
+      "properties": {
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "country": { "type": "string" },
+        "remote": { "type": "boolean" }
+      },
+      "required": ["city", "country"]
+    },
+    "salary": {
+      "type": "object",
+      "properties": {
+        "min": { "type": "number", "minimum": 0 },
+        "max": { "type": "number", "minimum": 0 },
+        "currency": { "type": "string", "default": "USD" },
+        "period": {
+          "type": "string",
+          "enum": ["hourly", "monthly", "yearly"]
+        }
+      }
+    },
+    "jobType": {
+      "type": "string",
+      "enum": ["full-time", "part-time", "contract", "internship"]
+    },
+    "experienceLevel": {
+      "type": "string",
+      "enum": ["entry", "mid", "senior", "lead", "executive"]
+    },
+    "skills": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Required skills"
+    },
+    "description": {
+      "type": "string",
+      "description": "Job description"
+    },
+    "postedDate": {
+      "type": "string",
+      "format": "date",
+      "description": "When the job was posted"
+    },
+    "applicationUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to apply"
+    }
+  },
+  "required": [
+    "jobTitle",
+    "company",
+    "location",
+    "jobType"
+  ]
+}
+```
+
+### Article/Blog post
+
+```json
+{
+  "title": "Article",
+  "type": "object",
+  "properties": {
+    "headline": {
+      "type": "string",
+      "description": "Article title"
+    },
+    "author": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "bio": { "type": "string" },
+        "avatarUrl": { "type": "string", "format": "uri" }
+      },
+      "required": ["name"]
+    },
+    "publishedDate": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Publication date and time"
+    },
+    "modifiedDate": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Last modified date"
+    },
+    "category": {
+      "type": "string",
+      "description": "Article category"
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Article tags"
+    },
+    "content": {
+      "type": "string",
+      "description": "Full article text"
+    },
+    "excerpt": {
+      "type": "string",
+      "description": "Short summary",
+      "maxLength": 500
+    },
+    "featuredImage": {
+      "type": "string",
+      "format": "uri",
+      "description": "Main article image"
+    },
+    "readingTime": {
+      "type": "integer",
+      "description": "Estimated reading time in minutes",
+      "minimum": 1
+    },
+    "wordCount": {
+      "type": "integer",
+      "description": "Article word count",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "headline",
+    "author",
+    "publishedDate",
+    "content"
+  ]
+}
+```
+
+---
+
+## Validation in practice
+
+### Client-side validation
+
+Use libraries like Ajv to validate responses:
+
+```typescript
+import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
+
+const ajv = new Ajv();
+addFormats(ajv);
+
+// Your schema
+const schema = {
+  type: 'object',
+  properties: {
+    title: { type: 'string' },
+    price: { type: 'number', minimum: 0 }
+  },
+  required: ['title', 'price']
+};
+
+const validate = ajv.compile(schema);
+
+async function scrapeWithValidation(url: string) {
+  const response = await fetch(/* ... */);
+  const result = await response.json();
+  
+  if (!result.success) {
+    throw new Error(result.error);
+  }
+  
+  // Validate the data
+  if (!validate(result.data)) {
+    console.error('Validation errors:', validate.errors);
+    throw new Error('Invalid data structure');
+  }
+  
+  // Data is guaranteed to match schema
+  return result.data;
+}
+```
+
+### Runtime type checking with Zod
+
+```typescript
+import { z } from 'zod';
+
+// Define schema with Zod
+const ProductSchema = z.object({
+  title: z.string().min(1),
+  price: z.number().positive(),
+  rating: z.number().min(0).max(5).optional(),
+  inStock: z.boolean(),
+  tags: z.array(z.string()).optional()
+});
+
+type Product = z.infer<typeof ProductSchema>;
+
+async function scrapeProduct(url: string): Promise<Product> {
+  const response = await fetch(/* ... */);
+  const result = await response.json();
+  
+  // Parse and validate
+  const product = ProductSchema.parse(result.data);
+  
+  // Fully typed and validated!
+  return product;
+}
+```
+
+---
+
+## Best practices
+
+<AccordionGroup>
+  <Accordion icon="check" title="Make optional fields nullable">
+    Not all pages have all data. Use nullable types for optional fields:
+    
+    ```json
+    {
+      "salePrice": {
+        "type": ["number", "null"],
+        "description": "Only present during sales"
+      }
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="list" title="Use enums for fixed values">
+    When a field has a limited set of possible values, use enums:
+    
+    ```json
+    {
+      "status": {
+        "type": "string",
+        "enum": ["active", "pending", "sold", "expired"]
+      }
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="ruler" title="Set reasonable constraints">
+    Add validation rules to catch data issues:
+    
+    ```json
+    {
+      "price": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1000000
+      },
+      "title": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      }
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="file-lines" title="Document your schema">
+    Add descriptions to help future developers:
+    
+    ```json
+    {
+      "rating": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 5,
+        "description": "Average customer rating out of 5 stars"
+      }
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="code" title="Generate types automatically">
+    Don't manually write types - generate them from your schema:
+    
+    ```bash
+    # Add to your build process
+    npm run generate-types
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Common patterns
+
+### Handling optional nested objects
+
+```json
+{
+  "shipping": {
+    "type": ["object", "null"],
+    "properties": {
+      "cost": { "type": "number" },
+      "estimatedDays": { "type": "integer" }
+    }
+  }
+}
+```
+
+### Arrays with minimum items
+
+```json
+{
+  "images": {
+    "type": "array",
+    "items": { "type": "string", "format": "uri" },
+    "minItems": 1,
+    "description": "At least one image required"
+  }
+}
+```
+
+### Conditional requirements
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "hasDiscount": { "type": "boolean" },
+    "discountPercent": { "type": "number" }
+  },
+  "if": {
+    "properties": { "hasDiscount": { "const": true } }
+  },
+  "then": {
+    "required": ["discountPercent"]
+  }
+}
+```
+
+---
+
+## Next steps
+
+<CardGroup cols={2}>
+
+<Card title="Create a scraper" icon="plus" href="https://app.manypi.com/dashboard/scrapers">
+  Start building with type-safe schemas
+</Card>
+
+<Card title="API Reference" icon="code" href="/api-reference">
+  See the complete API documentation
+</Card>
+
+<Card title="Examples" icon="book" href="/examples">
+  Explore more schema examples
+</Card>
+
+<Card title="JSON Schema docs" icon="file-code" href="https://json-schema.org/">
+  Learn more about JSON Schema
+</Card>
+
+</CardGroup>

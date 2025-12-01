@@ -1,33 +1,44 @@
 ---
 title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+description: 'How to use the ManyPI API'
 ---
 
 <Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
+ManyPI provides a powerful REST API that allows you to convert any website into a fully-typed API endpoint. Our API is designed to be simple, intuitive, and developer-friendly.
 </Note>
 
-## Welcome
+## Base URL
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
+All API endpoints are relative to the following base URL:
 
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+```
+https://app.manypi.com
+```
+
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+All API endpoints are authenticated using Bearer tokens and picked up from the specification file. Keep your API key secure and never expose it in client-side code.
+
 
 ```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
+--header 'Authorization: Bearer <token>'
 ```
+
+## Rate Limits
+
+The default rate limit of 60 requests per minute applies per active API key. The number of API keys that can be active in parallel depends on the subscription tier of the user's account. API rate limits are subject to change. API keys may be revoked to allow the creation of new keys. Revoked API keys remain associated with your account, but no longer count as active API keys.
+
+- ** 60 ** requests per minute
+
+## Response Format
+
+All API responses are in JSON format and include standard HTTP status codes.
+For more details on API responses, view the API endpoint page, provided on our API reference. 
+
+<Card   title="View API endpoints"
+  icon="rocket"
+  href="/api-reference/endpoint/scrape"
+  horizontal>
+  Reference the ManyPI API endpoints for structured web data gathering.
+</Card>

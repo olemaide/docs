@@ -5,7 +5,7 @@
     "description": "AI-powered web scraping API that extracts structured data from any website. Create custom scrapers with natural language prompts and get clean, schema-validated JSON responses.",
     "version": "1.0.0",
     "contact": {
-      "name": "ManyPi Support",
+      "name": "ManyPI Support",
       "email": "support@manypi.com",
       "url": "https://manypi.com"
     }
@@ -22,7 +22,7 @@
     }
   ],
   "paths": {
-    "/api/scrape/[scraperId]": {
+    "/api/scrape/{scraperId}": {
       "post": {
         "summary": "Execute a scraper",
         "description": "Runs a configured scraper to extract structured data from a target URL. The scraper uses AI to intelligently extract data matching your defined schema.",
@@ -240,6 +240,7 @@
     "schemas": {
       "ScrapeRequest": {
         "type": "object",
+        "required": ["url"],
         "properties": {
           "url": {
             "type": "string",

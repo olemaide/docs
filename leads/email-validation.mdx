@@ -1,0 +1,109 @@
+---
+title: "Email validation"
+description: "Probe every address before you send, so dead mailboxes never cost you a bounce."
+---
+
+ManyPI verifies email addresses with a **real SMTP mailbox probe** from a
+dedicated sending host — not a guess from a pattern database. The result is
+written back onto the lead and used automatically to protect your sending
+reputation.
+
+## Statuses
+
+| Status | Meaning | Blocks sending? |
+| --- | --- | --- |
+| `valid` | The mailbox exists and accepts mail. | No |
+| `invalid` | The server rejected the address. | **Yes** |
+| `no_mx` | The domain has no mail server at all. | **Yes** |
+| `disposable` | A throwaway-address provider. | **Yes** |
+| `catch_all` | The domain accepts everything, so the mailbox cannot be confirmed. | No |
+| `unknown` | The probe was inconclusive (greylisting, timeout, blocking). | No |
+
+<Note>
+  `catch_all` and `unknown` deliberately do **not** block sending. Catch-all
+  covers a large share of real B2B domains, and refusing to write to them would
+  cost far more genuine prospects than the occasional bounce it avoids. If you
+  would rather be strict, turn on **Skip unverifiable** in the brand's
+  deliverability settings.
+</Note>
+
+## Running a validation
+
+### From the dashboard
+
+Select leads in the grid and choose **Verify emails**. You get a price estimate
+first — how many addresses are billable versus already known — and the grid
+shows live progress as the job runs.
+
+### From the API
+
+```bash
+curl -X POST https://app.manypi.com/api/leads/validate \
+  -H "Authorization: Bearer mpi_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{ "lead_ids": ["8f1c…", "b207…"] }'
+```
+
+You can pass `lead_ids`, a raw `emails` array, or both. Add
+`"estimate_only": true` to price the run without queueing it.
+
+```json Response
+{ "job_id": "…", "total": 2, "estimate": { "billable": 1, "free": 1 } }
+```
+
+Poll [`GET /api/leads/validate/{jobId}`](/api-reference/validation/get-job) for
+progress and the per-address breakdown.
+
+This endpoint requires the **`leads:validate`** permission on your API key —
+deliberately separate from plain `write`, so a general-purpose key cannot run up
+a validation bill.
+
+## What you are charged for
+
+One validation credit per **probe that actually runs**. You are not charged for:
+
+- addresses ManyPI already has a fresh result for (results are cached and
+  re-used across your workspace),
+- addresses rejected by the cheap pre-check — malformed syntax, or a domain with
+  no MX record at all.
+
+The estimate returned before a run splits the batch into `billable` and `free`
+so there are no surprises.
+
+Included allowances match your outreach volume exactly (1,000 / 5,000 / 20,000
+per seat per month on Starter / Pro / Business), on the principle that verifying
+everything you send should cost nothing extra. Beyond that, overage is $0.005
+per validation.
+
+Out of credits with overage off, the endpoint returns `402` with
+`code: "validation_credits_exhausted"`.
+
+## Automatic validation on enroll
+
+By default, enrolling leads into a campaign **validates them first**. Addresses
+that come back undeliverable are skipped rather than sent to, which is the
+single most effective bounce guard there is.
+
+Both behaviours are per-brand settings, so an agency's cold-outbound brand and
+its warm-referral brand can differ:
+
+| Setting | Default | Effect |
+| --- | --- | --- |
+| **Validate on enroll** | On | Queue a validation for any lead whose address has not been checked recently. |
+| **Skip unverifiable** | Off | Also refuse `catch_all` and `unknown`, not just the three hard-fail statuses. |
+
+## Reading results
+
+Validation writes onto the lead itself:
+
+- `email_status` — one of the statuses above
+- `email_provider` — the receiving mail provider (Google, Microsoft, …)
+- `email_is_role` — `true` for role addresses like `info@` or `sales@`
+- `email_validated_at` — when it was checked
+
+Filter the grid by any of these, or export them — they are columns in the CSV.
+
+<Tip>
+  Role addresses (`info@`, `contact@`, `sales@`) are usually valid *and* usually
+  worthless for cold outreach. Filter on `email_is_role` before you enroll.
+</Tip>

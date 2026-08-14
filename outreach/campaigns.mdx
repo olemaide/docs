@@ -1,0 +1,131 @@
+---
+title: "Campaigns"
+description: "Bind a sequence to an inbox, enroll leads, and watch what happens."
+---
+
+A **campaign** is where content meets delivery: one sequence, one sending
+setup, plus the rules about when and how fast to send.
+
+## Creating a campaign
+
+```bash
+curl -X POST https://app.manypi.com/api/outreach/campaigns \
+  -H "Authorization: Bearer mpi_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "DACH agencies — Q3",
+    "sequence_id": "…",
+    "smtp_config_id": "…",
+    "daily_limit": 40
+  }'
+```
+
+| Field | Meaning |
+| --- | --- |
+| `sequence_id` | The sequence to send. |
+| `smtp_config_id` | The sending inbox (an `id` from [`/api/outreach/inboxes`](/api-reference/outreach/list-inboxes)). |
+| `reply_to` | Override the reply-to address for this campaign. |
+| `daily_limit` | Cap for this campaign. Never exceeds the inbox's own cap. |
+
+## Send window
+
+Campaigns can be restricted to business hours in the recipient-relevant
+timezone:
+
+| Setting | Meaning |
+| --- | --- |
+| `schedule_enabled` | Turn the window on. |
+| `send_days` | Days of the week, `0`–`6`. Defaults to Mon–Fri. |
+| `send_from` / `send_to` | Local time bounds, `HH:MM`. |
+| `timezone` | The timezone those bounds are read in. |
+| `track_opens` | Whether to embed the open-tracking pixel. |
+| `priority` | `1`–`10`. Higher wins the next slot when campaigns share an inbox. |
+
+<Tip>
+  Tuesday–Thursday, 08:00–11:00 local is the standard advice and it holds up.
+  Avoid sending on the hour exactly — ManyPI already staggers sends inside the
+  window for you.
+</Tip>
+
+## Enrolling leads
+
+Enrollment is what actually queues real email.
+
+```bash
+curl -X POST https://app.manypi.com/api/outreach/enroll \
+  -H "Authorization: Bearer mpi_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{ "campaign_id": "…", "lead_ids": ["8f1c…", "b207…"] }'
+```
+
+Up to 1,000 leads per call. ManyPI skips, rather than fails on:
+
+- leads with no email address,
+- leads already enrolled in this campaign,
+- suppressed or unsubscribed addresses,
+- addresses known to be undeliverable.
+
+If the brand has **validate on enroll** turned on (the default), unchecked
+addresses are validated first and undeliverable ones are dropped before a single
+email goes out.
+
+<Warning>
+  Enrollment is not reversible in the sense that matters: an email that has gone
+  out cannot be recalled. Pausing a campaign stops *future* sends only. Test
+  with a handful of leads before you enroll a list of 800.
+</Warning>
+
+Requires a paid plan — `403` with `code: "outreach_locked"` otherwise.
+
+## One-off sends
+
+For a single email outside any sequence:
+
+```bash
+curl -X POST https://app.manypi.com/api/outreach/send \
+  -H "Authorization: Bearer mpi_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "smtp_config_id": "…",
+    "lead_id": "8f1c…",
+    "subject": "Following up, {{first_name}}",
+    "html": "<p>Hi {{first_name}}, …</p>"
+  }'
+```
+
+Merge variables are rendered against the lead, the inbox's daily/warmup cap is
+respected, and the lead is marked `contacted`.
+
+## Pausing, resuming, archiving
+
+```bash
+curl -X PATCH https://app.manypi.com/api/outreach/campaigns \
+  -H "Authorization: Bearer mpi_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{ "id": "…", "status": "paused" }'
+```
+
+| Status | Effect |
+| --- | --- |
+| `active` | Sending. |
+| `paused` | Sends held. Progress kept; resuming picks up where it stopped. |
+| `archived` | Retired. Nothing sends, and it drops out of the default list. |
+
+## Analytics
+
+[`GET /api/outreach/campaigns/{id}`](/api-reference/outreach/get-campaign)
+returns the full picture:
+
+- headline stats — enrolled, active, completed, sent, opened, replied
+- a **per-step breakdown**, which is where you see the follow-up doing the work
+- every enrolled lead with its current step and status
+
+Workspace-wide activity — 14 days of sends, opens, replies, bounces,
+unsubscribes and today's sent-versus-cap — is at
+[`GET /api/outreach/stats`](/api-reference/outreach/get-stats).
+
+<Tip>
+  Read the per-step breakdown before you rewrite step 1. A campaign with a
+  healthy step-1 open rate and no replies has an offer problem, not a subject
+  line problem.
+</Tip>

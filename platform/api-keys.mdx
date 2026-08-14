@@ -1,0 +1,122 @@
+---
+title: "API keys and permissions"
+description: "Create keys, scope them to exactly what they need, and keep them safe."
+---
+
+Every programmatic call into ManyPI — REST or [MCP](/mcp/introduction) — is
+authenticated with a ManyPI API key, or with an OAuth access token obtained
+through the MCP consent flow.
+
+## Creating a key
+
+**Settings → API keys → Create key.** Pick the permissions it needs, then copy
+the key — it starts with `mpi_` and is shown once.
+
+```bash
+curl https://app.manypi.com/api/user \
+  -H "Authorization: Bearer mpi_your_api_key"
+```
+
+That endpoint is the cheapest way to confirm a key works: it returns the owning
+user, the key's permissions and its rate limit.
+
+## Permissions
+
+Keys are scoped. A key only carries the permissions you granted it, and a call
+outside them is rejected exactly as an invalid key would be.
+
+| Permission | Grants |
+| --- | --- |
+| `read` | View scrapers, runs, results, leads and usage. Read-only — a key with only this can never change anything. |
+| `write` | Create, update and delete scrapers, endpoints, folders and saved leads. Does not include *running* anything. |
+| `scraper` | Start scrape runs and re-runs. **Spends crawl credits.** |
+| `agents` | Start agent runs, reply to their questions, cancel them. **Spends credits.** |
+| `endpoints:invoke` | Call your published endpoints at `app.manypi.com/v1/e/…`. |
+| `leads:validate` | Verify lead email addresses. **Spends validation credits.** |
+| `outreach:send` | Send email from your inboxes and enroll leads into campaigns. |
+| `*` | Full access. |
+
+The default for a new key is `read`, `scraper` and `endpoints:invoke` — enough
+for most integrations, and nothing that can email your prospects.
+
+<Warning>
+  `outreach:send` is the one to think hardest about. A key with it can send mail
+  from your domain to your leads. Grant it only to systems you fully trust, and
+  never put it in a browser, a mobile app or a public repository.
+</Warning>
+
+### How permissions map to routes
+
+| Route pattern | Required |
+| --- | --- |
+| `GET /api/agents/*` | `read` or `agents` |
+| `POST /api/agents/*` | `agents` |
+| `/api/scrape*` | `scraper` |
+| `POST /api/outreach/{send,test-send,enroll}` | `outreach:send` |
+| `GET /api/leads/validate*` | `read` or `leads:validate` |
+| `POST /api/leads/validate` | `leads:validate` |
+| `/v1/e/{slug}` | `endpoints:invoke` |
+| Any other `GET` | `read` |
+| Any other write | `write` |
+
+Reading a validation job is a read; *starting* one spends credits — which is why
+a bare `write` key cannot run up a validation bill.
+
+<Note>
+  Keys issued before the permission catalogue existed are honoured with their
+  original access, so upgrading did not break anyone's live integration. Keys
+  created today get exactly the permissions you pick.
+</Note>
+
+## Rate limits
+
+**60 requests per minute** per active key by default. OAuth access tokens get
+the same 60/minute.
+
+How many keys you can keep active in parallel depends on your plan. Revoked keys
+stay associated with your account for the audit trail but stop counting toward
+that limit.
+
+Exceeding the limit returns `429`. Back off and retry — the window is one
+minute.
+
+## Rotating and revoking
+
+Revoke a key the moment it might be exposed. Revocation is immediate: in-flight
+requests fail, and every future call with that key is rejected.
+
+To rotate without downtime: create the new key, deploy it, confirm traffic has
+moved, then revoke the old one.
+
+## Keeping keys safe
+
+<AccordionGroup>
+  <Accordion title="Server-side only" icon="server">
+    Never ship a ManyPI key in frontend JavaScript, a mobile binary or anything
+    a user can open. Proxy through your own backend.
+  </Accordion>
+  <Accordion title="One key per integration" icon="key">
+    Separate keys per system means you can revoke one without taking the others
+    down, and the usage log tells you which system did what.
+  </Accordion>
+  <Accordion title="Least privilege" icon="lock">
+    A reporting dashboard needs `read`. It does not need `outreach:send`.
+  </Accordion>
+  <Accordion title="Environment variables" icon="file-shield">
+    Keep keys in your secret manager or environment, never in the repository.
+    Add `.env` to `.gitignore` before the first commit, not after.
+  </Accordion>
+</AccordionGroup>
+
+## OAuth instead of keys
+
+MCP clients that support OAuth 2.1 can connect with **no key at all**: the
+client registers itself, you approve it in the browser, and it acts as you
+until you revoke it.
+
+Review and revoke connected apps in **Settings → Connected apps**. Revoking
+kills that client's sessions and invalidates its tokens immediately.
+
+<Card title="MCP authentication" icon="shield-check" href="/mcp/authentication" horizontal>
+  How the OAuth handshake works and when to prefer it over a key.
+</Card>

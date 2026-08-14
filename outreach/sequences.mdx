@@ -1,0 +1,142 @@
+---
+title: "Sequences"
+description: "Multi-step cold email templates with merge variables, threading and A/B variants."
+---
+
+A **sequence** is the content: step 1 plus the follow-ups. It knows nothing
+about who receives it or which mailbox sends it — that is the campaign's job —
+so one sequence can be reused across campaigns, brands and inboxes.
+
+## Steps
+
+Each step has:
+
+| Field | Meaning |
+| --- | --- |
+| `subject` | Subject line. Merge variables allowed. |
+| `body_html` | Body as simple HTML. |
+| `wait_days` | Days to wait after the previous step. Step 1 is always `0`. |
+| `thread_mode` | `new` starts a fresh thread; `reply` threads under the first email. |
+
+A `reply` step sends as `Re:` the first email's subject, so the recipient sees
+one conversation rather than four unrelated messages. Step 1 is always `new`.
+
+A sequence can have up to 10 steps.
+
+<Tip>
+  Three steps over eight days converts about as well as seven steps over a
+  month, and annoys far fewer people. Start with `0 / 3 / 5` day gaps.
+</Tip>
+
+## Merge variables
+
+| Variable | Fills with |
+| --- | --- |
+| `{{first_name}}` | Lead's first name |
+| `{{company}}` | Company name |
+| `{{title}}` | Job title |
+| `{{domain}}` | Company domain |
+| `{{location}}` | Location |
+
+```html
+<p>Hi {{first_name}},</p>
+<p>I saw {{company}} is hiring in {{location}} — usually a sign the
+outbound team is stretched.</p>
+<p>Worth a quick look at how we'd fill the top of your funnel?</p>
+```
+
+<Warning>
+  A variable with no value renders empty, which produces `"Hi ,"`. Only use a
+  variable in the subject or first line when the field is required on the lead —
+  set `required_fields` accordingly when you [find
+  leads](/leads/finding-leads).
+</Warning>
+
+## Body HTML
+
+Bodies are **simple HTML** on purpose: `<p>`, `<br>`, `<strong>`, `<a>`. No
+images, no tracking pixels beyond ManyPI's own open tracking, no CSS-heavy
+templates. Plain-looking mail from a real person outperforms a designed
+newsletter in cold outbound, and it also survives spam filtering far better.
+
+## Drafting with AI
+
+Click **Draft with AI**, or call
+[`POST /api/outreach/generate`](/api-reference/outreach/generate-email).
+Describe what you are selling and ManyPI writes the email — or the whole
+sequence — against your brand context.
+
+```bash
+curl -X POST https://app.manypi.com/api/outreach/generate \
+  -H "Authorization: Bearer mpi_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "instructions": "We help e-commerce agencies find new client leads without cold-calling. Ask for a 15-minute call.",
+    "mode": "sequence",
+    "steps": 3
+  }'
+```
+
+```json
+{
+  "steps": [
+    { "subject": "Quick question about {{company}}", "html": "<p>Hi {{first_name}},</p>…", "wait_days": 0 },
+    { "subject": "", "html": "<p>Following up…</p>", "wait_days": 3 },
+    { "subject": "", "html": "<p>Last note…</p>", "wait_days": 5 }
+  ]
+}
+```
+
+The generator only **drafts**. Nothing is saved and nothing is sent — feed the
+result into a sequence or a one-off send.
+
+Pass a `lead_id` to tailor the tone toward that kind of recipient.
+
+<Note>
+  The brand's description, value proposition and personas are injected
+  automatically, which is why the instructions box only needs to say what is
+  different about *this* message.
+</Note>
+
+## A/B variants
+
+<Info>Pro and Business plans.</Info>
+
+Give a step two subject or body variants and ManyPI splits enrollments between
+them, then reports per-variant opens and replies in the campaign analytics. Run
+it until the difference is real, then keep the winner.
+
+Test one thing at a time. A variant that changes the subject *and* the offer
+tells you nothing about either.
+
+## Managing sequences over the API
+
+<CodeGroup>
+
+```bash Create
+curl -X POST https://app.manypi.com/api/outreach/sequences \
+  -H "Authorization: Bearer mpi_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Agency outbound Q3",
+    "steps": [
+      { "subject": "Quick question about {{company}}",
+        "body_html": "<p>Hi {{first_name}},</p><p>…</p>",
+        "wait_days": 0, "thread_mode": "new" },
+      { "subject": "",
+        "body_html": "<p>Following up on the above.</p>",
+        "wait_days": 3, "thread_mode": "reply" }
+    ]
+  }'
+```
+
+```bash List
+curl https://app.manypi.com/api/outreach/sequences \
+  -H "Authorization: Bearer mpi_your_api_key"
+```
+
+</CodeGroup>
+
+Sequences are **brand-scoped**. A sequence created while working in one brand
+belongs to that brand; use `?brand=all` on the list endpoint to see every
+brand's sequences at once.

@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "ManyPI Scraping API",
-    "description": "AI-powered web scraping API that extracts structured data from any website. Create custom scrapers with natural language prompts and get clean, schema-validated JSON responses.",
-    "version": "1.0.0",
+    "title": "ManyPI API",
+    "description": "The REST API behind ManyPI — AI lead generation, email validation, cold-email outreach, agent runs and web scraping. Every endpoint is authenticated with a ManyPI API key (`mpi_...`) or an OAuth 2.1 access token, and honours the permissions granted to that credential.",
+    "version": "2.0.0",
     "contact": {
       "name": "ManyPI Support",
       "email": "support@manypi.com",
@@ -11,60 +11,194 @@
     }
   },
   "servers": [
-    {
-      "url": "https://app.manypi.com",
-      "description": "Production server"
-    }
+    { "url": "https://app.manypi.com", "description": "Production" }
   ],
-  "security": [
-    {
-      "bearerAuth": []
-    }
+  "security": [{ "bearerAuth": [] }],
+  "tags": [
+    { "name": "Leads", "description": "Find, store, enrich and manage leads." },
+    { "name": "Email validation", "description": "Verify that lead addresses can receive mail." },
+    { "name": "Outreach", "description": "Inboxes, sequences, campaigns, sending and replies." },
+    { "name": "Agent", "description": "Agent runs, replies and skills." },
+    { "name": "Scraping", "description": "Scrapers, runs and extracted data." },
+    { "name": "Endpoints", "description": "Publish scrapers as typed REST endpoints." },
+    { "name": "Account", "description": "Key validation and account information." }
   ],
   "paths": {
-    "/api/scrape/{scraperId}": {
-      "post": {
-        "summary": "Execute a scraper",
-        "description": "Runs a configured scraper to extract structured data from a target URL. The scraper uses AI to intelligently extract data matching your defined schema.",
-        "operationId": "executeScraper",
-        "tags": ["Scraping"],
+    "/api/leads": {
+      "get": {
+        "summary": "List leads",
+        "description": "List and filter the workspace's leads. Also returns the declared custom columns, the past lead searches that produced these leads, the workspace total and the plan's lead limit — everything a grid needs in one call.\n\nRequires the `read` permission.",
+        "operationId": "listLeads",
+        "tags": ["Leads"],
         "parameters": [
-          {
-            "name": "scraperId",
-            "in": "path",
-            "description": "Unique identifier of the scraper to execute. Find this in your dashboard under Scrapers.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "example": "550e8400-e29b-41d4-a716-446655440000"
-            }
-          }
+          { "name": "q", "in": "query", "description": "Free text across company, full name, email and domain.", "schema": { "type": "string" } },
+          { "name": "status", "in": "query", "description": "A lead status, or `archived` / `unsubscribed` (which are flags, not statuses).", "schema": { "type": "string", "enum": ["new", "qualified", "contacted", "disqualified", "archived", "unsubscribed"] } },
+          { "name": "campaign", "in": "query", "description": "The agent run id of the lead search that produced the leads.", "schema": { "type": "string", "format": "uuid" } },
+          { "name": "brand", "in": "query", "description": "Narrow to one brand, or `all` for the whole workspace.", "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "description": "Max 500.", "schema": { "type": "integer", "default": 100, "maximum": 500 } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } }
         ],
+        "responses": {
+          "200": {
+            "description": "Leads and grid metadata.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "leads": { "type": "array", "items": { "$ref": "#/components/schemas/Lead" } },
+                    "total": { "type": "integer", "description": "Rows matching the current filter." },
+                    "workspaceTotal": { "type": "integer", "description": "Every lead the workspace stores, ignoring filters." },
+                    "customColumns": { "type": "array", "items": { "type": "string" } },
+                    "customFields": { "type": "array", "items": { "$ref": "#/components/schemas/LeadField" } },
+                    "campaigns": {
+                      "type": "array",
+                      "description": "Past lead searches, with how many leads each produced.",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "format": "uuid" },
+                          "label": { "type": "string" },
+                          "count": { "type": "integer" },
+                          "created_at": { "type": "string", "format": "date-time", "nullable": true }
+                        }
+                      }
+                    },
+                    "leadLimit": { "type": "integer", "description": "Stored-lead cap for the plan." }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "patch": {
+        "summary": "Bulk update leads",
+        "description": "Change status and/or archive state for up to 500 leads at once.\n\nRequires the `write` permission.",
+        "operationId": "bulkUpdateLeads",
+        "tags": ["Leads"],
         "requestBody": {
-          "description": "Optional configuration for the scraping request",
-          "required": false,
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ScrapeRequest"
+                "type": "object",
+                "required": ["ids"],
+                "properties": {
+                  "ids": { "type": "array", "items": { "type": "string", "format": "uuid" }, "minItems": 1, "maxItems": 500 },
+                  "status": { "type": "string", "enum": ["new", "qualified", "contacted", "disqualified"] },
+                  "archived": { "type": "boolean", "description": "true archives, false restores." }
+                }
               },
-              "examples": {
-                "basic": {
-                  "summary": "Basic scrape request",
-                  "value": {
-                    "url": "https://example.com/product/123"
-                  }
-                },
-                "withOptions": {
-                  "summary": "Request with custom options",
-                  "value": {
-                    "url": "https://example.com/product/123",
-                    "options": {
-                      "timeout": 30000,
-                      "retries": 3
-                    }
-                  }
+              "example": { "ids": ["8f1c0e6a-1c3e-4f2a-9a4b-0f7a1e2b3c4d"], "status": "qualified" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated.", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" }, "updated": { "type": "integer" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "delete": {
+        "summary": "Bulk delete leads",
+        "description": "Permanently delete up to 500 leads. Consider archiving instead — archived leads stop appearing everywhere but stay recoverable.\n\nRequires the `write` permission.",
+        "operationId": "bulkDeleteLeads",
+        "tags": ["Leads"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["ids"],
+                "properties": { "ids": { "type": "array", "items": { "type": "string", "format": "uuid" }, "minItems": 1, "maxItems": 500 } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Deleted.", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" }, "deleted": { "type": "integer" } } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/leads/{id}": {
+      "patch": {
+        "summary": "Update a lead",
+        "description": "Update one field, the status, the score, or the archive flag on a single lead. Setting `field` to a name that is not a core field writes into the lead's custom columns.\n\nRequires the `write` permission.",
+        "operationId": "updateLead",
+        "tags": ["Leads"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "field": { "type": "string", "maxLength": 64, "description": "A core field (`company`, `full_name`, `title`, `email`, `phone`, `domain`, `linkedin_url`, `location`, `source_url`) or a custom column key." },
+                  "value": { "type": "string", "nullable": true, "maxLength": 2000, "description": "Empty string or null clears the field." },
+                  "status": { "type": "string", "enum": ["new", "qualified", "contacted", "disqualified"] },
+                  "score": { "type": "integer", "minimum": 0, "maximum": 100, "nullable": true },
+                  "archived": { "type": "boolean" }
+                }
+              },
+              "example": { "field": "title", "value": "Head of Growth" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "The updated lead.", "content": { "application/json": { "schema": { "type": "object", "properties": { "lead": { "$ref": "#/components/schemas/Lead" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "delete": {
+        "summary": "Delete a lead",
+        "description": "Permanently delete one lead.\n\nRequires the `write` permission.",
+        "operationId": "deleteLead",
+        "tags": ["Leads"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Deleted.", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/leads/research": {
+      "post": {
+        "summary": "Start a lead search",
+        "description": "Launch the lead-generation agent against structured criteria, a saved search, or a set of seed leads (\"find more like these\").\n\nThe run is asynchronous: poll `GET /api/agents/runs` with the returned `conversation_id`. The run may pause with a clarifying question — answer it with `POST /api/agents/runs/{id}/reply` and the same run continues.\n\n`count` is clamped to the workspace's remaining lead capacity; when that happens the response carries a `clamped` block. A full workspace returns `403` with `code: \"lead_limit\"`.\n\nRequires the `agents` permission.",
+        "operationId": "startLeadResearch",
+        "tags": ["Leads"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "criteria": { "$ref": "#/components/schemas/LeadResearchCriteria" },
+                  "profile_id": { "type": "string", "format": "uuid", "description": "Re-run a saved search. Its criteria are used unless `criteria` overrides them." },
+                  "seed_lead_ids": { "type": "array", "maxItems": 50, "items": { "type": "string", "format": "uuid" }, "description": "Seed the search from existing leads (\"find similar\")." },
+                  "save": { "type": "boolean", "default": true, "description": "Persist as a reusable saved search." },
+                  "name": { "type": "string", "maxLength": 120 },
+                  "kind": { "type": "string", "enum": ["icp", "similar"] }
+                }
+              },
+              "example": {
+                "criteria": {
+                  "description": "E-commerce agencies building Shopify stores for DTC brands",
+                  "locations": ["Germany", "Austria"],
+                  "industries": ["Marketing agency", "E-commerce"],
+                  "company_size": "5-50 employees",
+                  "titles": ["Founder", "Head of Growth"],
+                  "exclusions": ["SEO-only agencies"],
+                  "required_fields": ["email"],
+                  "extra_columns": [{ "name": "Ecommerce platform", "description": "Shopify, WooCommerce, custom or unknown" }],
+                  "count": 25
                 }
               }
             }
@@ -72,31 +206,263 @@
         },
         "responses": {
           "200": {
-            "description": "Scraping completed successfully",
+            "description": "The run was created.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ScrapeResponse"
-                },
-                "examples": {
-                  "productScrape": {
-                    "summary": "Product data extraction",
-                    "value": {
-                      "success": true,
-                      "data": {
-                        "title": "Wireless Bluetooth Headphones",
-                        "price": "$79.99",
-                        "rating": 4.5,
-                        "reviews": 1234,
-                        "inStock": true,
-                        "description": "Premium noise-cancelling headphones with 30-hour battery life"
-                      },
-                      "metadata": {
-                        "scraperId": "550e8400-e29b-41d4-a716-446655440000",
-                        "timestamp": "2024-01-15T10:30:00.000Z",
-                        "tokensUsed": 1500,
-                        "creditsCost": 1500,
-                        "creditsRemaining": 8500
+                  "type": "object",
+                  "properties": {
+                    "run_id": { "type": "string", "format": "uuid" },
+                    "conversation_id": { "type": "string", "format": "uuid" },
+                    "status": { "type": "string" },
+                    "count": { "type": "integer", "description": "Leads the run will actually try to save, after clamping." },
+                    "profile": { "type": "object", "nullable": true },
+                    "clamped": {
+                      "type": "object",
+                      "description": "Present only when `count` was reduced to fit the plan.",
+                      "properties": { "requested": { "type": "integer" }, "allowed": { "type": "integer" }, "limit": { "type": "integer" } }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "description": "The workspace is storing all the leads the plan allows (`code: \"lead_limit\"`).", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/leads/research-profiles": {
+      "get": {
+        "summary": "List saved searches",
+        "description": "The workspace's saved lead searches, plus past lead-generation campaigns that were never saved as a profile.\n\nRequires the `read` permission.",
+        "operationId": "listResearchProfiles",
+        "tags": ["Leads"],
+        "responses": {
+          "200": {
+            "description": "Saved searches.",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "profiles": { "type": "array", "items": { "$ref": "#/components/schemas/ResearchProfile" } }, "past": { "type": "array", "items": { "type": "object" } } } } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "summary": "Create or update a saved search",
+        "description": "Store a search without running it. Pass `id` to update an existing profile in place.\n\nRequires the `write` permission.",
+        "operationId": "saveResearchProfile",
+        "tags": ["Leads"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["criteria"],
+                "properties": {
+                  "id": { "type": "string", "format": "uuid" },
+                  "name": { "type": "string", "maxLength": 120 },
+                  "kind": { "type": "string", "enum": ["icp", "similar"] },
+                  "criteria": { "$ref": "#/components/schemas/LeadResearchCriteria" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "The saved profile.", "content": { "application/json": { "schema": { "type": "object", "properties": { "profile": { "$ref": "#/components/schemas/ResearchProfile" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/leads/import": {
+      "post": {
+        "summary": "Import leads",
+        "description": "Write a batch of leads. **Up to 100 rows per request** — chunk larger files client-side so a big import cannot outlive the request timeout and so progress is real.\n\n`declare_fields` lets the same request that carries the first chunk also declare the custom columns those rows write into. It is idempotent, so resending the declarations with every chunk is harmless.\n\nA full workspace still returns `200` — the rows that fitted were written — with `code: \"lead_limit\"` in the body.\n\nRequires the `write` permission.",
+        "operationId": "importLeads",
+        "tags": ["Leads"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["rows"],
+                "properties": {
+                  "rows": { "type": "array", "minItems": 1, "maxItems": 100, "items": { "$ref": "#/components/schemas/ImportRow" } },
+                  "duplicates": { "type": "string", "enum": ["merge", "overwrite", "skip"], "default": "merge", "description": "`merge` fills blanks on the existing lead; `overwrite` lets incoming values win; `skip` leaves it untouched." },
+                  "declare_fields": { "type": "array", "maxItems": 60, "items": { "$ref": "#/components/schemas/LeadFieldInput" } }
+                }
+              },
+              "example": {
+                "duplicates": "merge",
+                "declare_fields": [{ "label": "Ecommerce platform", "type": "text" }],
+                "rows": [{ "company": "Acme GmbH", "full_name": "Lena Roth", "title": "Head of Growth", "email": "lena@acme.de", "domain": "acme.de", "custom": { "ecommerce_platform": "Shopify" } }]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Per-row outcome for the chunk.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "created": { "type": "integer" },
+                    "updated": { "type": "integer" },
+                    "skippedDuplicate": { "type": "integer" },
+                    "skippedNoIdentity": { "type": "integer", "description": "No email and no domain-plus-name, so there is nothing to file the row under." },
+                    "skippedOverLimit": { "type": "integer" },
+                    "skippedOtherWorkspace": { "type": "integer" },
+                    "failed": { "type": "array", "items": { "type": "object", "properties": { "index": { "type": "integer" }, "error": { "type": "string" } } } },
+                    "remaining": { "type": "integer", "nullable": true, "description": "Lead slots left after this batch." },
+                    "declared": { "type": "array", "items": { "type": "string" } },
+                    "code": { "type": "string", "description": "`lead_limit` when the plan filled up mid-import." }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/leads/export": {
+      "get": {
+        "summary": "Export leads as CSV",
+        "description": "Stream the filtered leads as CSV, up to 10,000 rows. Honours the same `status` and `q` filters as the list endpoint. Archived leads are excluded unless you ask for them.\n\nRequires the `read` permission.",
+        "operationId": "exportLeads",
+        "tags": ["Leads"],
+        "parameters": [
+          { "name": "status", "in": "query", "schema": { "type": "string" } },
+          { "name": "q", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "CSV file.", "content": { "text/csv": { "schema": { "type": "string" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/leads/capacity": {
+      "get": {
+        "summary": "Get lead capacity",
+        "description": "How many more leads the workspace can store. Read this before starting a large search or import — it changes every time a run saves a lead.\n\nRequires the `read` permission.",
+        "operationId": "getLeadCapacity",
+        "tags": ["Leads"],
+        "responses": {
+          "200": {
+            "description": "Current capacity.",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "used": { "type": "integer" }, "limit": { "type": "integer", "nullable": true }, "remaining": { "type": "integer" }, "tier": { "type": "string" } } } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/leads/fields": {
+      "get": {
+        "summary": "List custom columns",
+        "description": "The workspace's declared lead columns, in display order. These are column *definitions*; the values live on each lead's `custom` object.\n\nRequires the `read` permission.",
+        "operationId": "listLeadFields",
+        "tags": ["Leads"],
+        "responses": {
+          "200": { "description": "Declared columns.", "content": { "application/json": { "schema": { "type": "object", "properties": { "fields": { "type": "array", "items": { "$ref": "#/components/schemas/LeadField" } } } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "summary": "Declare a custom column",
+        "description": "Declare a column so leads can carry it. Set `auto_research` and the agent fills it in on future lead searches without you restating it each time.\n\nRequires the `write` permission.",
+        "operationId": "createLeadField",
+        "tags": ["Leads"],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LeadFieldInput" }, "example": { "label": "Ecommerce platform", "type": "text", "description": "Shopify, WooCommerce, custom or unknown", "auto_research": true } } } },
+        "responses": {
+          "201": { "description": "Column created.", "content": { "application/json": { "schema": { "type": "object", "properties": { "field": { "$ref": "#/components/schemas/LeadField" }, "created": { "type": "boolean" } } } } } },
+          "200": { "description": "The column already existed and was returned unchanged." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/leads/validate": {
+      "post": {
+        "summary": "Verify email addresses",
+        "description": "Queue an SMTP mailbox probe for lead addresses, raw addresses, or both. Results are written back onto the leads as `email_status`, `email_provider`, `email_is_role` and `email_validated_at`.\n\nPass `estimate_only` to price the run without queueing it. You are only charged for probes that actually run — cached results and addresses rejected by the cheap pre-check are free.\n\nRequires the `leads:validate` permission, deliberately separate from `write` so a general-purpose key cannot run up a validation bill.",
+        "operationId": "validateEmails",
+        "tags": ["Email validation"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "lead_ids": { "type": "array", "items": { "type": "string", "format": "uuid" }, "description": "Leads in this workspace whose addresses should be checked." },
+                  "emails": { "type": "array", "items": { "type": "string" }, "description": "Raw addresses, not tied to a lead." },
+                  "estimate_only": { "type": "boolean", "description": "Price the run without queueing it." }
+                }
+              },
+              "example": { "lead_ids": ["8f1c0e6a-1c3e-4f2a-9a4b-0f7a1e2b3c4d"] }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The job was queued, or (with `estimate_only`) priced.",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "job_id": { "type": "string", "format": "uuid" }, "total": { "type": "integer" }, "estimate": { "type": "object", "properties": { "billable": { "type": "integer" }, "free": { "type": "integer" } } } } } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "402": { "description": "Out of validation credits and overage is off (`code: \"validation_credits_exhausted\"`).", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "get": {
+        "summary": "List validation jobs",
+        "description": "The workspace's recent validation jobs, newest first.\n\nRequires the `read` permission.",
+        "operationId": "listValidationJobs",
+        "tags": ["Email validation"],
+        "parameters": [{ "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10, "maximum": 50 } }],
+        "responses": {
+          "200": { "description": "Recent jobs.", "content": { "application/json": { "schema": { "type": "object", "properties": { "jobs": { "type": "array", "items": { "$ref": "#/components/schemas/ValidationJob" } } } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/leads/validate/{jobId}": {
+      "get": {
+        "summary": "Get a validation job",
+        "description": "One validation job plus its per-address results. Poll this for progress and the final breakdown.\n\nRequires the `read` permission.",
+        "operationId": "getValidationJob",
+        "tags": ["Email validation"],
+        "parameters": [
+          { "name": "jobId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "items", "in": "query", "description": "Set to `false` to omit the per-address results.", "schema": { "type": "string", "enum": ["true", "false"], "default": "true" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "The job and its results.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "job": { "$ref": "#/components/schemas/ValidationJob" },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "email": { "type": "string" },
+                          "lead_id": { "type": "string", "format": "uuid", "nullable": true },
+                          "status": { "type": "string", "enum": ["valid", "invalid", "catch_all", "no_mx", "disposable", "unknown"] },
+                          "reason": { "type": "string", "nullable": true },
+                          "is_role": { "type": "boolean" },
+                          "smtp_code": { "type": "integer", "nullable": true },
+                          "billed": { "type": "boolean" }
+                        }
                       }
                     }
                   }
@@ -104,267 +470,1101 @@
               }
             }
           },
-          "400": {
-            "description": "Bad request - Invalid parameters or configuration",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "examples": {
-                  "invalidUrl": {
-                    "summary": "Invalid URL provided",
-                    "value": {
-                      "success": false,
-                      "error": "Invalid URL format",
-                      "errorType": "validation_error"
-                    }
-                  }
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/api/outreach/inboxes": {
+      "get": {
+        "summary": "List sending inboxes",
+        "description": "Every connected sending identity with its health: today's sends versus the warmup-aware cap, 14-day delivered/failed/opened/bounced, a rolling 24-hour bounce rate, whether the bounce guard has paused it, and a 0–100 health score.\n\nUse an inbox `id` as `smtp_config_id` when creating a campaign or sending.\n\nRequires the `read` permission.",
+        "operationId": "listInboxes",
+        "tags": ["Outreach"],
+        "parameters": [{ "name": "brand", "in": "query", "description": "`all` reports every inbox in the workspace.", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Inboxes with health.", "content": { "application/json": { "schema": { "type": "object", "properties": { "inboxes": { "type": "array", "items": { "$ref": "#/components/schemas/Inbox" } } } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/outreach/sequences": {
+      "get": {
+        "summary": "List sequences",
+        "description": "Saved email sequences with their inline steps. Brand-scoped; `?brand=all` widens to the whole workspace.\n\nRequires the `read` permission.",
+        "operationId": "listSequences",
+        "tags": ["Outreach"],
+        "parameters": [{ "name": "brand", "in": "query", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Sequences.", "content": { "application/json": { "schema": { "type": "object", "properties": { "sequences": { "type": "array", "items": { "$ref": "#/components/schemas/Sequence" } } } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "summary": "Create a sequence",
+        "description": "Create the email steps a campaign sends. Step 0 goes out on enrollment; each later step waits `wait_days` after the previous one and, with `thread_mode: \"reply\"`, threads under the first email.\n\nMerge variables: `{{first_name}}`, `{{company}}`, `{{title}}`, `{{domain}}`, `{{location}}`. Bodies are simple HTML — `<p>`, `<br>`, `<strong>`, `<a>`.\n\nA/B variants inside a step require Pro or Business.\n\nRequires the `write` permission.",
+        "operationId": "createSequence",
+        "tags": ["Outreach"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "steps"],
+                "properties": {
+                  "name": { "type": "string", "maxLength": 120 },
+                  "description": { "type": "string", "maxLength": 500 },
+                  "steps": { "type": "array", "minItems": 1, "maxItems": 10, "items": { "$ref": "#/components/schemas/SequenceStep" } }
                 }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Invalid or missing API key",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "examples": {
-                  "missingKey": {
-                    "summary": "API key not provided",
-                    "value": {
-                      "success": false,
-                      "error": "API key is required",
-                      "errorType": "authentication_error"
-                    }
-                  },
-                  "invalidKey": {
-                    "summary": "Invalid API key",
-                    "value": {
-                      "success": false,
-                      "error": "Invalid API key",
-                      "errorType": "authentication_error"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Insufficient credits or permissions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "examples": {
-                  "insufficientCredits": {
-                    "summary": "Not enough credits",
-                    "value": {
-                      "success": false,
-                      "error": "Insufficient credits to perform this operation",
-                      "errorType": "insufficient_credits"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found - Scraper does not exist",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "examples": {
-                  "scraperNotFound": {
-                    "summary": "Scraper not found",
-                    "value": {
-                      "success": false,
-                      "error": "Scraper not found",
-                      "errorType": "not_found"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Too many requests - Rate limit exceeded",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "examples": {
-                  "rateLimited": {
-                    "summary": "Rate limit exceeded",
-                    "value": {
-                      "success": false,
-                      "error": "Rate limit exceeded. Please try again later.",
-                      "errorType": "rate_limit_error"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error - Something went wrong on our end",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "examples": {
-                  "serverError": {
-                    "summary": "Internal server error",
-                    "value": {
-                      "success": false,
-                      "error": "An unexpected error occurred. Please try again.",
-                      "errorType": "internal_error"
-                    }
-                  }
-                }
+              },
+              "example": {
+                "name": "Agency outbound Q3",
+                "steps": [
+                  { "subject": "Quick question about {{company}}", "body_html": "<p>Hi {{first_name}},</p><p>…</p>", "wait_days": 0, "thread_mode": "new" },
+                  { "subject": "", "body_html": "<p>Following up on the above.</p>", "wait_days": 3, "thread_mode": "reply" }
+                ]
               }
             }
           }
+        },
+        "responses": {
+          "200": { "description": "The created sequence.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Sequence" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "description": "A/B variants require Pro or Business." }
+        }
+      }
+    },
+    "/api/outreach/generate": {
+      "post": {
+        "summary": "Draft an email with AI",
+        "description": "AI-draft a cold email (`mode: \"email\"`) or a whole follow-up sequence (`mode: \"sequence\"`) from a plain-language brief, written against your brand context.\n\nThis only drafts: nothing is saved and nothing is sent. Feed the result into `POST /api/outreach/sequences` or `POST /api/outreach/send`.\n\nRequires the `read` permission.",
+        "operationId": "generateEmail",
+        "tags": ["Outreach"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["instructions"],
+                "properties": {
+                  "instructions": { "type": "string", "maxLength": 2000 },
+                  "mode": { "type": "string", "enum": ["email", "sequence"], "default": "email" },
+                  "steps": { "type": "integer", "minimum": 2, "maximum": 5, "default": 3 },
+                  "lead_id": { "type": "string", "format": "uuid", "description": "An example lead to tailor the tone toward." }
+                }
+              },
+              "example": { "instructions": "We help e-commerce agencies find new client leads without cold-calling. Ask for a 15-minute call.", "mode": "sequence", "steps": 3 }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The draft.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "subject": { "type": "string" },
+                    "html": { "type": "string" },
+                    "steps": { "type": "array", "items": { "type": "object", "properties": { "subject": { "type": "string" }, "html": { "type": "string" }, "wait_days": { "type": "integer" } } } }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "503": { "description": "AI generation is not configured." }
+        }
+      }
+    },
+    "/api/outreach/campaigns": {
+      "get": {
+        "summary": "List campaigns",
+        "description": "Campaigns with per-campaign stats — enrolled, active, completed, sent, opened, replied — plus the sequence and inbox each is bound to.\n\nRequires the `read` permission.",
+        "operationId": "listCampaigns",
+        "tags": ["Outreach"],
+        "parameters": [{ "name": "brand", "in": "query", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Campaigns.", "content": { "application/json": { "schema": { "type": "object", "properties": { "campaigns": { "type": "array", "items": { "$ref": "#/components/schemas/Campaign" } } } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "summary": "Create a campaign",
+        "description": "Bind a sequence to a sending inbox. After creating it, enroll leads with `POST /api/outreach/enroll`.\n\nRequires the `write` permission.",
+        "operationId": "createCampaign",
+        "tags": ["Outreach"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "sequence_id", "smtp_config_id"],
+                "properties": {
+                  "name": { "type": "string", "maxLength": 120 },
+                  "sequence_id": { "type": "string", "format": "uuid" },
+                  "smtp_config_id": { "type": "string", "format": "uuid", "description": "An inbox id from `GET /api/outreach/inboxes`." },
+                  "reply_to": { "type": "string", "format": "email" },
+                  "daily_limit": { "type": "integer", "minimum": 1, "maximum": 2000, "description": "Never exceeds the inbox's own cap." },
+                  "schedule_enabled": { "type": "boolean" },
+                  "send_days": { "type": "array", "items": { "type": "integer", "minimum": 0, "maximum": 6 }, "description": "Defaults to Mon–Fri." },
+                  "send_from": { "type": "string", "description": "Local time, `HH:MM`." },
+                  "send_to": { "type": "string", "description": "Local time, `HH:MM`." },
+                  "timezone": { "type": "string" },
+                  "track_opens": { "type": "boolean" },
+                  "priority": { "type": "integer", "minimum": 1, "maximum": 10, "default": 5, "description": "Higher wins the next paced slot when campaigns share an inbox." },
+                  "inbox_strategy": { "type": "string", "enum": ["single", "rotate", "round_robin", "provider_match"] }
+                }
+              },
+              "example": { "name": "DACH agencies — Q3", "sequence_id": "…", "smtp_config_id": "…", "daily_limit": 40 }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "The created campaign.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Campaign" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "patch": {
+        "summary": "Update a campaign",
+        "description": "Pause, resume or archive a campaign, or change its name, reply-to, daily limit, schedule or priority. Pausing stops further sends without losing progress.\n\nRequires the `write` permission.",
+        "operationId": "updateCampaign",
+        "tags": ["Outreach"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                  "id": { "type": "string", "format": "uuid" },
+                  "status": { "type": "string", "enum": ["active", "paused", "archived"] },
+                  "name": { "type": "string", "maxLength": 120 },
+                  "reply_to": { "type": "string", "format": "email" },
+                  "daily_limit": { "type": "integer", "minimum": 1, "maximum": 2000 },
+                  "priority": { "type": "integer", "minimum": 1, "maximum": 10 }
+                }
+              },
+              "example": { "id": "…", "status": "paused" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "The updated campaign." },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "delete": {
+        "summary": "Delete a campaign",
+        "description": "Delete a campaign. Archiving (`PATCH` with `status: \"archived\"`) is usually the better choice — it keeps the history.\n\nRequires the `write` permission.",
+        "operationId": "deleteCampaign",
+        "tags": ["Outreach"],
+        "parameters": [{ "name": "id", "in": "query", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Deleted." },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/outreach/campaigns/{id}": {
+      "get": {
+        "summary": "Get campaign analytics",
+        "description": "One campaign's full analytics: headline stats, a per-step sent/opened breakdown, and every enrolled lead with its progress.\n\nThe per-step breakdown is where you see whether the follow-ups are doing the work.\n\nRequires the `read` permission.",
+        "operationId": "getCampaign",
+        "tags": ["Outreach"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": {
+            "description": "Campaign analytics.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "campaign": { "$ref": "#/components/schemas/Campaign" },
+                    "stats": { "type": "object", "properties": { "enrolled": { "type": "integer" }, "active": { "type": "integer" }, "completed": { "type": "integer" }, "sent": { "type": "integer" }, "opened": { "type": "integer" }, "replied": { "type": "integer" } } },
+                    "steps": { "type": "array", "items": { "type": "object", "properties": { "step": { "type": "integer" }, "sent": { "type": "integer" }, "opened": { "type": "integer" } } } },
+                    "enrollments": { "type": "array", "items": { "type": "object" } }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/api/outreach/enroll": {
+      "post": {
+        "summary": "Enroll leads into a campaign",
+        "description": "Queue the campaign's sequence for real sending, respecting the inbox's warmup and daily caps. Up to 1,000 leads per call.\n\nSkipped rather than failed: leads with no email, leads already enrolled, suppressed or unsubscribed addresses, and addresses known to be undeliverable. When the brand has *validate on enroll* turned on (the default), unchecked addresses are validated first and undeliverable ones dropped before anything is sent.\n\n**Sending cannot be undone.** Requires a paid plan and the `outreach:send` permission.",
+        "operationId": "enrollLeads",
+        "tags": ["Outreach"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["campaign_id", "lead_ids"],
+                "properties": {
+                  "campaign_id": { "type": "string", "format": "uuid" },
+                  "lead_ids": { "type": "array", "minItems": 1, "maxItems": 1000, "items": { "type": "string", "format": "uuid" } }
+                }
+              },
+              "example": { "campaign_id": "…", "lead_ids": ["8f1c0e6a-1c3e-4f2a-9a4b-0f7a1e2b3c4d"] }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Enrollment outcome.",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "enrolled": { "type": "integer" }, "skipped": { "type": "integer" }, "reasons": { "type": "object" } } } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "description": "Outreach requires a paid plan (`code: \"outreach_locked\"`), or the workspace is over its seat count.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "delete": {
+        "summary": "Remove leads from a campaign",
+        "description": "Cancel remaining steps for the given leads. Emails already sent cannot be recalled.\n\nRequires the `outreach:send` permission.",
+        "operationId": "unenrollLeads",
+        "tags": ["Outreach"],
+        "parameters": [
+          { "name": "campaign_id", "in": "query", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "lead_ids", "in": "query", "required": true, "description": "Comma-separated lead ids.", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Removed." },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/outreach/send": {
+      "post": {
+        "summary": "Send a one-off email",
+        "description": "Send a single email to a lead now, outside any sequence. Merge variables are rendered against the lead, the inbox's daily/warmup cap is respected, and the lead is marked `contacted`.\n\n**Cannot be undone.** Requires a paid plan and the `outreach:send` permission.",
+        "operationId": "sendEmail",
+        "tags": ["Outreach"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["smtp_config_id", "subject", "html"],
+                "properties": {
+                  "smtp_config_id": { "type": "string", "format": "uuid" },
+                  "subject": { "type": "string" },
+                  "html": { "type": "string" },
+                  "lead_id": { "type": "string", "format": "uuid", "description": "Used for merge variables and as the default recipient." },
+                  "to": { "type": "string", "format": "email", "description": "Explicit recipient; defaults to the lead's address." }
+                }
+              },
+              "example": { "smtp_config_id": "…", "lead_id": "…", "subject": "Following up, {{first_name}}", "html": "<p>Hi {{first_name}}, …</p>" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Sent.", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" }, "send_id": { "type": "string", "format": "uuid" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "description": "Outreach requires a paid plan (`code: \"outreach_locked\"`)." },
+          "404": { "description": "The inbox was not found." }
+        }
+      }
+    },
+    "/api/outreach/stats": {
+      "get": {
+        "summary": "Get outreach stats",
+        "description": "Workspace-wide sending activity: 14 days of sends (sent, failed, opened per day), replies per day, unsubscribes, bounces, active enrollments, and today's sent versus the combined warmup-aware cap.\n\nRequires the `read` permission.",
+        "operationId": "getOutreachStats",
+        "tags": ["Outreach"],
+        "parameters": [{ "name": "brand", "in": "query", "schema": { "type": "string" } }],
+        "responses": {
+          "200": {
+            "description": "Activity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "days": { "type": "array", "items": { "type": "object" } },
+                    "totals": {
+                      "type": "object",
+                      "properties": {
+                        "sent14d": { "type": "integer" }, "failed14d": { "type": "integer" }, "opened14d": { "type": "integer" },
+                        "replies14d": { "type": "integer" }, "unsub14d": { "type": "integer" }, "unsubRate14d": { "type": "number" },
+                        "bounced14d": { "type": "integer" }, "bounceRate14d": { "type": "number" },
+                        "activeEnrollments": { "type": "integer" }, "sentToday": { "type": "integer" }, "capToday": { "type": "integer" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/outreach/replies": {
+      "get": {
+        "summary": "List replies",
+        "description": "Everything that came back from your campaigns — human replies, auto-replies and bounces — with counts for filter chips and a sentiment summary.\n\nReading replies requires any paid plan. The **sentiment fields** (`sentiment`, `sentiment_score`, `intent`, `summary`, `analyzed_at`) require Pro or Business and are stripped from the response on other plans.\n\nRequires the `read` permission.",
+        "operationId": "listReplies",
+        "tags": ["Outreach"],
+        "parameters": [
+          { "name": "campaign", "in": "query", "schema": { "type": "string", "format": "uuid" } },
+          { "name": "kind", "in": "query", "schema": { "type": "string", "enum": ["reply", "bounce", "auto_reply"] } },
+          { "name": "sentiment", "in": "query", "schema": { "type": "string", "enum": ["positive", "neutral", "negative", "objection", "unsubscribe", "ooo", "referral"] } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 100 } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Replies.",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "replies": { "type": "array", "items": { "$ref": "#/components/schemas/Reply" } }, "total": { "type": "integer" }, "counts": { "type": "object" }, "sentiment": { "type": "object", "nullable": true } } } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "description": "Outreach requires a paid plan (`code: \"outreach_locked\"`)." }
+        }
+      }
+    },
+    "/api/outreach/insights": {
+      "get": {
+        "summary": "Get reply insights",
+        "description": "Patterns across your replies and concrete, approvable suggestions for what to change.\n\nRequires Pro or Business, and the `read` permission.",
+        "operationId": "getOutreachInsights",
+        "tags": ["Outreach"],
+        "responses": {
+          "200": { "description": "Insights and suggestions." },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "description": "Reply intelligence requires Pro or Business." }
+        }
+      }
+    },
+    "/api/outreach/suppressions": {
+      "get": {
+        "summary": "List suppressed addresses",
+        "description": "The workspace's do-not-contact list. Nothing on it is ever sent to, by any campaign, from any inbox, in any brand.\n\nPass `format=csv` to download the whole list.\n\nRequires the `read` permission.",
+        "operationId": "listSuppressions",
+        "tags": ["Outreach"],
+        "parameters": [
+          { "name": "q", "in": "query", "schema": { "type": "string" } },
+          { "name": "format", "in": "query", "schema": { "type": "string", "enum": ["csv"] } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 100, "maximum": 500 } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } }
+        ],
+        "responses": {
+          "200": { "description": "Suppressed addresses.", "content": { "application/json": { "schema": { "type": "object", "properties": { "suppressions": { "type": "array", "items": { "type": "object" } }, "total": { "type": "integer" } } } }, "text/csv": { "schema": { "type": "string" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "summary": "Suppress addresses",
+        "description": "Add addresses to the do-not-contact list. Import your existing list on day one — customers, competitors, anyone who has already asked you to stop.\n\nRequires the `write` permission.",
+        "operationId": "addSuppressions",
+        "tags": ["Outreach"],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["emails"], "properties": { "emails": { "type": "array", "items": { "type": "string", "format": "email" } } } }, "example": { "emails": ["someone@example.com"] } } }
+        },
+        "responses": {
+          "200": { "description": "Added." },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "delete": {
+        "summary": "Unsuppress an address",
+        "description": "Remove one address from the list. This only clears the block — it does not re-enroll anyone, so a mistaken removal cannot by itself restart emails to someone who opted out.\n\nRequires the `write` permission.",
+        "operationId": "removeSuppression",
+        "tags": ["Outreach"],
+        "parameters": [{ "name": "email", "in": "query", "required": true, "schema": { "type": "string", "format": "email" } }],
+        "responses": {
+          "200": { "description": "Removed." },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/agents/runs": {
+      "post": {
+        "summary": "Create an agent run",
+        "description": "Start an agent run on a natural-language goal. Asynchronous — poll `GET /api/agents/runs/{id}` for status and results.\n\nA run that hits an ambiguity **pauses** and asks a question rather than guessing; read it from `result_summary` and answer with `POST /api/agents/runs/{id}/reply` to resume the same run.\n\nRequires the `agents` permission.",
+        "operationId": "createAgentRun",
+        "tags": ["Agent"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["goal"],
+                "properties": {
+                  "goal": { "type": "string", "description": "What you want ManyPI to do, in plain language." },
+                  "conversation_id": { "type": "string", "format": "uuid", "description": "Attach to an existing conversation." },
+                  "playbook": { "type": "string", "description": "A named behaviour, e.g. `lead_generation`." },
+                  "sources": { "type": "array", "items": { "type": "object", "properties": { "type": { "type": "string", "enum": ["file", "scraper_run", "url"] }, "id": { "type": "string" }, "url": { "type": "string" } } } },
+                  "output_schema": { "type": "object", "description": "A JSON schema the result must conform to." },
+                  "max_steps": { "type": "integer" },
+                  "max_pages": { "type": "integer" }
+                }
+              },
+              "example": { "goal": "Find the pricing pages of the ten largest Shopify agencies in Berlin and summarise their packages." }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "The run was created.", "content": { "application/json": { "schema": { "type": "object", "properties": { "run_id": { "type": "string", "format": "uuid" }, "conversation_id": { "type": "string", "format": "uuid" }, "status": { "type": "string" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "description": "Too many runs already in flight for the plan." }
+        }
+      },
+      "get": {
+        "summary": "List agent runs",
+        "description": "Your recent runs, newest first, narrowed to the workspace and brand you are working in.\n\nRequires the `read` permission.",
+        "operationId": "listAgentRuns",
+        "tags": ["Agent"],
+        "parameters": [
+          { "name": "conversation_id", "in": "query", "schema": { "type": "string", "format": "uuid" } },
+          { "name": "brand", "in": "query", "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20, "maximum": 100 } }
+        ],
+        "responses": {
+          "200": { "description": "Runs.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AgentRun" } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/agents/runs/{id}": {
+      "get": {
+        "summary": "Get an agent run",
+        "description": "Full status for one run, plus its artifacts with signed download URLs valid for one hour.\n\nWhen `status` is `paused`, the agent's question is in `result_summary`.\n\nRequires the `read` permission.",
+        "operationId": "getAgentRun",
+        "tags": ["Agent"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": {
+            "description": "The run.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/AgentRun" },
+                    { "type": "object", "properties": { "artifacts": { "type": "array", "items": { "$ref": "#/components/schemas/Artifact" } } } }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "summary": "Delete an agent run",
+        "description": "Delete a run along with its events and artifacts.\n\nRequires the `write` permission.",
+        "operationId": "deleteAgentRun",
+        "tags": ["Agent"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Deleted." },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/agents/runs/{id}/reply": {
+      "post": {
+        "summary": "Reply to an agent run",
+        "description": "Deliver a message into a run.\n\n- **Paused run** — the reply is submitted as the answer to the agent's pending question and the *same* run continues mid-thought.\n- **Finished run** (`completed` / `failed` / `cancelled`) — a follow-up run starts in the same conversation, inheriting its context and playbook, so \"find 25 more like those\" keeps saving leads.\n- **Still working** — `409`, unless you pass `interrupt: true`, which cancels it and starts a new run with your message.\n\nRequires the `agents` permission.",
+        "operationId": "replyToAgentRun",
+        "tags": ["Agent"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["message"],
+                "properties": {
+                  "message": { "type": "string", "minLength": 1, "maxLength": 8000 },
+                  "interrupt": { "type": "boolean", "description": "Stop a still-working run, then start a new one with this message." }
+                }
+              },
+              "example": { "message": "Only agencies with a team page and at least five people." }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Resumed or created.", "content": { "application/json": { "schema": { "type": "object", "properties": { "run_id": { "type": "string", "format": "uuid" }, "conversation_id": { "type": "string", "format": "uuid" }, "status": { "type": "string", "enum": ["resumed", "created"] } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "description": "The run is still working. Wait for it to pause or finish, cancel it, or pass `interrupt: true`." }
+        }
+      }
+    },
+    "/api/agents/runs/{id}/cancel": {
+      "post": {
+        "summary": "Cancel an agent run",
+        "description": "Stop a run immediately. Cancellation is authoritative rather than advisory — the run is marked cancelled at once, so a wedged executor cannot keep it \"running\" and occupying one of your parallel-run slots.\n\nRequires the `agents` permission.",
+        "operationId": "cancelAgentRun",
+        "tags": ["Agent"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Cancelled." },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/skills": {
+      "get": {
+        "summary": "List skills",
+        "description": "Skills available to the caller: ManyPI's premade ones plus the workspace's own.\n\nRequires the `read` permission.",
+        "operationId": "listSkills",
+        "tags": ["Agent"],
+        "responses": {
+          "200": { "description": "Skills.", "content": { "application/json": { "schema": { "type": "object", "properties": { "skills": { "type": "array", "items": { "$ref": "#/components/schemas/Skill" } } } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "summary": "Create a skill",
+        "description": "Create a custom skill — a reusable instruction set injected into the agent's system prompt for a run.\n\nInstructions shape behaviour but never widen tool access: custom skills are always created with the safe defaults.\n\nRequires the `write` permission.",
+        "operationId": "createSkill",
+        "tags": ["Agent"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "system_prompt"],
+                "properties": {
+                  "title": { "type": "string", "maxLength": 80 },
+                  "description": { "type": "string", "maxLength": 280, "nullable": true },
+                  "emoji": { "type": "string", "maxLength": 8, "nullable": true },
+                  "system_prompt": { "type": "string", "maxLength": 8000 }
+                }
+              },
+              "example": { "title": "Company research", "emoji": "🔍", "system_prompt": "For the company given, research what they sell, who their customers are, recent funding or hiring news, and the two people most likely to own the buying decision. Cite a source URL for every fact." }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "The created skill." },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/scrapers": {
+      "get": {
+        "summary": "List scrapers",
+        "description": "The workspace's scrapers with their schema, target URL, status and type.\n\nRequires the `read` permission.",
+        "operationId": "listScrapers",
+        "tags": ["Scraping"],
+        "responses": {
+          "200": { "description": "Scrapers.", "content": { "application/json": { "schema": { "type": "object", "properties": { "scrapers": { "type": "array", "items": { "$ref": "#/components/schemas/Scraper" } } } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/scrape/{scraperId}": {
+      "post": {
+        "summary": "Run a scraper",
+        "description": "Queue a scraper run. **Asynchronous** — the call returns `202` immediately with a `runId`, so a slow page never times your request out.\n\nRead the result with `GET /api/{scraperId}/data/{runId}`, or configure an outbound webhook to be notified when it completes.\n\nRequires the `scraper` permission.",
+        "operationId": "runScraper",
+        "tags": ["Scraping"],
+        "parameters": [{ "name": "scraperId", "in": "path", "required": true, "description": "Find this in the dashboard under Scrapers.", "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": { "type": "string", "format": "uri", "description": "Override the scraper's saved target for this run." },
+                  "options": { "type": "object", "properties": { "timeout": { "type": "integer" }, "retries": { "type": "integer" } } }
+                }
+              },
+              "example": { "url": "https://example.com/product/42" }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "The run was queued.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": { "type": "object", "properties": { "runId": { "type": "string", "format": "uuid" }, "status": { "type": "string" }, "message": { "type": "string" } } },
+                    "metadata": { "type": "object", "properties": { "scraperId": { "type": "string" }, "timestamp": { "type": "string", "format": "date-time" }, "creditsRemaining": { "type": "integer" } } }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "402": { "description": "Out of credits.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "No such scraper for this account." }
+        }
+      }
+    },
+    "/api/{scraperId}/data/{runId}": {
+      "get": {
+        "summary": "Get scraper run results",
+        "description": "The status and extracted data for one run. Poll this after `POST /api/scrape/{scraperId}` until `status` is `completed`.\n\nRequires the `read` permission.",
+        "operationId": "getScraperRunData",
+        "tags": ["Scraping"],
+        "parameters": [
+          { "name": "scraperId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "runId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "The run and its data.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScraperRun" } } } },
+          "400": { "description": "Invalid scraper id format." },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/api/runs": {
+      "get": {
+        "summary": "List scraper runs",
+        "description": "Recent scraper runs across every scraper, with status and extracted data. Returned as a flat array, which is the shape polling-based integrations such as Zapier expect for a trigger.\n\nRequires the `read` permission.",
+        "operationId": "listScraperRuns",
+        "tags": ["Scraping"],
+        "parameters": [
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20, "maximum": 100 } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } }
+        ],
+        "responses": {
+          "200": { "description": "Runs.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ScraperRun" } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/endpoints": {
+      "get": {
+        "summary": "List API endpoints",
+        "description": "Your published endpoints and the scrapers backing them.\n\nRequires the `read` permission.",
+        "operationId": "listEndpoints",
+        "tags": ["Endpoints"],
+        "responses": {
+          "200": { "description": "Endpoints.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Endpoint" } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "summary": "Create an API endpoint",
+        "description": "Publish a scraper as a typed REST endpoint at `https://app.manypi.com/v1/e/{slug}`.\n\nSlugs are unique per account and resolve within the key owner's endpoints, so your slug namespace is your own.\n\nRequires the `write` permission.",
+        "operationId": "createEndpoint",
+        "tags": ["Endpoints"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["slug", "name", "scraper_id"],
+                "properties": {
+                  "slug": { "type": "string", "minLength": 2, "maxLength": 64, "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "description": "Lowercase letters, digits and dashes." },
+                  "name": { "type": "string", "maxLength": 120 },
+                  "description": { "type": "string", "maxLength": 2000 },
+                  "method": { "type": "string", "enum": ["GET", "POST"], "default": "GET" },
+                  "scraper_id": { "type": "string", "format": "uuid" },
+                  "param_schema": { "type": "object", "nullable": true, "description": "JSON Schema for the input. Validated on every call." },
+                  "output_schema": { "type": "object", "nullable": true },
+                  "freshness": { "type": "string", "enum": ["cached_ok", "always_fresh"], "default": "cached_ok" },
+                  "cache_ttl_seconds": { "type": "integer", "minimum": 0, "maximum": 604800, "default": 3600 },
+                  "mode": { "type": "string", "enum": ["sync", "async"], "default": "sync" }
+                }
+              },
+              "example": { "slug": "product-price", "name": "Product price lookup", "scraper_id": "…", "param_schema": { "type": "object", "properties": { "url": { "type": "string" } }, "required": ["url"] }, "cache_ttl_seconds": 3600 }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "The created endpoint.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Endpoint" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "description": "Endpoint limit reached for the plan." },
+          "404": { "description": "Scraper not found." },
+          "409": { "description": "That slug is already in use." }
+        }
+      }
+    },
+    "/v1/e/{slug}": {
+      "get": {
+        "summary": "Invoke an endpoint",
+        "description": "Call one of your published endpoints.\n\nHow a call resolves: a fresh cached result is returned immediately (no crawl credits spent); otherwise the scrape runs inline, up to a ~110 second budget; if it exceeds that — or the endpoint is `async` — you get `202` with a run id to poll at `GET /v1/e/{slug}/results/{runId}`.\n\nRequires the `endpoints:invoke` permission.",
+        "operationId": "invokeEndpoint",
+        "tags": ["Endpoints"],
+        "parameters": [
+          { "name": "slug", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "url", "in": "query", "description": "Endpoint-defined parameters, validated against its `param_schema`.", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "The extracted data, matching the endpoint's output schema.", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "202": { "description": "Still running. Poll `GET /v1/e/{slug}/results/{runId}`.", "content": { "application/json": { "schema": { "type": "object", "properties": { "runId": { "type": "string", "format": "uuid" }, "status": { "type": "string" } } } } } },
+          "400": { "description": "Parameters failed validation against the endpoint's schema." },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "description": "The key lacks the `endpoints:invoke` permission." },
+          "404": { "description": "No endpoint with that slug for this account." }
+        }
+      }
+    },
+    "/api/user": {
+      "get": {
+        "summary": "Validate a key / get account info",
+        "description": "The cheapest way to confirm a key works. Returns the owning user, the key's permissions and its rate limit.",
+        "operationId": "getUser",
+        "tags": ["Account"],
+        "responses": {
+          "200": {
+            "description": "Account information.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "userId": { "type": "string", "format": "uuid" },
+                        "email": { "type": "string", "format": "email" },
+                        "name": { "type": "string" },
+                        "apiKey": { "type": "object", "properties": { "id": { "type": "string" }, "scopes": { "type": "array", "items": { "type": "string" } }, "status": { "type": "string" }, "rateLimit": { "type": "integer" } } },
+                        "createdAt": { "type": "string", "format": "date-time" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
     }
   },
   "components": {
-    "schemas": {
-      "ScrapeRequest": {
-        "type": "object",
-        "required": ["url"],
-        "properties": {
-          "url": {
-            "type": "string",
-            "format": "uri",
-            "description": "Target URL to scrape. Must be a valid HTTP/HTTPS URL.",
-            "example": "https://example.com/product/123"
-          },
-          "options": {
-            "type": "object",
-            "description": "Optional configuration for the scraping request",
-            "properties": {
-              "timeout": {
-                "type": "integer",
-                "description": "Maximum time to wait for scraping to complete (in milliseconds)",
-                "default": 30000,
-                "minimum": 5000,
-                "maximum": 120000,
-                "example": 30000
-              },
-              "retries": {
-                "type": "integer",
-                "description": "Number of retry attempts if scraping fails",
-                "default": 3,
-                "minimum": 0,
-                "maximum": 5,
-                "example": 3
-              }
-            }
-          }
-        }
-      },
-      "ScrapeResponse": {
-        "type": "object",
-        "required": ["success", "data", "metadata"],
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "description": "Indicates whether the scraping operation was successful",
-            "example": true
-          },
-          "data": {
-            "type": "object",
-            "description": "Extracted data matching your scraper's schema. Structure varies based on your scraper configuration.",
-            "additionalProperties": true,
-            "example": {
-              "title": "Product Name",
-              "price": "$99.99",
-              "rating": 4.5,
-              "inStock": true
-            }
-          },
-          "metadata": {
-            "type": "object",
-            "description": "Information about the scraping operation",
-            "required": ["scraperId", "timestamp", "tokensUsed", "creditsCost", "creditsRemaining"],
-            "properties": {
-              "scraperId": {
-                "type": "string",
-                "format": "uuid",
-                "description": "ID of the scraper that was executed",
-                "example": "550e8400-e29b-41d4-a716-446655440000"
-              },
-              "timestamp": {
-                "type": "string",
-                "format": "date-time",
-                "description": "ISO 8601 timestamp of when the scraping was completed",
-                "example": "2024-01-15T10:30:00.000Z"
-              },
-              "tokensUsed": {
-                "type": "integer",
-                "description": "Number of AI tokens consumed during scraping",
-                "example": 1500
-              },
-              "creditsCost": {
-                "type": "integer",
-                "description": "Number of credits deducted for this operation",
-                "example": 1500
-              },
-              "creditsRemaining": {
-                "type": "integer",
-                "description": "Your remaining credit balance after this operation",
-                "example": 8500
-              }
-            }
-          }
-        }
-      },
-      "Error": {
-        "type": "object",
-        "required": ["success", "error", "errorType"],
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "description": "Always false for error responses",
-            "example": false
-          },
-          "error": {
-            "type": "string",
-            "description": "Human-readable error message",
-            "example": "Invalid API key"
-          },
-          "errorType": {
-            "type": "string",
-            "description": "Machine-readable error type for programmatic handling",
-            "enum": [
-              "authentication_error",
-              "validation_error",
-              "not_found",
-              "insufficient_credits",
-              "rate_limit_error",
-              "scraping_error",
-              "internal_error"
-            ],
-            "example": "authentication_error"
-          }
-        }
-      }
-    },
     "securitySchemes": {
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "bearerFormat": "API Key",
-        "description": "API key authentication. Generate your API key in the ManyPI dashboard under 'API Access'. Include it in the Authorization header as: `Authorization: Bearer YOUR_API_KEY`"
+        "description": "A ManyPI API key (`mpi_...`) from Settings → API keys, or an OAuth 2.1 access token obtained through the MCP consent flow."
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Missing, invalid or expired credential — or a key that lacks the permission this route requires.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "BadRequest": {
+        "description": "The request body or parameters failed validation.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "NotFound": {
+        "description": "No such resource in this workspace.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string", "description": "Human-readable message." },
+          "code": { "type": "string", "description": "A machine-readable code on gated failures: `lead_limit`, `outreach_locked`, `validation_credits_exhausted`." }
+        }
+      },
+      "Lead": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "company": { "type": "string", "nullable": true },
+          "full_name": { "type": "string", "nullable": true },
+          "title": { "type": "string", "nullable": true },
+          "email": { "type": "string", "nullable": true },
+          "phone": { "type": "string", "nullable": true },
+          "domain": { "type": "string", "nullable": true },
+          "linkedin_url": { "type": "string", "nullable": true },
+          "location": { "type": "string", "nullable": true },
+          "source_url": { "type": "string", "nullable": true },
+          "score": { "type": "integer", "nullable": true },
+          "status": { "type": "string", "enum": ["new", "qualified", "contacted", "disqualified"] },
+          "custom": { "type": "object", "description": "Values for the workspace's declared custom columns." },
+          "email_status": { "type": "string", "nullable": true, "enum": ["valid", "invalid", "catch_all", "no_mx", "disposable", "unknown"] },
+          "email_provider": { "type": "string", "nullable": true },
+          "email_is_role": { "type": "boolean", "nullable": true },
+          "email_validated_at": { "type": "string", "format": "date-time", "nullable": true },
+          "unsubscribed_at": { "type": "string", "format": "date-time", "nullable": true },
+          "archived_at": { "type": "string", "format": "date-time", "nullable": true },
+          "agent_run_id": { "type": "string", "format": "uuid", "nullable": true, "description": "The lead search that produced this lead." },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "LeadField": {
+        "type": "object",
+        "properties": {
+          "key": { "type": "string" },
+          "label": { "type": "string" },
+          "type": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "auto_research": { "type": "boolean", "description": "The agent fills this in on future lead searches." },
+          "declared": { "type": "boolean" }
+        }
+      },
+      "LeadFieldInput": {
+        "type": "object",
+        "required": ["label"],
+        "properties": {
+          "label": { "type": "string", "maxLength": 60 },
+          "key": { "type": "string", "maxLength": 40, "description": "Derived from the label when absent." },
+          "type": { "type": "string", "default": "text" },
+          "options": { "type": "array", "maxItems": 50, "items": { "type": "string" } },
+          "description": { "type": "string", "maxLength": 500, "nullable": true },
+          "auto_research": { "type": "boolean", "default": false }
+        }
+      },
+      "ImportRow": {
+        "type": "object",
+        "description": "A lead needs an email, or a domain plus a name, or it cannot be filed and is skipped.",
+        "properties": {
+          "company": { "type": "string", "maxLength": 300 },
+          "full_name": { "type": "string", "maxLength": 200 },
+          "title": { "type": "string", "maxLength": 200 },
+          "email": { "type": "string", "maxLength": 320 },
+          "phone": { "type": "string", "maxLength": 60 },
+          "domain": { "type": "string", "maxLength": 300 },
+          "linkedin_url": { "type": "string", "maxLength": 500 },
+          "location": { "type": "string", "maxLength": 200 },
+          "source_url": { "type": "string", "maxLength": 1000 },
+          "score": { "type": "integer", "minimum": 0, "maximum": 100, "nullable": true },
+          "status": { "type": "string", "enum": ["new", "qualified", "contacted", "disqualified"], "nullable": true },
+          "custom": { "type": "object", "description": "Keys must match declared columns, or the values are dropped." }
+        }
+      },
+      "LeadResearchCriteria": {
+        "type": "object",
+        "description": "The structured search. The description does most of the work; the rest is what the agent enforces.",
+        "properties": {
+          "description": { "type": "string", "maxLength": 4000, "description": "Free-text ideal-customer description." },
+          "count": { "type": "integer", "minimum": 1, "default": 25, "description": "How many NEW leads to save. Clamped to remaining plan capacity." },
+          "locations": { "type": "array", "maxItems": 20, "items": { "type": "string" } },
+          "industries": { "type": "array", "maxItems": 20, "items": { "type": "string" } },
+          "company_size": { "type": "string", "maxLength": 160, "description": "Free text on purpose: \"5-50 employees\", \"Series A\", \"under $5M ARR\"." },
+          "titles": { "type": "array", "maxItems": 20, "items": { "type": "string" }, "description": "Roles to reach inside each company." },
+          "keywords": { "type": "array", "maxItems": 30, "items": { "type": "string" }, "description": "Signals a company must show." },
+          "exclusions": { "type": "array", "maxItems": 30, "items": { "type": "string" }, "description": "Hard excludes — matches are dropped, not saved." },
+          "required_fields": { "type": "array", "maxItems": 6, "items": { "type": "string", "enum": ["email", "phone", "full_name", "title", "linkedin_url", "location"] }, "default": ["email"], "description": "A lead missing one of these is not saved." },
+          "extra_columns": { "type": "array", "maxItems": 10, "items": { "type": "object", "properties": { "name": { "type": "string", "maxLength": 60 }, "description": { "type": "string", "maxLength": 300 } } }, "description": "Extra researched columns, written to the lead's custom fields." },
+          "sources": { "type": "array", "maxItems": 10, "items": { "type": "string" }, "description": "Where to look: directories, marketplaces, maps, specific sites." },
+          "notes": { "type": "string", "maxLength": 2000 }
+        }
+      },
+      "ResearchProfile": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "kind": { "type": "string", "enum": ["icp", "similar"] },
+          "criteria": { "$ref": "#/components/schemas/LeadResearchCriteria" },
+          "run_count": { "type": "integer" },
+          "last_run_at": { "type": "string", "format": "date-time", "nullable": true },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ValidationJob": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "status": { "type": "string", "enum": ["queued", "running", "completed", "failed"] },
+          "source": { "type": "string", "enum": ["manual", "enroll", "agent", "api", "cron"] },
+          "total": { "type": "integer" },
+          "processed": { "type": "integer" },
+          "billable": { "type": "integer" },
+          "credits_charged": { "type": "integer" },
+          "counts": { "type": "object", "description": "How many addresses landed in each status." },
+          "error": { "type": "string", "nullable": true },
+          "created_at": { "type": "string", "format": "date-time" },
+          "finished_at": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "Inbox": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "description": "Use as `smtp_config_id`." },
+          "name": { "type": "string" },
+          "from_email": { "type": "string", "format": "email" },
+          "sentToday": { "type": "integer" },
+          "capToday": { "type": "integer", "description": "Warmup-aware cap, not the raw daily limit." },
+          "sent14d": { "type": "integer" },
+          "failed14d": { "type": "integer" },
+          "opened14d": { "type": "integer" },
+          "bounced14d": { "type": "integer" },
+          "bounceRate24h": { "type": "number" },
+          "warmup_enabled": { "type": "boolean" },
+          "sending_paused_at": { "type": "string", "format": "date-time", "nullable": true, "description": "Set when the bounce guard paused the inbox." },
+          "sending_paused_reason": { "type": "string", "nullable": true },
+          "health": { "type": "integer", "minimum": 0, "maximum": 100 }
+        }
+      },
+      "SequenceStep": {
+        "type": "object",
+        "required": ["subject", "body_html"],
+        "properties": {
+          "subject": { "type": "string", "maxLength": 300, "description": "Merge variables allowed. Empty on a `reply` step, which sends as \"Re:\" the first email's subject." },
+          "body_html": { "type": "string", "description": "Simple HTML: `<p>`, `<br>`, `<strong>`, `<a>`." },
+          "wait_days": { "type": "integer", "minimum": 0, "maximum": 90, "description": "Days after the previous step. Step 0 is 0." },
+          "thread_mode": { "type": "string", "enum": ["new", "reply"], "description": "Step 0 is always `new`." }
+        }
+      },
+      "Sequence": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "steps": { "type": "array", "items": { "$ref": "#/components/schemas/SequenceStep" } },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Campaign": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "status": { "type": "string", "enum": ["active", "paused", "archived"] },
+          "sequence_id": { "type": "string", "format": "uuid" },
+          "smtp_config_id": { "type": "string", "format": "uuid" },
+          "reply_to": { "type": "string", "nullable": true },
+          "daily_limit": { "type": "integer", "nullable": true },
+          "priority": { "type": "integer" },
+          "schedule_enabled": { "type": "boolean" },
+          "send_days": { "type": "array", "items": { "type": "integer" } },
+          "send_from": { "type": "string", "nullable": true },
+          "send_to": { "type": "string", "nullable": true },
+          "timezone": { "type": "string", "nullable": true },
+          "track_opens": { "type": "boolean" },
+          "stats": { "type": "object", "properties": { "enrolled": { "type": "integer" }, "active": { "type": "integer" }, "completed": { "type": "integer" }, "sent": { "type": "integer" }, "opened": { "type": "integer" }, "replied": { "type": "integer" } } },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Reply": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "kind": { "type": "string", "enum": ["reply", "bounce", "auto_reply"] },
+          "campaign_id": { "type": "string", "format": "uuid", "nullable": true },
+          "lead_id": { "type": "string", "format": "uuid", "nullable": true },
+          "from_email": { "type": "string" },
+          "from_name": { "type": "string", "nullable": true },
+          "subject": { "type": "string", "nullable": true },
+          "body_text": { "type": "string", "nullable": true },
+          "received_at": { "type": "string", "format": "date-time" },
+          "bounce_type": { "type": "string", "nullable": true },
+          "bounce_code": { "type": "string", "nullable": true },
+          "sentiment": { "type": "string", "nullable": true, "enum": ["positive", "neutral", "negative", "objection", "unsubscribe", "ooo", "referral"], "description": "Pro and Business only; stripped from the response on other plans." },
+          "sentiment_score": { "type": "number", "nullable": true },
+          "intent": { "type": "string", "nullable": true },
+          "summary": { "type": "string", "nullable": true }
+        }
+      },
+      "AgentRun": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "conversation_id": { "type": "string", "format": "uuid", "nullable": true },
+          "goal": { "type": "string" },
+          "status": { "type": "string", "enum": ["queued", "planning", "running", "paused", "completed", "failed", "cancelled"] },
+          "result_summary": { "type": "string", "nullable": true, "description": "The result — or, while `paused`, the agent's question to you." },
+          "tokens_used": { "type": "integer", "nullable": true },
+          "started_at": { "type": "string", "format": "date-time", "nullable": true },
+          "finished_at": { "type": "string", "format": "date-time", "nullable": true },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Artifact": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "mime_type": { "type": "string" },
+          "row_count": { "type": "integer", "nullable": true },
+          "size_bytes": { "type": "integer", "nullable": true },
+          "preview": { "type": "object", "nullable": true },
+          "download_url": { "type": "string", "nullable": true, "description": "Signed URL, valid for one hour." }
+        }
+      },
+      "Skill": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "slug": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "emoji": { "type": "string", "nullable": true },
+          "system_prompt": { "type": "string" },
+          "is_system": { "type": "boolean", "description": "True for ManyPI's premade skills." }
+        }
+      },
+      "Scraper": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "scraper_name": { "type": "string" },
+          "scraper_schema": { "type": "object", "description": "The JSON Schema the extracted data conforms to." },
+          "url_to_scrape": { "type": "string" },
+          "status": { "type": "string" },
+          "type": { "type": "string" }
+        }
+      },
+      "ScraperRun": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "scraper_id": { "type": "string", "format": "uuid" },
+          "url": { "type": "string" },
+          "status": { "type": "string", "enum": ["pending", "running", "completed", "failed"] },
+          "result": { "type": "object", "nullable": true, "description": "Present once the run is completed." },
+          "error": { "type": "string", "nullable": true },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Endpoint": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "slug": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "method": { "type": "string", "enum": ["GET", "POST"] },
+          "scraper_id": { "type": "string", "format": "uuid" },
+          "param_schema": { "type": "object", "nullable": true },
+          "output_schema": { "type": "object", "nullable": true },
+          "freshness": { "type": "string", "enum": ["cached_ok", "always_fresh"] },
+          "cache_ttl_seconds": { "type": "integer" },
+          "mode": { "type": "string", "enum": ["sync", "async"] },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
       }
     }
   }

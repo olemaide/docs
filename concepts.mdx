@@ -1,0 +1,134 @@
+---
+title: "Core concepts"
+description: "Workspaces, brands, seats, leads and the three credit types."
+---
+
+Five ideas explain how everything in ManyPI is organised. Read this once and
+the rest of the documentation is straightforward.
+
+## Workspace
+
+A **workspace** is the account. It owns billing, the subscription, seats and
+every piece of data. Nothing crosses a workspace boundary — a different
+workspace is effectively a different customer.
+
+You switch workspaces from the account menu. Team plans invite members into a
+shared workspace, where leads, campaigns, chats and folders are pooled rather
+than private to whoever created them.
+
+## Brand
+
+A **brand** is the company you are selling. It lives *inside* a workspace and
+owns that company's inboxes, campaigns, sequences, folders and chats.
+
+The brand carries your website, description, value proposition and personas.
+That context is injected into:
+
+- **lead searches**, so the agent can judge whether a company would actually
+  want what you sell, and
+- **AI-drafted emails**, so you do not retype who you are on every message.
+
+One workspace with several brands is the agency case: one brand per client,
+each with its own sending domain and its own idea of a good lead.
+
+| Plan | Brands |
+| --- | --- |
+| Free | 1 |
+| Starter | 1 |
+| Pro | 3 |
+| Business | Unlimited |
+
+<Note>
+  Leads are **workspace-pooled**, not brand-scoped. The brand filter in the
+  Leads grid is a lens you apply, not a wall the server enforces. Inboxes,
+  campaigns and sequences *are* brand-scoped.
+</Note>
+
+## Lead
+
+A **lead** is one company-plus-contact record. Core fields are fixed
+(`company`, `full_name`, `title`, `email`, `phone`, `domain`, `linkedin_url`,
+`location`, `source_url`, `score`, `status`); everything else lives in custom
+columns you declare yourself.
+
+Statuses are `new`, `qualified`, `contacted` and `disqualified`. Two flags sit
+alongside them and are not statuses: **archived** (hidden from every view but
+still stored) and **unsubscribed** (opted out — never contacted again).
+
+Your plan caps how many leads a workspace can store:
+
+| Plan | Stored leads |
+| --- | --- |
+| Free | 50 |
+| Starter | 2,500 |
+| Pro | 25,000 |
+| Business | 100,000 |
+
+The cap is enforced up front: a lead search is clamped to the space you have
+left rather than spending credits finding leads it would have to throw away.
+
+## Seats
+
+Paid plans are **per seat**, and credits pool across the workspace: three
+Starter seats share 3M AI credits, not 1M each.
+
+| Plan | Seats |
+| --- | --- |
+| Free | 1 |
+| Starter | up to 3 |
+| Pro | up to 10 |
+| Business | unlimited |
+
+## Credits
+
+Three separate meters, each measuring a different real cost.
+
+<CardGroup cols={3}>
+  <Card title="AI credits" icon="brain">
+    1 credit = 1 model token. Spent by agent runs, lead research, AI drafting
+    and reply analysis.
+  </Card>
+  <Card title="Crawl credits" icon="globe">
+    1 credit = 1 page scrape or search. Spent by scrapers, endpoints and the
+    agent's web browsing.
+  </Card>
+  <Card title="Validation credits" icon="envelope-circle-check">
+    1 credit = 1 SMTP mailbox probe. Spent by email validation.
+  </Card>
+</CardGroup>
+
+Included allowances, per seat per month:
+
+| Plan | AI credits | Crawls | Validations | Outreach emails |
+| --- | --- | --- | --- | --- |
+| Free | 10,000 | 20 | 50 | — |
+| Starter | 1,000,000 | 250 | 1,000 | 1,000 |
+| Pro | 3,000,000 | 900 | 5,000 | 5,000 |
+| Business | 8,000,000 | 3,000 | 20,000 | 20,000 |
+
+When an allowance runs out you can either buy a credit pack or switch on
+**overage**, which meters the excess and bills it at the same unit rate
+($0.00008 per AI credit, $0.04 per crawl, $0.005 per validation). Overage has a
+spend cap you set per meter, so it can never surprise you.
+
+<Card title="Plans and billing in detail" icon="credit-card" href="/platform/plans-and-credits" horizontal>
+  Feature gates per tier, overage, credit packs and spend caps.
+</Card>
+
+## How a run works
+
+Almost everything expensive in ManyPI is an **agent run**: a job with a goal, a
+status, streamed events and, at the end, a result and any artifacts.
+
+```
+queued → planning → running → completed
+                  ↘ paused (waiting on you)
+                  ↘ failed / cancelled
+```
+
+A run that hits an ambiguity pauses and asks a question rather than guessing.
+In the dashboard you answer it in the chat; over the API or MCP you read the
+question from the run and post a reply, and the *same* run resumes mid-thought.
+
+Your plan limits how many runs can be in flight at once (1 on Free, 2 on
+Starter, 5 on Pro, 10 on Business).

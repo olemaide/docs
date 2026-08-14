@@ -1,0 +1,67 @@
+---
+title: "Integrations"
+description: "Webhooks, polling, MCP and databases — how ManyPI talks to the rest of your stack."
+---
+
+## Outbound webhooks
+
+Get notified when something finishes instead of polling for it. Configure
+targets in **Dashboard → Webhooks**.
+
+Typical use: a scraper run completes → ManyPI POSTs the result to your endpoint
+→ you write it into your warehouse.
+
+Endpoints should respond `2xx` quickly and do the real work asynchronously; a
+slow consumer is the usual cause of "missing" deliveries.
+
+## Inbound webhooks
+
+Pro and Business workspaces can trigger a **workflow** from an inbound webhook.
+Each workflow gets its own URL; POST JSON to it and the payload is available to
+the workflow's steps.
+
+That is how you wire a CRM, a form, or another automation tool into ManyPI —
+new form submission in, enriched and validated lead out.
+
+<Card title="Workflows" icon="diagram-project" href="/agent/workflows" horizontal>
+  Triggers, steps and execution history.
+</Card>
+
+## Polling integrations
+
+`GET /api/runs?limit=20` returns recent scraper runs as a flat array, which is
+the shape polling-based tools such as Zapier expect for a trigger. Use it when
+you cannot receive a webhook.
+
+## MCP — both directions
+
+<Columns cols={2}>
+  <Card title="ManyPI in your AI client" icon="arrow-right-from-bracket" href="/mcp/introduction">
+    Connect `mcp.manypi.com` to Claude, Cursor, VS Code, ChatGPT and others, and
+    run lead gen and outreach in conversation.
+  </Card>
+  <Card title="Your tools inside ManyPI" icon="arrow-right-to-bracket" href="/agent/data">
+    Connect third-party MCP servers to your workspace so the ManyPI agent can
+    call them during a run.
+  </Card>
+</Columns>
+
+## Databases
+
+Connect PostgreSQL, MySQL or BigQuery read-only and the agent can query your own
+data as part of a run — joining your CRM against freshly sourced leads, for
+example. Credentials are vaulted and never returned; queries run from a static
+egress IP you can allowlist.
+
+<Card title="Connections" icon="database" href="/agent/data" horizontal>
+  Setup, security model and testing.
+</Card>
+
+## Your own REST API
+
+Anything the dashboard does is available over REST, so the most flexible
+integration is often just calling ManyPI directly from your backend.
+
+<Card title="API reference" icon="terminal" href="/api-reference/introduction" horizontal>
+  Every endpoint, with authentication and permission scopes.
+</Card>

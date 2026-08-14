@@ -1,0 +1,333 @@
+---
+title: "Connect a client"
+description: "Copy-paste setup for Claude, Cursor, VS Code, ChatGPT, Codex and more."
+---
+
+Every client points at the same endpoint:
+
+```
+https://mcp.manypi.com/mcp
+```
+
+Two ways to authenticate:
+
+- **Sign in with your browser (OAuth)** — nothing to paste. Supported by Claude
+  Code, Claude.ai & Desktop, Cursor and VS Code.
+- **API key** — works everywhere. Create one in **Settings → API keys** and send
+  it as `Authorization: Bearer mpi_…`.
+
+<Tip>
+  Prefer OAuth where it is available: there is no key to leak, and you can
+  revoke the connection from **Settings → Connected apps** at any time.
+</Tip>
+
+<Note>
+  Replace `mpi_your_api_key` in every snippet below with your real key. A key
+  needs `read`, plus `agents` for lead generation, `leads:validate` for
+  verification, and `outreach:send` to send.
+</Note>
+
+## AI agent CLIs
+
+<AccordionGroup>
+  <Accordion title="Claude Code" icon="terminal">
+    **With browser sign-in** — no key needed:
+
+    ```bash
+    claude mcp add --transport http manypi https://mcp.manypi.com/mcp -s user
+    ```
+
+    Then start Claude Code, run `/mcp`, choose **manypi → Authenticate**, and
+    approve in the browser.
+
+    **With an API key:**
+
+    ```bash
+    claude mcp add --transport http manypi https://mcp.manypi.com/mcp \
+      --header "Authorization: Bearer mpi_your_api_key" -s user
+    ```
+
+    Drop `-s user` to scope it to the current project only. Verify with `/mcp`.
+  </Accordion>
+
+  <Accordion title="Codex" icon="terminal">
+    Codex speaks stdio, so bridge to the hosted server with `mcp-remote`. Add to
+    `~/.codex/config.toml`:
+
+    ```toml
+    [mcp_servers.manypi]
+    command = "npx"
+    args = ["-y", "mcp-remote", "https://mcp.manypi.com/mcp", "--header", "Authorization: Bearer mpi_your_api_key"]
+    ```
+  </Accordion>
+
+  <Accordion title="Gemini CLI" icon="terminal">
+    Add to `~/.gemini/settings.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "manypi": {
+          "httpUrl": "https://mcp.manypi.com/mcp",
+          "headers": { "Authorization": "Bearer mpi_your_api_key" }
+        }
+      }
+    }
+    ```
+
+    Run `gemini`, then `/mcp` to confirm.
+  </Accordion>
+
+  <Accordion title="GitHub Copilot CLI" icon="terminal">
+    Run `/mcp add` and provide an HTTP server, or add to your Copilot MCP
+    config:
+
+    ```json
+    {
+      "mcpServers": {
+        "manypi": {
+          "type": "http",
+          "url": "https://mcp.manypi.com/mcp",
+          "headers": { "Authorization": "Bearer mpi_your_api_key" }
+        }
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="OpenCode" icon="terminal">
+    Add to `opencode.json` (project) or `~/.config/opencode/opencode.json`:
+
+    ```json
+    {
+      "$schema": "https://opencode.ai/config.json",
+      "mcp": {
+        "manypi": {
+          "type": "remote",
+          "url": "https://mcp.manypi.com/mcp",
+          "enabled": true,
+          "headers": { "Authorization": "Bearer mpi_your_api_key" }
+        }
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Factory (Droid)" icon="terminal">
+    Add to `~/.factory/mcp.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "manypi": {
+          "type": "http",
+          "url": "https://mcp.manypi.com/mcp",
+          "headers": { "Authorization": "Bearer mpi_your_api_key" }
+        }
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Web clients
+
+<AccordionGroup>
+  <Accordion title="Claude.ai and Claude Desktop" icon="globe">
+    **With browser sign-in:**
+
+    1. **Settings → Connectors → Add custom connector**
+    2. Name it `ManyPI` and paste the server URL:
+
+       ```
+       https://mcp.manypi.com/mcp
+       ```
+    3. Click **Connect**. Claude opens ManyPI in a new window; approve and the
+       connector goes live.
+
+    Leave the advanced OAuth fields empty — Claude fills them in from ManyPI
+    itself.
+
+    **With an API key:** add the connector the same way, and when Claude prompts
+    for an Authorization header, paste:
+
+    ```
+    Authorization: Bearer mpi_your_api_key
+    ```
+  </Accordion>
+
+  <Accordion title="ChatGPT" icon="globe">
+    Requires a paid ChatGPT plan.
+
+    1. **Settings → Connectors → Advanced → Developer mode**
+    2. Under **Connectors**, click **Create**, name it `ManyPI`, and paste:
+
+       ```
+       https://mcp.manypi.com/mcp
+       ```
+    3. Add a custom header so every call is authenticated:
+
+       ```
+       Authorization: Bearer mpi_your_api_key
+       ```
+  </Accordion>
+
+  <Accordion title="Goose" icon="globe">
+    Desktop: **Settings → Extensions → Add**. CLI: `goose configure → Add
+    Extension`.
+
+    Choose **Remote Extension (Streamable HTTP)**, paste
+    `https://mcp.manypi.com/mcp`, and add the header:
+
+    ```
+    Authorization: Bearer mpi_your_api_key
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## IDEs
+
+<AccordionGroup>
+  <Accordion title="Cursor" icon="code">
+    **With browser sign-in** — create `~/.cursor/mcp.json` (global) or
+    `.cursor/mcp.json` (per project):
+
+    ```json
+    { "mcpServers": { "manypi": { "url": "https://mcp.manypi.com/mcp" } } }
+    ```
+
+    Open **Settings → MCP**; `manypi` shows a **Login** button. Click it and
+    approve.
+
+    **With an API key:**
+
+    ```json
+    {
+      "mcpServers": {
+        "manypi": {
+          "url": "https://mcp.manypi.com/mcp",
+          "headers": { "Authorization": "Bearer mpi_your_api_key" }
+        }
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="VS Code" icon="code">
+    **With browser sign-in** — create `.vscode/mcp.json`:
+
+    ```json
+    { "servers": { "manypi": { "type": "http", "url": "https://mcp.manypi.com/mcp" } } }
+    ```
+
+    Run **MCP: List Servers → manypi → Start**. VS Code opens ManyPI for
+    approval.
+
+    Or from the CLI:
+
+    ```bash
+    code --add-mcp '{"name":"manypi","type":"http","url":"https://mcp.manypi.com/mcp"}'
+    ```
+
+    **With an API key:**
+
+    ```json
+    {
+      "servers": {
+        "manypi": {
+          "type": "http",
+          "url": "https://mcp.manypi.com/mcp",
+          "headers": { "Authorization": "Bearer mpi_your_api_key" }
+        }
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Antigravity" icon="code">
+    Agent panel → **MCP servers → Add server**, or edit the MCP config:
+
+    ```json
+    {
+      "mcpServers": {
+        "manypi": {
+          "serverUrl": "https://mcp.manypi.com/mcp",
+          "headers": { "Authorization": "Bearer mpi_your_api_key" }
+        }
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Kiro" icon="code">
+    Edit `.kiro/settings/mcp.json` (workspace) or `~/.kiro/settings/mcp.json`
+    (user):
+
+    ```json
+    {
+      "mcpServers": {
+        "manypi": {
+          "command": "npx",
+          "args": ["-y", "mcp-remote", "https://mcp.manypi.com/mcp", "--header", "Authorization: Bearer mpi_your_api_key"]
+        }
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Windsurf" icon="code">
+    **Settings → Cascade → MCP servers → Add**, or edit
+    `~/.codeium/windsurf/mcp_config.json`. Windsurf proxies HTTP servers via
+    `mcp-remote`:
+
+    ```json
+    {
+      "mcpServers": {
+        "manypi": {
+          "command": "npx",
+          "args": ["-y", "mcp-remote", "https://mcp.manypi.com/mcp", "--header", "Authorization: Bearer mpi_your_api_key"]
+        }
+      }
+    }
+    ```
+
+    Click **Refresh** in the MCP panel.
+  </Accordion>
+</AccordionGroup>
+
+## Any other client
+
+If your client supports MCP over Streamable HTTP, point it at
+`https://mcp.manypi.com/mcp` with an `Authorization: Bearer` header. If it only
+speaks stdio, bridge with:
+
+```bash
+npx -y mcp-remote https://mcp.manypi.com/mcp \
+  --header "Authorization: Bearer mpi_your_api_key"
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="The tool list is empty" icon="circle-question">
+    Almost always authentication. Check the header is exactly
+    `Authorization: Bearer mpi_…`, and confirm the key works:
+
+    ```bash
+    curl https://app.manypi.com/api/user -H "Authorization: Bearer mpi_your_api_key"
+    ```
+  </Accordion>
+  <Accordion title="401 Unauthorized" icon="circle-question">
+    The key is missing, revoked, or expired — or an OAuth token has expired and
+    the client needs to re-authorise. Reconnect from the client's MCP panel.
+  </Accordion>
+  <Accordion title="A tool returns a permission error" icon="circle-question">
+    The key exists but lacks that permission. Lead generation needs `agents`,
+    verification needs `leads:validate`, sending needs `outreach:send`. See
+    [API keys and permissions](/platform/api-keys).
+  </Accordion>
+  <Accordion title="Sending tools fail with outreach_locked" icon="circle-question">
+    `enroll_leads` and `send_email` require a paid plan. Everything else works
+    on free.
+  </Accordion>
+</AccordionGroup>

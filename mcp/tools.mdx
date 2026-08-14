@@ -1,0 +1,252 @@
+---
+title: "Tool reference"
+description: "Every tool the ManyPI MCP server exposes."
+---
+
+Sixteen tools, grouped the way you use them. Each lists its arguments and its
+safety annotation — the hint MCP clients use to decide what to run
+automatically and what to confirm with you first.
+
+## Agent
+
+### `run_agent`
+
+<Info>Write · reaches the web</Info>
+
+Run the ManyPI agent on a natural-language goal: scrape sites, research,
+analyse data, turn a site into an API. Asynchronous — returns a `run_id` and
+`conversation_id`.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `goal` | string | **Required.** What you want ManyPI to do, in plain language. |
+
+For finding leads, prefer `generate_leads`.
+
+### `get_agent_run`
+
+<Info>Read-only</Info>
+
+Check the status and result of agent and lead-gen runs.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `conversation_id` | uuid | From `run_agent` / `generate_leads`. Omit for your most recent runs. |
+| `limit` | 1–50 | How many runs to return. |
+
+Statuses: `queued` / `planning` / `running` (working), `paused` (waiting on you
+— the question is in `result_summary`), `completed` / `failed` / `cancelled`
+(done — see `result_summary`).
+
+### `reply_to_agent`
+
+<Info>Write · reaches the web</Info>
+
+Answer an agent that is waiting for input, or send a follow-up to a finished
+run. Resumes the **same** run if it was paused; otherwise starts a follow-up run
+in the same conversation.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `run_id` | uuid | **Required.** The run to answer. |
+| `message` | string | **Required.** Your answer or follow-up, up to 8,000 characters. |
+
+## Lead generation
+
+### `generate_leads`
+
+<Info>Write · reaches the web</Info>
+
+Find and enrich B2B leads. Describe your ideal customer; poll `get_agent_run`
+for progress and read results with `search_leads`.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `description` | string | **Required.** e.g. *"e-commerce agencies in Germany, 5–50 employees, with emails"*. |
+
+### `search_leads`
+
+<Info>Read-only</Info>
+
+Search the workspace's saved leads.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `query` | string | Matches company, name, email or domain. |
+| `status` | enum | `new` · `qualified` · `contacted` · `disqualified` |
+| `limit` | 1–500 | Defaults to 100. |
+
+## Outreach content
+
+### `list_inboxes`
+
+<Info>Read-only</Info>
+
+List connected sending inboxes with per-inbox health: today's sends versus the
+warmup-aware cap, 14-day delivered/failed/opened, and a 0–100 health score. Use
+an inbox `id` as `smtp_config_id` elsewhere. Takes no arguments.
+
+### `list_sequences`
+
+<Info>Read-only</Info>
+
+List saved email sequences with their inline steps. Takes no arguments.
+
+### `create_sequence`
+
+<Info>Write</Info>
+
+Create the email steps a campaign sends.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `name` | string | **Required.** Internal name. |
+| `description` | string | Optional. |
+| `steps` | array (1–10) | **Required.** Ordered steps. |
+
+Each step: `subject`, `body_html`, `wait_days` (0–90), `thread_mode`
+(`new` / `reply`). Step 0 goes out on enrollment and is always `new`; a `reply`
+step threads under the first email.
+
+Merge variables: `{{first_name}}`, `{{company}}`, `{{title}}`, `{{domain}}`,
+`{{location}}`. Bodies are simple HTML — `<p>`, `<br>`, `<strong>`, `<a>`.
+
+### `draft_email`
+
+<Info>Read-only</Info>
+
+AI-draft a cold email or a whole follow-up sequence. Returns
+`{subject, html}` or `{steps: […]}`. **Persists nothing** — feed the result
+into `create_sequence` or `send_email`.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `instructions` | string | **Required.** What you are selling / your ask. |
+| `mode` | `email` \| `sequence` | Defaults to `email`. |
+| `steps` | 2–5 | Number of steps when `mode` is `sequence`. Defaults to 3. |
+| `lead_id` | uuid | An example lead to tailor the tone toward. |
+
+## Campaigns
+
+### `list_campaigns`
+
+<Info>Read-only</Info>
+
+List campaigns with per-campaign stats — enrolled, active, completed, sent,
+opened, replied. Takes no arguments.
+
+### `get_campaign`
+
+<Info>Read-only</Info>
+
+One campaign's full analytics: headline stats, a per-step sent/opened
+breakdown, and every enrolled lead with its progress.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `campaign_id` | uuid | **Required.** |
+
+### `create_campaign`
+
+<Info>Write</Info>
+
+Bind a sequence to a sending inbox.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `name` | string | **Required.** |
+| `sequence_id` | uuid | **Required.** From `list_sequences` / `create_sequence`. |
+| `smtp_config_id` | uuid | **Required.** From `list_inboxes`. |
+| `reply_to` | email | Override the reply-to address. |
+| `daily_limit` | 1–2000 | Never exceeds the inbox's own cap. |
+
+### `update_campaign`
+
+<Info>Destructive · idempotent</Info>
+
+Pause, resume, archive, or change a campaign's name, reply-to or daily limit.
+Pausing stops further sends without losing progress.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `campaign_id` | uuid | **Required.** |
+| `status` | `active` \| `paused` \| `archived` | |
+| `name`, `reply_to`, `daily_limit` | | |
+
+Annotated destructive because it overwrites existing fields and archiving is
+this API's closest thing to a delete — but applying the same patch twice lands
+on the same state, so it is also idempotent.
+
+## Sending
+
+<Warning>
+  Both tools below queue **real email to real people** and require a paid ManyPI
+  plan. Nothing sent can be recalled.
+</Warning>
+
+### `enroll_leads`
+
+<Info>Destructive · reaches the web</Info>
+
+Enroll leads into a campaign, queuing the sequence for real sending and
+respecting the inbox's warmup and daily caps. Leads with no email, or already
+enrolled, are skipped.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `campaign_id` | uuid | **Required.** |
+| `lead_ids` | uuid[] (1–1000) | **Required.** From `search_leads`. |
+
+### `send_email`
+
+<Info>Destructive · reaches the web</Info>
+
+Send a single one-off email to a lead now, outside any sequence. Renders merge
+variables against the lead, respects the inbox's cap, and marks the lead
+contacted.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `smtp_config_id` | uuid | **Required.** From `list_inboxes`. |
+| `subject` | string | **Required.** Merge variables allowed. |
+| `html` | string | **Required.** Simple HTML. |
+| `lead_id` | uuid | Used for merge variables and as the default recipient. |
+| `to` | email | Explicit recipient; defaults to the lead's address. |
+
+### `outreach_stats`
+
+<Info>Read-only</Info>
+
+Workspace-wide activity: 14 days of sends (sent/failed/opened per day), replies
+per day, active enrollments, and today's sent versus the combined cap. Takes no
+arguments.
+
+## Scraping
+
+### `list_scrapers`
+
+<Info>Read-only</Info>
+
+List the workspace's scrapers — id, name, target URL, type. Takes no arguments.
+
+### `run_scraper`
+
+<Info>Write · reaches the web</Info>
+
+Run a saved scraper. Asynchronous — returns a `runId`; read the extracted data
+with `get_scraper_runs`.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `scraper_id` | string | **Required.** From `list_scrapers`. |
+| `url` | url | Override the scraper's target for this run. |
+
+### `get_scraper_runs`
+
+<Info>Read-only</Info>
+
+Recent scraper runs with status and extracted data.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `limit` | 1–100 | |

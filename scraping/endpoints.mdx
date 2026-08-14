@@ -1,0 +1,97 @@
+---
+title: "API endpoints"
+description: "Publish a scraper as a typed REST endpoint on your own slug."
+---
+
+An **endpoint** wraps a scraper in a stable, typed REST URL. You define the
+slug, the parameters it accepts and the shape it returns; ManyPI handles
+caching, validation and the async fallback.
+
+```
+https://app.manypi.com/v1/e/{slug}
+```
+
+This is the "turn any website into an API" part of ManyPI — the same machinery
+the sales side runs on, exposed for your own integrations.
+
+## Creating an endpoint
+
+```bash
+curl -X POST https://app.manypi.com/api/endpoints \
+  -H "Authorization: Bearer mpi_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "slug": "product-price",
+    "name": "Product price lookup",
+    "method": "GET",
+    "scraper_id": "…",
+    "param_schema": {
+      "type": "object",
+      "properties": { "url": { "type": "string" } },
+      "required": ["url"]
+    },
+    "freshness": "cached_ok",
+    "cache_ttl_seconds": 3600,
+    "mode": "sync"
+  }'
+```
+
+| Field | Meaning |
+| --- | --- |
+| `slug` | The URL segment. Lowercase letters, digits and dashes. Unique per account. |
+| `method` | `GET` or `POST`. |
+| `scraper_id` | The scraper that backs it. |
+| `param_schema` | JSON Schema for the input. Validated on every call. |
+| `output_schema` | JSON Schema for the response. |
+| `freshness` | `cached_ok` serves a cached result within TTL; `always_fresh` re-scrapes every time. |
+| `cache_ttl_seconds` | 0 – 604800 (one week). |
+| `mode` | `sync` waits for the result; `async` returns a run id immediately. |
+
+## Calling it
+
+```bash
+curl "https://app.manypi.com/v1/e/product-price?url=https://example.com/p/42" \
+  -H "Authorization: Bearer mpi_your_api_key"
+```
+
+The call requires the **`endpoints:invoke`** permission on the key. Slugs
+resolve within the key owner's endpoints, so your slug namespace is your own.
+
+### How a call resolves
+
+<Steps>
+  <Step title="Cache">
+    If `freshness` is `cached_ok` and a fresh result exists, it is returned
+    immediately — no crawl credits spent.
+  </Step>
+  <Step title="Synchronous scrape">
+    Otherwise the scrape runs inline, up to a ~110 second budget. Most calls
+    finish here.
+  </Step>
+  <Step title="202 fallback">
+    If it exceeds the budget — or the endpoint is `async` — you get `202` with a
+    run id. Poll `GET /v1/e/{slug}/results/{runId}` for the result.
+  </Step>
+</Steps>
+
+That escalation is why an endpoint stays usable from a browser or a Lambda even
+when the target site is slow: you never hold a connection open indefinitely, and
+you never lose the work.
+
+## Your OpenAPI spec
+
+ManyPI generates a live OpenAPI 3.1 document covering **your** endpoints:
+
+```
+https://app.manypi.com/v1/openapi.json
+```
+
+Feed it to a client generator, an API gateway, or an AI agent that consumes tool
+specs — the types come from the schemas you defined, so the generated client is
+correctly typed with no hand-written models.
+
+## Endpoint limits
+
+The number of endpoints you can publish depends on your plan; creating one past
+the limit returns `403` with the reason. Everything else — caching, validation,
+the OpenAPI spec — is the same on every paid tier.

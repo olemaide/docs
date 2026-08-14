@@ -1,0 +1,158 @@
+---
+title: "Managing leads"
+description: "Fields, custom columns, statuses, import, export and deduplication."
+---
+
+The Leads grid is the working surface for everything ManyPI has found or you
+have imported. It is workspace-wide: teammates on a paid plan see and act on the
+same pool.
+
+## Lead fields
+
+### Core fields
+
+Fixed columns every lead has:
+
+`company` · `full_name` · `title` · `email` · `phone` · `domain` ·
+`linkedin_url` · `location` · `source_url` · `score` · `status`
+
+Validation writes four more: `email_status`, `email_provider`,
+`email_is_role` and `email_validated_at`.
+
+### Custom columns
+
+Anything else is a custom column you declare yourself, with a label, a type and
+an optional description. Values live on the lead's `custom` object.
+
+Set **auto-research** on a column and the agent fills it in on future runs
+without you restating it in every search.
+
+Declare columns in the grid's column menu, or over the API with
+[`POST /api/leads/fields`](/api-reference/leads/create-field).
+
+<Note>
+  Columns are declared separately from values on purpose — a column you add now
+  and fill later has no data to be inferred from, so it has to exist in its own
+  right.
+</Note>
+
+## Statuses and flags
+
+| Value | Meaning |
+| --- | --- |
+| `new` | Untouched. |
+| `qualified` | You have reviewed it and want it. |
+| `contacted` | Outreach has gone out. Set automatically when an email sends. |
+| `disqualified` | Not a fit. Stays stored so it is not re-found. |
+
+Two flags are **not** statuses:
+
+- **Archived** — hidden from every view and from exports, but still stored and
+  still counted against... nothing. Archiving is how you free plan capacity
+  without deleting history.
+- **Unsubscribed** — the recipient opted out. They are excluded from every send
+  permanently.
+
+Filter by either with `?status=archived` or `?status=unsubscribed`.
+
+## Importing
+
+**Leads → Import** accepts CSV, a pasted block, or manual entry. Map your
+columns onto ManyPI fields; anything unmapped can be declared as a new custom
+column in the same step.
+
+### Duplicate handling
+
+Choose what happens when an incoming row matches a lead you already have:
+
+| Mode | Behaviour |
+| --- | --- |
+| `merge` *(default)* | Fill in blanks on the existing lead, keep what is already there. |
+| `overwrite` | Incoming values win. |
+| `skip` | Leave the existing lead untouched. |
+
+Matching is by email, falling back to domain plus name. A row with neither has
+nothing to be filed under and is skipped.
+
+### Over the API
+
+[`POST /api/leads/import`](/api-reference/leads/import-leads) takes **up to 100
+rows per request**. Chunk larger files client-side — that is what the dashboard
+importer does, and it is why a ten-thousand-row file shows real progress instead
+of a spinner that eventually times out.
+
+```bash
+curl -X POST https://app.manypi.com/api/leads/import \
+  -H "Authorization: Bearer mpi_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "duplicates": "merge",
+    "declare_fields": [
+      { "label": "Ecommerce platform", "type": "text" }
+    ],
+    "rows": [
+      {
+        "company": "Acme GmbH",
+        "full_name": "Lena Roth",
+        "title": "Head of Growth",
+        "email": "lena@acme.de",
+        "domain": "acme.de",
+        "custom": { "ecommerce_platform": "Shopify" }
+      }
+    ]
+  }'
+```
+
+The response reports exactly what happened:
+
+```json
+{
+  "created": 1,
+  "updated": 0,
+  "skippedDuplicate": 0,
+  "skippedNoIdentity": 0,
+  "skippedOverLimit": 0,
+  "failed": [],
+  "remaining": 2499,
+  "declared": ["ecommerce_platform"]
+}
+```
+
+If the workspace filled up mid-import the response still returns `200` — the
+rows that fitted were written — with `code: "lead_limit"` so your client can
+report it honestly.
+
+## Exporting
+
+[`GET /api/leads/export`](/api-reference/leads/export-leads) streams the
+filtered set as CSV, up to 10,000 rows, honouring the same `status` and `q`
+filters as the grid. Archived leads are excluded unless you ask for them.
+
+## Bulk actions
+
+Select rows and change status, archive, restore or delete in one go. Over the
+API that is `PATCH /api/leads` and `DELETE /api/leads` with up to 500 ids per
+call.
+
+```bash
+curl -X PATCH https://app.manypi.com/api/leads \
+  -H "Authorization: Bearer mpi_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{ "ids": ["8f1c…", "b207…"], "status": "qualified" }'
+```
+
+## Searching and filtering
+
+`GET /api/leads` supports:
+
+| Parameter | Effect |
+| --- | --- |
+| `q` | Free text across company, name, email and domain. |
+| `status` | A lead status, or `archived` / `unsubscribed`. |
+| `campaign` | The agent run (lead search) that produced the leads. |
+| `brand` | Narrow to one brand's leads, or `all`. |
+| `limit` / `offset` | Paging. Max 500 per page. |
+
+The response also returns `customFields`, `campaigns` (your past lead searches
+with counts), `workspaceTotal` and `leadLimit`, which is everything a client
+needs to render the grid without a second round-trip.

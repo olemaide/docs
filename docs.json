@@ -18,16 +18,50 @@
             "pages": [
               "index",
               "quickstart",
-              "development"
+              "concepts"
             ]
           },
           {
-            "group": "Features",
+            "group": "Lead generation",
             "pages": [
-              "features/authentication",
-              "features/website-to-api",
-              "features/type-safety",
-              "features/rate-limiting"
+              "leads/finding-leads",
+              "leads/managing-leads",
+              "leads/email-validation"
+            ]
+          },
+          {
+            "group": "Email outreach",
+            "pages": [
+              "outreach/overview",
+              "outreach/inboxes",
+              "outreach/sequences",
+              "outreach/campaigns",
+              "outreach/replies"
+            ]
+          },
+          {
+            "group": "The agent",
+            "pages": [
+              "agent/chat",
+              "agent/skills",
+              "agent/workflows",
+              "agent/data"
+            ]
+          },
+          {
+            "group": "Scraping & APIs",
+            "pages": [
+              "scraping/scrapers",
+              "scraping/endpoints"
+            ]
+          },
+          {
+            "group": "Platform",
+            "pages": [
+              "platform/brands-and-teams",
+              "platform/plans-and-credits",
+              "platform/api-keys",
+              "platform/integrations"
             ]
           }
         ]
@@ -36,15 +70,109 @@
         "tab": "API reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Overview",
             "pages": [
               "api-reference/introduction"
             ]
           },
           {
+            "group": "Leads",
+            "pages": [
+              "api-reference/leads/list-leads",
+              "api-reference/leads/bulk-update-leads",
+              "api-reference/leads/bulk-delete-leads",
+              "api-reference/leads/update-lead",
+              "api-reference/leads/delete-lead",
+              "api-reference/leads/start-research",
+              "api-reference/leads/list-research-profiles",
+              "api-reference/leads/save-research-profile",
+              "api-reference/leads/import-leads",
+              "api-reference/leads/export-leads",
+              "api-reference/leads/get-capacity",
+              "api-reference/leads/list-fields",
+              "api-reference/leads/create-field"
+            ]
+          },
+          {
+            "group": "Email validation",
+            "pages": [
+              "api-reference/validation/verify-emails",
+              "api-reference/validation/list-jobs",
+              "api-reference/validation/get-job"
+            ]
+          },
+          {
+            "group": "Outreach",
+            "pages": [
+              "api-reference/outreach/list-inboxes",
+              "api-reference/outreach/list-sequences",
+              "api-reference/outreach/create-sequence",
+              "api-reference/outreach/generate-email",
+              "api-reference/outreach/list-campaigns",
+              "api-reference/outreach/create-campaign",
+              "api-reference/outreach/update-campaign",
+              "api-reference/outreach/delete-campaign",
+              "api-reference/outreach/get-campaign",
+              "api-reference/outreach/enroll-leads",
+              "api-reference/outreach/unenroll-leads",
+              "api-reference/outreach/send-email",
+              "api-reference/outreach/get-stats",
+              "api-reference/outreach/list-replies",
+              "api-reference/outreach/get-insights",
+              "api-reference/outreach/list-suppressions",
+              "api-reference/outreach/add-suppressions",
+              "api-reference/outreach/remove-suppression"
+            ]
+          },
+          {
+            "group": "Agent",
+            "pages": [
+              "api-reference/agent/create-run",
+              "api-reference/agent/list-runs",
+              "api-reference/agent/get-run",
+              "api-reference/agent/delete-run",
+              "api-reference/agent/reply-to-run",
+              "api-reference/agent/cancel-run",
+              "api-reference/agent/list-skills",
+              "api-reference/agent/create-skill"
+            ]
+          },
+          {
+            "group": "Scraping",
+            "pages": [
+              "api-reference/scraping/list-scrapers",
+              "api-reference/scraping/run-scraper",
+              "api-reference/scraping/get-scraper-run-data",
+              "api-reference/scraping/list-scraper-runs"
+            ]
+          },
+          {
             "group": "Endpoints",
             "pages": [
-              "api-reference/endpoint/scrape"
+              "api-reference/endpoints/list-endpoints",
+              "api-reference/endpoints/create-endpoint",
+              "api-reference/endpoints/invoke-endpoint"
+            ]
+          },
+          {
+            "group": "Account",
+            "pages": [
+              "api-reference/account/get-user"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "MCP Server",
+        "groups": [
+          {
+            "group": "MCP Server",
+            "pages": [
+              "mcp/introduction",
+              "mcp/connect",
+              "mcp/authentication",
+              "mcp/tools",
+              "mcp/recipes"
             ]
           }
         ]
@@ -84,15 +212,15 @@
   },
   "contextual": {
     "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
   },
   "footer": {
     "socials": {

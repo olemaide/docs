@@ -1,0 +1,97 @@
+---
+title: "MCP server"
+description: "Run ManyPI's lead generation and outreach from Claude, Cursor, ChatGPT or any MCP client."
+---
+
+ManyPI hosts a public [Model Context Protocol](https://modelcontextprotocol.io)
+server. Connect it once and your AI assistant can find leads, verify addresses,
+draft sequences, create campaigns and send outreach — in conversation, using
+your ManyPI workspace.
+
+```
+https://mcp.manypi.com/mcp
+```
+
+<Columns cols={2}>
+  <Card title="Connect a client" icon="plug" href="/mcp/connect">
+    Setup for Claude, Cursor, VS Code, ChatGPT, Codex, Gemini CLI and more.
+  </Card>
+  <Card title="Tool reference" icon="wrench" href="/mcp/tools">
+    All 16 tools, their arguments and what they do.
+  </Card>
+  <Card title="Authentication" icon="shield-check" href="/mcp/authentication">
+    Sign in with your browser, or use an API key.
+  </Card>
+  <Card title="Recipes" icon="book-open" href="/mcp/recipes">
+    Complete conversations that go from ICP to launched campaign.
+  </Card>
+</Columns>
+
+## What it can do
+
+| Area | Tools |
+| --- | --- |
+| **Lead generation** | `generate_leads`, `search_leads` |
+| **Agent** | `run_agent`, `get_agent_run`, `reply_to_agent` |
+| **Outreach content** | `list_sequences`, `create_sequence`, `draft_email` |
+| **Campaigns** | `list_campaigns`, `get_campaign`, `create_campaign`, `update_campaign` |
+| **Sending** | `list_inboxes`, `enroll_leads`, `send_email`, `outreach_stats` |
+| **Scraping** | `list_scrapers`, `run_scraper`, `get_scraper_runs` |
+
+## How it is built
+
+Three properties are worth knowing before you connect it to anything.
+
+<AccordionGroup>
+  <Accordion title="The server holds no secrets" icon="key">
+    Every request carries **your** credential as `Authorization: Bearer …`, and
+    each tool forwards it to the ManyPI REST API. The MCP server itself stores
+    nothing — no keys, no tokens, no data. Authorization, rate limiting and
+    credit accounting all happen in the ManyPI API, exactly as they do for a
+    direct REST call.
+  </Accordion>
+  <Accordion title="One credential = one workspace" icon="building">
+    Whichever credential you connect determines which ManyPI workspace the tools
+    act on. To work across brands, switch brand in ManyPI, or pass brand-aware
+    parameters where the underlying endpoint supports them.
+  </Accordion>
+  <Accordion title="It is stateless" icon="layer-group">
+    A fresh server and transport are built per request, so many users with
+    different credentials are served concurrently and safely. There is no
+    session to expire and nothing to reconnect.
+  </Accordion>
+</AccordionGroup>
+
+## Tools are annotated for safety
+
+Every tool declares whether it reads, writes, or does something irreversible.
+MCP clients use those hints to decide what to run automatically and what to ask
+you about first.
+
+| Class | Meaning | Examples |
+| --- | --- | --- |
+| **Read-only** | Changes nothing. | `search_leads`, `list_campaigns`, `outreach_stats`, `draft_email` |
+| **Write** | Creates or updates ManyPI data. Additive. | `create_sequence`, `create_campaign` |
+| **Write + web** | Additive, and reaches the open internet. | `run_agent`, `generate_leads`, `run_scraper` |
+| **Destructive** | Overwrites state, or cannot be undone outside ManyPI. | `update_campaign`, `enroll_leads`, `send_email` |
+
+<Warning>
+  `enroll_leads` and `send_email` queue **real email to real people**. Nothing
+  sent can be recalled, so they are annotated destructive even though they are
+  additive inside ManyPI — clients that auto-approve plain writes should still
+  stop and ask before these. Both also require a paid ManyPI plan.
+</Warning>
+
+`draft_email` is annotated read-only despite being a POST: it returns generated
+text and persists nothing. No sequence is saved, no email is sent.
+
+## Requirements
+
+- A ManyPI account. Lead generation, validation and scraping work on the free
+  plan; **sending** requires a paid plan.
+- A client that speaks MCP over Streamable HTTP, or `mcp-remote` for stdio-only
+  clients.
+
+<Card title="Connect your client" icon="arrow-right" href="/mcp/connect" horizontal>
+  Copy-paste setup for every supported client.
+</Card>

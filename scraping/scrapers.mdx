@@ -1,0 +1,118 @@
+---
+title: "Scrapers"
+description: "Reusable, schema-validated extractors for any page."
+---
+
+A **scraper** is a saved extraction: a target URL, a schema describing the shape
+of the data you want, and the AI instructions to get it. Once saved you can run
+it from the dashboard, the API, a workflow, the agent, or an MCP client — and
+every run returns the same validated shape.
+
+Scrapers are unlimited on every plan, including Free. What you spend is crawl
+credits per page.
+
+## Creating one
+
+<Steps>
+  <Step title="Point at a URL">
+    Paste the page you want to extract from.
+  </Step>
+  <Step title="Describe the data">
+    In plain English: *"Extract the product title, price, rating and whether
+    it's in stock."* ManyPI generates a JSON schema from that.
+  </Step>
+  <Step title="Review the schema">
+    Adjust field names and types, or write the schema yourself:
+
+    ```json
+    {
+      "type": "object",
+      "properties": {
+        "title":   { "type": "string" },
+        "price":   { "type": "string" },
+        "rating":  { "type": "number" },
+        "inStock": { "type": "boolean" }
+      },
+      "required": ["title", "price"]
+    }
+    ```
+  </Step>
+  <Step title="Test">
+    Run it once and check the output before you wire anything to it.
+  </Step>
+</Steps>
+
+## Running a scraper
+
+Runs are **asynchronous**. The API accepts the job and returns immediately with
+a `runId`, so a slow page never times your request out.
+
+```bash Start a run
+curl -X POST https://app.manypi.com/api/scrape/{scraperId} \
+  -H "Authorization: Bearer mpi_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{ "url": "https://example.com/product/42" }'
+```
+
+```json 202 Accepted
+{
+  "success": true,
+  "data": {
+    "runId": "…",
+    "status": "pending",
+    "message": "Scraping job queued."
+  },
+  "metadata": {
+    "scraperId": "…",
+    "timestamp": "2026-08-14T09:12:44.000Z",
+    "creditsRemaining": 812
+  }
+}
+```
+
+`url` is optional — omit it to use the scraper's saved target, pass it to point
+the same extractor at a different page.
+
+Requires the **`scraper`** permission on your API key.
+
+### Getting the result
+
+Poll:
+
+```bash
+curl https://app.manypi.com/api/{scraperId}/data/{runId} \
+  -H "Authorization: Bearer mpi_your_api_key"
+```
+
+Or stop polling entirely and configure an outbound webhook in **Dashboard →
+Webhooks** to be notified when a run completes.
+
+`GET /api/runs?limit=20` lists recent runs across all your scrapers with their
+status and extracted data — the shape polling-based integrations like Zapier
+expect.
+
+## Errors and credits
+
+| Status | Meaning |
+| --- | --- |
+| `202` | Queued. Poll for the result. |
+| `401` | Missing, invalid or expired API key. |
+| `402` | Out of credits. |
+| `403` | The key lacks the `scraper` permission. |
+| `404` | No such scraper for this account. |
+
+Credits are consumed by the work actually performed, so a run that fails to
+fetch anything does not bill you for pages it never retrieved.
+
+## When to use a scraper vs the agent
+
+| Use a **scraper** when | Use the **agent** when |
+| --- | --- |
+| The page shape is known and stable | You do not know where the data is yet |
+| You need the same fields every time | The task spans many sites |
+| Something automated consumes the output | You want judgement, not just extraction |
+| You want it as a REST endpoint | It is a one-off question |
+
+<Card title="Publish a scraper as an API" icon="code" href="/scraping/endpoints" horizontal>
+  Turn any scraper into a typed REST endpoint at `app.manypi.com/v1/e/{slug}`.
+</Card>

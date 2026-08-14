@@ -1,0 +1,159 @@
+---
+title: "Finding leads"
+description: "Describe your ideal customer and let the agent source, enrich and save real leads."
+---
+
+Lead generation is a specialised agent run. You give it criteria; it searches
+the live web, opens candidate sites, cross-checks what it finds, and writes
+enriched leads into your workspace as it goes.
+
+## Starting a search
+
+Open **Leads → Find leads**, or call
+[`POST /api/leads/research`](/api-reference/leads/start-research).
+
+### The description does most of the work
+
+```text
+B2B SaaS companies in the DACH region selling to marketing teams,
+20–200 employees, that have raised a seed or Series A round.
+I want the founder or VP Marketing with a work email.
+Skip agencies and consultancies.
+```
+
+Write it the way you would brief a junior researcher: who they are, why they
+qualify, and what would disqualify them.
+
+### Structured criteria
+
+The fields beside the description are what the agent enforces, and what gets
+saved when you store the search as a profile.
+
+| Field | What it does |
+| --- | --- |
+| `description` | Free-text ICP. The backbone of the instruction. |
+| `count` | How many **new** leads to save. Clamped to your remaining plan capacity. |
+| `locations` | Countries, regions or cities. |
+| `industries` | Industry or vertical tags. |
+| `company_size` | Free text on purpose — `"5-50 employees"`, `"Series A"`, `"under $5M ARR"`. |
+| `titles` | Roles to reach inside each company. |
+| `keywords` | Signals a company must show (technology, marketplace presence, phrases). |
+| `exclusions` | Hard excludes. Matches are dropped, not saved and flagged. |
+| `required_fields` | Any of `email`, `phone`, `full_name`, `title`, `linkedin_url`, `location`. A lead missing a required field is not saved. |
+| `extra_columns` | Extra researched columns, written to the lead's custom fields. |
+| `sources` | Where to look — directories, marketplaces, maps, specific sites. |
+| `notes` | Anything the structured fields do not cover. |
+
+<Tip>
+  `required_fields: ["email"]` is the default and usually the right one. Adding
+  `phone` as required will cut your yield sharply, because most B2B sites do not
+  publish direct phone numbers.
+</Tip>
+
+### Extra columns
+
+`extra_columns` is where lead research turns into lead *enrichment*. Each entry
+is a name plus a description of what to look for:
+
+```json
+"extra_columns": [
+  { "name": "Ecommerce platform", "description": "Shopify, WooCommerce, custom, or unknown" },
+  { "name": "Pricing page", "description": "Direct URL to their pricing page if public" },
+  { "name": "Hiring", "description": "Are they currently hiring sales roles?" }
+]
+```
+
+Each becomes a column in the Leads grid and a key on the lead's `custom` object,
+so you can filter, export and merge on it like any other field.
+
+## Find more like these
+
+Select existing leads and choose **Find similar**. ManyPI snapshots those leads
+into the criteria and searches for companies that match their shape.
+
+Over the API this is `seed_lead_ids` on
+[`POST /api/leads/research`](/api-reference/leads/start-research). The seeds are
+copied into the saved criteria, so the search stays re-runnable even after those
+leads change.
+
+## Saved searches
+
+A search saved as a **profile** keeps its structured criteria, so you can
+re-open it, edit it and run it again. Re-running only saves companies you do not
+already have, which makes a saved search a recurring lead source rather than a
+one-off.
+
+Profiles are managed at
+[`/api/leads/research-profiles`](/api-reference/leads/list-research-profiles),
+and every run stamps the profile it came from — that is what the campaign filter
+in the Leads grid groups by.
+
+## What happens during a run
+
+<Steps>
+  <Step title="Planning">
+    The agent turns your criteria plus your brand context into a research plan.
+  </Step>
+  <Step title="Sourcing">
+    It searches and crawls: directories, company sites, marketplaces, maps and
+    whatever `sources` you named.
+  </Step>
+  <Step title="Qualifying">
+    Each candidate is checked against your criteria and exclusions. Failures are
+    dropped silently rather than saved as noise.
+  </Step>
+  <Step title="Enriching">
+    Required fields and extra columns are researched per company.
+  </Step>
+  <Step title="Saving">
+    Leads are written in batches as they are confirmed, so you see results while
+    the run is still going.
+  </Step>
+</Steps>
+
+### It will ask you questions
+
+If your criteria are ambiguous the run **pauses** and asks. In the dashboard the
+question appears in the chat. Over the API the run's status becomes `paused` and
+the question is in `result_summary`; answer with
+[`POST /api/agents/runs/{id}/reply`](/api-reference/agent/reply-to-run) and the
+same run continues.
+
+## Capacity and limits
+
+Your plan caps stored leads (50 / 2,500 / 25,000 / 100,000). Before a run
+starts, ManyPI reads your remaining capacity and **clamps `count` to it**. If
+you asked for 50 and have room for 8, the response tells you so:
+
+```json
+{
+  "run_id": "…",
+  "count": 8,
+  "clamped": { "requested": 50, "allowed": 8, "limit": 2500 }
+}
+```
+
+A completely full workspace returns `403` with `code: "lead_limit"`. Archive
+leads you are done with, or upgrade.
+
+Check headroom any time with
+[`GET /api/leads/capacity`](/api-reference/leads/get-capacity).
+
+## Cost
+
+Lead research spends **AI credits** (reasoning and extraction) and **crawl
+credits** (one per page fetched or search performed). A 25-lead search on a
+well-indexed niche typically costs a few dozen crawls; a hard niche where the
+agent has to dig costs more.
+
+## Doing it from an AI assistant
+
+With the [MCP server](/mcp/introduction) connected:
+
+```text
+Find me 25 e-commerce agencies in Germany with 5–50 employees
+and a contact email, then show me what you saved.
+```
+
+Your assistant calls `generate_leads`, polls `get_agent_run`, answers any
+clarifying question with `reply_to_agent`, and reads results with `search_leads`.

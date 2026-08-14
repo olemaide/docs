@@ -1,73 +1,83 @@
 ---
 title: "Introduction"
-description: "Turn any website into a type-safe API in seconds with ManyPI"
+description: "ManyPI is the AI sales platform that finds your leads, verifies them, and emails them for you."
 ---
 
-## Get Started with ManyPI
+## What ManyPI does
 
-Transform websites into fully-typed APIs with just a few lines of code. ManyPI makes it effortless to interact with web content programmatically.
+ManyPI is a sales platform built on an AI agent. You describe the customers you
+want; the agent goes out on the live web, finds real companies and people,
+enriches them with the fields you asked for, and saves them as leads. From there
+you verify the addresses, write a sequence, and send from your own inbox — all
+in the same workspace.
 
-<Card   title="Quick Start Guide"
-  icon="rocket"
-  href="/quickstart"
-  horizontal>
-  Get up and running in under 5 minutes with our quickstart guide.
-</Card>
-
-## Core Features
-
-Powerful capabilities to supercharge your web automation
+Everything the dashboard can do is also available over the REST API and through
+the [ManyPI MCP server](/mcp/introduction), so the same workflow runs from your
+code or from an AI agent like Claude or Cursor.
 
 <Columns cols={2}>
-  <Card
-    title="Website to API"
-    icon="globe"
-    href="/features/website-to-api"
-  >
-    Convert any website into a type-safe API endpoint instantly.
+  <Card title="Find leads" icon="crosshairs" href="/leads/finding-leads">
+    Describe your ideal customer. The agent researches the web and saves
+    enriched leads with exactly the columns you asked for.
   </Card>
-  <Card
-    title="Type Safety"
-    icon="shield"
-    href="/features/type-safety"
-  >
-    Get full TypeScript support with automatically generated types.
+  <Card title="Verify emails" icon="circle-check" href="/leads/email-validation">
+    Probe every address before you send. Dead mailboxes never cost you a bounce.
   </Card>
-  <Card
-    title="Authentication"
-    icon="key"
-    href="/features/authentication"
-  >
-    Handle authentication when implementing ManyPI API endpoints.
+  <Card title="Run outreach" icon="paper-plane" href="/outreach/overview">
+    Multi-step cold email from your own inboxes, with warmup, throttling,
+    open and reply tracking.
   </Card>
-  <Card
-    title="Rate Limiting"
-    icon="gauge"
-    href="/features/rate-limiting"
-  >
-    Built-in rate limiting to prevent abuse and ensure reliability.
+  <Card title="Read the replies" icon="inbox" href="/outreach/replies">
+    Replies land back in ManyPI, classified by sentiment and intent, with
+    suggested fixes for what is not working.
   </Card>
 </Columns>
 
-## Developer Resources
+## The rest of the platform
 
-Everything you need to build with ManyPI
+Lead generation and outreach sit on top of a general web-data agent. That layer
+is still there, and it is what makes the sales side work.
 
-  <Card
-    title="API Reference"
-    icon="code"
-    href="/api-reference">
-    Complete API documentation with examples.
+<Columns cols={2}>
+  <Card title="The agent" icon="sparkles" href="/agent/chat">
+    Chat with an agent that browses, scrapes, analyses spreadsheets and queries
+    your database — and asks you questions when it needs to.
   </Card>
+  <Card title="Scrapers" icon="spider" href="/scraping/scrapers">
+    Reusable, schema-validated extractors for any page. Run them from the
+    dashboard, the API, or on a schedule.
+  </Card>
+  <Card title="API endpoints" icon="code" href="/scraping/endpoints">
+    Publish a scraper as a typed REST endpoint at
+    `app.manypi.com/v1/e/{'{slug}'}` and call it like any other API.
+  </Card>
+  <Card title="Workflows" icon="diagram-project" href="/agent/workflows">
+    Chain steps together and trigger them on a schedule or an inbound webhook.
+  </Card>
+</Columns>
 
+## Start here
 
-## Need Help?
+<Card title="Quickstart" icon="rocket" href="/quickstart" horizontal>
+  From signup to your first campaign in about ten minutes.
+</Card>
 
-<Card
-  title="Contact us"
-  icon="comments"
-  href="https://manypi.com/contact"
-  horizontal
->
+<Card title="Core concepts" icon="cube" href="/concepts" horizontal>
+  Workspaces, brands, seats and the three credit types — read this once and the
+  rest of the docs make sense.
+</Card>
+
+<Columns cols={2}>
+  <Card title="API reference" icon="terminal" href="/api-reference/introduction">
+    Every REST endpoint, with authentication and permission scopes.
+  </Card>
+  <Card title="MCP server" icon="plug" href="/mcp/introduction">
+    Drive ManyPI from Claude, Cursor, ChatGPT or any MCP client.
+  </Card>
+</Columns>
+
+## Need help?
+
+<Card title="Contact us" icon="comments" href="https://manypi.com/contact" horizontal>
   Get support, ask questions, and share your thoughts.
 </Card>

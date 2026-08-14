@@ -1,0 +1,134 @@
+---
+title: "Replies and deliverability"
+description: "Everything that comes back: replies, sentiment, bounces, unsubscribes and suppressions."
+---
+
+Reply capture is not a reporting nicety. It is what **stops a sequence** when
+someone answers and what **detects bounces** before they wreck an inbox — which
+is why every paid plan gets it, not just the top tier.
+
+## The Replies inbox
+
+**Outreach → Replies** shows everything that came back, filterable by campaign
+and kind:
+
+| Kind | What it is |
+| --- | --- |
+| `reply` | A human answered. |
+| `auto_reply` | Out-of-office or an automated acknowledgement. |
+| `bounce` | The message could not be delivered. |
+
+Over the API:
+[`GET /api/outreach/replies`](/api-reference/outreach/list-replies), with
+`?campaign=`, `?kind=`, `?sentiment=`, `?limit=` and `?offset=`.
+
+## Reply intelligence
+
+<Info>Pro and Business plans.</Info>
+
+Replies are classified so you can triage a hundred of them in a minute:
+
+| Sentiment | Meaning |
+| --- | --- |
+| `positive` | Interested. Follow up now. |
+| `neutral` | Acknowledged, no clear signal. |
+| `negative` | Not interested. |
+| `objection` | Interested but blocked — price, timing, incumbent. |
+| `unsubscribe` | Asking to be removed. |
+| `ooo` | Out of office. |
+| `referral` | Pointing you at the right person. |
+
+Each classified reply also carries an `intent`, a short `summary` and a
+`sentiment_score`, plus workspace-level **insights** at
+[`GET /api/outreach/insights`](/api-reference/outreach/get-insights) — patterns
+across your replies and concrete, approvable suggestions for what to change.
+
+<Note>
+  On plans without reply intelligence the sentiment fields are stripped from the
+  API response entirely, not merely hidden in the UI — the endpoint is reachable
+  with an API key, and a client-side gate is not a gate.
+</Note>
+
+## Bounces
+
+A bounce is recorded against the send, the lead and the inbox:
+
+- the lead's `email_status` is set to the failing status, so it is never emailed
+  again,
+- the enrollment stops,
+- the inbox's 24-hour bounce rate updates, and if it crosses the threshold the
+  **bounce guard pauses that inbox automatically**.
+
+Hard bounces are permanent (the mailbox does not exist); soft bounces are
+transient (full mailbox, temporary server failure) and are treated far less
+harshly.
+
+<Card title="Prevent bounces at the source" icon="circle-check" href="/leads/email-validation" horizontal>
+  Validate before you enroll. It is the fix for nearly every bounce problem.
+</Card>
+
+## Unsubscribes
+
+Every campaign email can carry an unsubscribe link. When someone uses it:
+
+1. the lead is flagged `unsubscribed`,
+2. their address is added to the workspace suppression list,
+3. all remaining steps for them are cancelled.
+
+Unsubscribed leads still appear in the grid — filter with
+`?status=unsubscribed` — so you keep the record without ever contacting them
+again.
+
+## Suppression list
+
+The workspace's do-not-contact list. Nothing on it is ever sent to, by any
+campaign, from any inbox, in any brand.
+
+Addresses land there from unsubscribes, hard bounces, and manual additions.
+
+<CodeGroup>
+
+```bash Add addresses
+curl -X POST https://app.manypi.com/api/outreach/suppressions \
+  -H "Authorization: Bearer mpi_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{ "emails": ["someone@example.com", "nope@example.org"] }'
+```
+
+```bash Export the list
+curl "https://app.manypi.com/api/outreach/suppressions?format=csv" \
+  -H "Authorization: Bearer mpi_your_api_key"
+```
+
+```bash Remove one
+curl -X DELETE "https://app.manypi.com/api/outreach/suppressions?email=someone@example.com" \
+  -H "Authorization: Bearer mpi_your_api_key"
+```
+
+</CodeGroup>
+
+<Note>
+  Removing an address only clears the block. It does not re-enroll anyone, so a
+  mistaken removal cannot by itself restart emails to someone who opted out.
+</Note>
+
+Import your existing do-not-contact list here on day one — customers,
+competitors, anyone who has already asked you to stop.
+
+## Staying compliant
+
+ManyPI gives you the machinery; using it correctly is on you.
+
+- Include a working unsubscribe link and honour it immediately (ManyPI does this
+  for you automatically).
+- Use a real, monitored reply-to address and a genuine physical address in your
+  signature where required.
+- Do not disguise who you are or what the message is about.
+- Cold B2B email is regulated differently in different jurisdictions — GDPR in
+  the EU, CAN-SPAM in the US, PECR in the UK. Know which applies to the people
+  you are writing to.
+
+<Warning>
+  This is not legal advice. If you are sending at volume into the EU, get the
+  legitimate-interest basis for your outreach reviewed by someone qualified.
+</Warning>

@@ -1,61 +1,60 @@
-# ManyPI Documentation
+# ManyPI Docs
 
-Welcome to the official ManyPI documentation! This comprehensive guide will help you get started with ManyPI's web data aggregation platform and make the most out of its powerful features.
+Documentation for [ManyPI](https://manypi.com) — the AI sales platform that
+finds leads, verifies them, and runs cold-email outreach, built on a web-data
+agent.
 
-## What is ManyPI?
+Published with [Mintlify](https://mintlify.com).
 
-TLDR: With ManyPI, you can turn any website into a type-save API.
+## Structure
 
-ManyPI is a powerful web data aggregator that allows you to extract structured data from any website with ease. With our intuitive API and powerful features, you can collect, process, and analyze web data at scale.
+| Tab | Directory | Covers |
+| --- | --- | --- |
+| **Guides** | `leads/`, `outreach/`, `agent/`, `scraping/`, `platform/` | Product documentation, from quickstart to plan limits. |
+| **API reference** | `api-reference/` | Every REST endpoint, generated from `api-reference/openapi.json`. |
+| **MCP Server** | `mcp/` | Connecting ManyPI to Claude, Cursor, ChatGPT and other MCP clients. |
 
-## Getting Started
+Navigation lives in [`docs.json`](docs.json). Every page must be listed there to
+appear in the sidebar.
 
-New to ManyPI? Start here:
+## Local development
 
-- [Quick Start Guide](./getting-started/quick-start.mdx) - Get up and running in minutes
-- [Installation Guide](./getting-started/installation.mdx) - Set up ManyPI in your environment
-- [Configuration](./getting-started/configuration.mdx) - Configure ManyPI for your needs
-- [Your First Scraper](./guides/creating-scrapers.mdx) - Learn how to create your first web scraper
+```bash
+npm i -g mint
+mint dev
+```
 
-## API Reference
+Opens a preview at `http://localhost:3000`.
 
-Complete reference for ManyPI's API:
+Check for broken links before pushing:
 
-- [Authentication](./api-reference/authentication.mdx) - How to authenticate with the API
-- [Scraping API](./api-reference/scraping.mdx) - Reference for the scraping endpoints
-- [Rate Limiting](./api-reference/rate-limiting.mdx) - Understand API rate limits
+```bash
+mint broken-links
+```
 
-## Guides
+## Editing the API reference
 
-Learn how to make the most of ManyPI:
+Endpoint pages are thin MDX stubs — a title plus an `openapi` frontmatter key
+pointing at an operation:
 
-- [First Steps](./guides/first-steps.mdx) - Your journey with ManyPI begins here
-- [Creating Scrapers](./guides/creating-scrapers.mdx) - Build custom web scrapers
-- [Advanced Usage](./guides/advanced-usage.mdx) - Advanced techniques and patterns
-- [Best Practices](./guides/best-practices.mdx) - Recommended practices for reliable scraping
+```mdx
+---
+title: "List leads"
+openapi: "GET /api/leads"
+---
+```
 
-## FAQ & Help
+All the real content (parameters, schemas, examples, permission notes) lives in
+[`api-reference/openapi.json`](api-reference/openapi.json). Edit the spec, not
+the stubs.
 
-Find answers to common questions:
+To add an endpoint:
 
-- [General Questions](./faq/general.mdx) - Common questions about ManyPI
-- [Troubleshooting](./troubleshooting/common-issues.mdx) - Solutions to common issues
-- [API Status](https://status.manypi.com) - Check the status of ManyPI's services
+1. Add the operation to `openapi.json` with a `summary`, a `description` naming
+   the required permission, and an example.
+2. Create the stub MDX under `api-reference/<group>/<slug>.mdx`.
+3. Add the page path to the matching group in `docs.json`.
 
-## Support & Community
+## Deployment
 
-We're here to help you succeed with ManyPI:
-
-- [Help Center](https://help.manypi.com) - Detailed guides and tutorials
-- [Community Forum](https://community.manypi.com) - Get help from the ManyPI community
-- [Contact Support](mailto:support@manypi.com) - Email our support team
-- [Status Page](https://status.manypi.com) - Check service status
-- [Changelog](https://changelog.manypi.com) - Latest updates and releases
-
-## Contributing
-
-Interested in contributing to ManyPI's documentation? Check out our [Contributing Guide](https://github.com/manypi/docs/blob/main/CONTRIBUTING.md) to get started.
-
-## License
-
-© 2025 ManyPI. All rights reserved. [Terms of Service](https://manypi.com/terms) | [Privacy Policy](https://manypi.com/privacy)
+Changes to the default branch deploy automatically via the Mintlify GitHub app.

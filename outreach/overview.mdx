@@ -1,0 +1,98 @@
+---
+title: "Outreach overview"
+description: "How cold email works in ManyPI, end to end."
+---
+
+ManyPI sends cold email from **your own mailboxes**, not from a shared ManyPI
+domain. That means your deliverability is yours: your domain, your reputation,
+your replies landing in your inbox.
+
+## The four pieces
+
+<Steps>
+  <Step title="Inbox">
+    A mailbox you connect, over Gmail/Outlook OAuth or plain SMTP. It carries
+    the daily cap, the warmup schedule and the health score.
+  </Step>
+  <Step title="Sequence">
+    The email steps: step 1 plus timed follow-ups, with merge variables so one
+    template personalises across every lead.
+  </Step>
+  <Step title="Campaign">
+    Binds one sequence to one inbox, and carries the send window, daily limit,
+    tracking and priority.
+  </Step>
+  <Step title="Enrollment">
+    A lead placed into a campaign. ManyPI schedules the steps, sends them within
+    the caps, and stops the moment they reply.
+  </Step>
+</Steps>
+
+```
+Leads ──enroll──▶ Campaign ──uses──▶ Sequence
+                     │
+                     └──sends through──▶ Inbox ──▶ Prospect
+                                                      │
+                     Replies ◀──────────────────────┘
+```
+
+## The sending loop
+
+ManyPI's scheduler runs continuously and decides, for every due enrollment,
+whether it may send right now:
+
+1. Is the campaign active and inside its send window (days of week, hours,
+   timezone)?
+2. Has the inbox hit today's cap? The cap is the **warmup-aware** number, not
+   the raw daily limit.
+3. Has the campaign hit its own daily limit?
+4. Is the address suppressed, unsubscribed or known-undeliverable?
+5. Has the lead replied? If so, remaining steps are cancelled.
+
+Sends are **staggered**, not fired in a burst — twenty emails at 09:00:00 looks
+exactly like what it is.
+
+## What stops a sequence
+
+| Event | Effect |
+| --- | --- |
+| Lead replies | All remaining steps cancelled for that lead. |
+| Lead unsubscribes | Cancelled, and the address is suppressed workspace-wide. |
+| Hard bounce | Cancelled, address marked undeliverable, never retried. |
+| Campaign paused | All sends held; progress is kept and resumes on unpause. |
+| Bounce rate spike | The **inbox** is paused automatically to protect it. |
+
+## Plan gates
+
+Sending to leads requires a **paid plan**. Free workspaces can connect an
+inbox, build sequences, create campaigns and send test emails to themselves —
+they just cannot enroll leads or send to them.
+
+| | Free | Starter | Pro | Business |
+| --- | --- | --- | --- | --- |
+| Send to leads | — | ✓ | ✓ | ✓ |
+| Emails / seat / month | — | 1,000 | 5,000 | 20,000 |
+| Inboxes / seat | 1 (setup only) | 2 | 5 | 15 |
+| Inbox warmup | — | ✓ | ✓ | ✓ |
+| Open & reply tracking | — | ✓ | ✓ | ✓ |
+| A/B variants | — | — | ✓ | ✓ |
+| Reply sentiment & fixes | — | — | ✓ | ✓ |
+
+Hitting a gate over the API returns `403` with `code: "outreach_locked"`.
+
+## Where to go next
+
+<Columns cols={2}>
+  <Card title="Inboxes & warmup" icon="inbox" href="/outreach/inboxes">
+    Connect Gmail, Outlook or SMTP, and ramp a new domain safely.
+  </Card>
+  <Card title="Sequences" icon="list-ol" href="/outreach/sequences">
+    Steps, merge variables, threading, AI drafting and A/B variants.
+  </Card>
+  <Card title="Campaigns" icon="paper-plane" href="/outreach/campaigns">
+    Send windows, daily limits, enrollment and per-campaign analytics.
+  </Card>
+  <Card title="Replies & deliverability" icon="reply" href="/outreach/replies">
+    Sentiment, bounces, suppressions and unsubscribes.
+  </Card>
+</Columns>

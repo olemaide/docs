@@ -1,0 +1,92 @@
+---
+title: "Data, Vault and Studio"
+description: "Where the agent's outputs live, and how to point it at your own data."
+---
+
+## Vault
+
+Every artifact a run produces — extracted datasets, CSVs, generated files —
+lands in the **Vault**. Artifacts stay linked to the run that made them, so you
+can always trace a number back to the job that produced it.
+
+Download them from the dashboard, or over the API: a run's detail response
+includes each artifact with a signed `download_url` valid for one hour.
+
+```bash
+curl https://app.manypi.com/api/agents/runs/{id} \
+  -H "Authorization: Bearer mpi_your_api_key"
+```
+
+```json
+{
+  "id": "…",
+  "status": "completed",
+  "result_summary": "Extracted 412 rows across 9 pages.",
+  "artifacts": [
+    {
+      "name": "results.csv",
+      "mime_type": "text/csv",
+      "row_count": 412,
+      "download_url": "https://…"
+    }
+  ]
+}
+```
+
+## Connections
+
+<Info>Beta.</Info>
+
+Connect your own database and the agent can query it as part of a run — join
+your CRM data against freshly scraped leads, check which prospects are already
+customers, or analyse a table in plain language.
+
+Supported: **PostgreSQL**, **MySQL**, **BigQuery**.
+
+```bash
+curl -X POST https://app.manypi.com/api/connections \
+  -H "Authorization: Bearer mpi_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Analytics replica",
+    "type": "postgres",
+    "config": { "host": "db.example.com", "port": 5432, "database": "analytics", "username": "readonly", "ssl": true },
+    "secret": "…"
+  }'
+```
+
+Security specifics worth knowing:
+
+- The credential goes straight into an encrypted vault. It is **never** returned
+  by the API — listing connections returns configuration and status only.
+- Queries run from a worker with a **static egress IP**, so you can allowlist it
+  on your side.
+- ManyPI records whether the connection has been verified read-only. Give it a
+  read-only user; there is no reason for it to have anything more.
+
+Test a connection any time with `POST /api/connections/{id}/test`.
+
+## MCP connectors
+
+Connect third-party MCP servers to your workspace and their tools become
+available to the ManyPI agent inside a run. Credentials are encrypted on the way
+in and never returned.
+
+Manage them in **Settings → Integrations**, or at
+`/api/mcp-connectors`. ManyPI ships a catalogue of presets for common servers,
+and OAuth-based servers are authorised through a browser handshake.
+
+<Note>
+  This is the *inbound* direction: other people's tools inside ManyPI. For the
+  outbound direction — ManyPI's tools inside Claude, Cursor or ChatGPT — see the
+  [MCP server](/mcp/introduction) tab.
+</Note>
+
+## Studio
+
+<Info>Pro and Business plans.</Info>
+
+The visualization Studio turns a dataset — a scraper run, an artifact, a
+database query result — into charts you can save, share by link, and embed.
+Charts also render inline in chat when the agent decides a picture is clearer
+than a table.

@@ -1,44 +1,142 @@
 ---
-title: 'Introduction'
-description: 'How to use the ManyPI API'
+title: "Introduction"
+description: "The REST API behind ManyPI — leads, validation, outreach, agents and scraping."
 ---
 
-<Note>
-ManyPI provides a powerful REST API that allows you to convert any website into a fully-typed API endpoint. Our API is designed to be simple, intuitive, and developer-friendly.
-</Note>
+Everything the ManyPI dashboard does is available over REST. Same endpoints,
+same permissions, same credit accounting.
 
 ## Base URL
-
-All API endpoints are relative to the following base URL:
 
 ```
 https://app.manypi.com
 ```
 
+Published API endpoints live under the same host, on the `/v1/e/` path.
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file. Keep your API key secure and never expose it in client-side code.
+Send a ManyPI API key as a bearer token on every request:
 
-
-```json
---header 'Authorization: Bearer <token>'
+```bash
+curl https://app.manypi.com/api/user \
+  -H "Authorization: Bearer mpi_your_api_key"
 ```
 
-## Rate Limits
+Create keys in **Settings → API keys**. That `/api/user` call is the cheapest
+way to confirm a key works — it returns the owning account, the key's
+permissions and its rate limit.
 
-The default rate limit of 60 requests per minute applies per active API key. The number of API keys that can be active in parallel depends on the subscription tier of the user's account. API rate limits are subject to change. API keys may be revoked to allow the creation of new keys. Revoked API keys remain associated with your account, but no longer count as active API keys.
+OAuth 2.1 access tokens are accepted anywhere a key is, and resolve to the same
+user. They are how [MCP clients](/mcp/authentication) connect without a key.
 
-- 60 requests per minute
+<Warning>
+  Keys are secrets. Keep them server-side, one per integration, and scoped to
+  the least they need. Never ship one in frontend JavaScript or commit one to a
+  repository.
+</Warning>
 
-## Response Format
+## Permissions
 
-All API responses are in JSON format and include standard HTTP status codes.
-For more details on API responses, view the API endpoint page, provided on our API reference. 
+Keys carry only the permissions you grant them. A call outside a key's
+permissions is rejected exactly as an invalid key would be.
 
-<Card   title="View API endpoints"
-  icon="rocket"
-  href="/api-reference/endpoint/scrape"
-  horizontal>
-  Reference the ManyPI API endpoints for structured web data gathering.
+| Permission | Grants |
+| --- | --- |
+| `read` | View scrapers, runs, results, leads and usage. |
+| `write` | Create, update and delete scrapers, endpoints, folders and saved leads. |
+| `scraper` | Start scrape runs. **Spends crawl credits.** |
+| `agents` | Start agent runs, reply to them, cancel them. **Spends credits.** |
+| `endpoints:invoke` | Call your published endpoints at `/v1/e/…`. |
+| `leads:validate` | Verify lead email addresses. **Spends validation credits.** |
+| `outreach:send` | Send email from your inboxes and enroll leads. |
+| `*` | Full access. |
+
+Each endpoint below states which permission it needs.
+
+<Card title="API keys and permissions" icon="key" href="/platform/api-keys" horizontal>
+  Rotation, revocation, and the full route-to-permission mapping.
+</Card>
+
+## Rate limits
+
+**60 requests per minute** per active key. OAuth tokens get the same. Exceeding
+the limit returns `429`; the window is one minute, so back off and retry.
+
+How many keys you can keep active in parallel depends on your plan. Revoked keys
+stop counting toward that limit.
+
+## Responses
+
+All responses are JSON. Successful calls return `200`, except:
+
+| Code | When |
+| --- | --- |
+| `201` | A resource was created. |
+| `202` | Work was accepted and is running asynchronously. Poll for the result. |
+
+## Errors
+
+Errors carry a human-readable `error`, and — where you might want to branch on
+it — a machine-readable `code`.
+
+```json
+{
+  "error": "Your workspace is storing all 2,500 leads your plan holds.",
+  "code": "lead_limit",
+  "used": 2500,
+  "limit": 2500
+}
+```
+
+| Status | Meaning |
+| --- | --- |
+| `400` | The body or parameters failed validation. The message says which field. |
+| `401` | Missing, invalid or expired credential — or a key lacking the required permission. |
+| `402` | Out of credits, with overage off. |
+| `403` | A plan gate, a seat limit, or a permission the key does not hold. |
+| `404` | No such resource in this workspace. |
+| `409` | A conflict — a slug already in use, or a run that is still working. |
+| `429` | Rate limited. |
+| `5xx` | Something broke on our side. Retry with backoff. |
+
+### Codes worth handling
+
+| Code | Meaning | What to do |
+| --- | --- | --- |
+| `lead_limit` | Lead storage is full. | Archive leads, or upgrade. |
+| `outreach_locked` | Sending requires a paid plan. | Upgrade. |
+| `validation_credits_exhausted` | Out of validation credits. | Buy credits or enable overage. |
+
+## Asynchronous work
+
+Anything that browses the web is asynchronous. The pattern is always the same:
+
+<Steps>
+  <Step title="Start it">
+    `POST` returns a run id immediately — `run_id` for agent work, `runId` for
+    scrapes.
+  </Step>
+  <Step title="Poll it">
+    `GET` the run until its status is terminal.
+  </Step>
+  <Step title="Handle a pause">
+    An agent run may reach `paused`, meaning it has a question for you. Read it
+    from `result_summary` and answer with
+    `POST /api/agents/runs/{id}/reply` — the same run resumes.
+  </Step>
+</Steps>
+
+Prefer not to poll? Configure an outbound webhook in **Dashboard → Webhooks**.
+
+## Workspaces and brands
+
+A credential belongs to one workspace, and every call acts on that workspace.
+
+Leads are workspace-pooled. Inboxes, campaigns and sequences are **brand**-scoped
+— most list endpoints accept `?brand=<id>` to narrow or `?brand=all` to widen
+across the workspace.
+
+<Card title="Core concepts" icon="cube" href="/concepts" horizontal>
+  Workspaces, brands, seats and the three credit types.
 </Card>

@@ -1,0 +1,157 @@
+---
+title: "Recipes"
+description: "Complete conversations that go from an ICP description to a launched campaign."
+---
+
+These are things to actually say to your assistant once the
+[MCP server is connected](/mcp/connect). Each shows the tools involved so you
+can see what is happening underneath.
+
+## Find leads and review them
+
+```text
+Find me 25 e-commerce agencies in Germany and Austria with 5–50
+employees that build Shopify stores. I need a contact email and
+the founder or head of growth. Then show me what you saved.
+```
+
+`generate_leads` → `get_agent_run` → `search_leads`
+
+The run is asynchronous, so your assistant will poll. If the agent needs a
+clarification the run goes `paused` with the question in `result_summary`; your
+assistant answers it with `reply_to_agent` and the **same** run continues.
+
+## Refine an existing search
+
+```text
+That list has too many one-person shops. Find 25 more, but only
+agencies with a real team page and at least five people.
+```
+
+`reply_to_agent` on the finished run — it starts a follow-up in the same
+conversation, inheriting the lead-generation playbook, so results keep landing
+in your leads rather than in a chat message.
+
+## Draft a sequence
+
+```text
+Draft a three-step cold email sequence for these leads. We help
+agencies find new clients without cold-calling. Ask for a
+15-minute call. Keep it under 100 words per email.
+```
+
+`draft_email` with `mode: "sequence"`. Nothing is saved yet — read it, ask for
+edits, and only then:
+
+```text
+Good. Save that as a sequence called "Agency outbound Q3".
+```
+
+`create_sequence`
+
+## Launch a campaign
+
+```text
+Which inboxes do I have?
+```
+
+`list_inboxes` — check the health score and today's remaining cap before you
+commit to a volume.
+
+```text
+Create a campaign called "DACH agencies Q3" using that sequence
+and my lena@getacme.com inbox, capped at 40 emails a day.
+```
+
+`create_campaign`
+
+```text
+Enroll the 25 leads from the search into it.
+```
+
+`enroll_leads`
+
+<Warning>
+  This queues real email. Your client should ask before running it — that is why
+  the tool is annotated destructive. Enroll a handful first and read what
+  actually goes out.
+</Warning>
+
+## Check on a running campaign
+
+```text
+How is the DACH agencies campaign doing? Show me the per-step
+breakdown.
+```
+
+`list_campaigns` → `get_campaign`
+
+The per-step numbers are the useful part: a healthy step-1 open rate with no
+replies is an offer problem, not a subject-line problem.
+
+```text
+Give me the last two weeks of sending across the whole workspace.
+```
+
+`outreach_stats`
+
+## Pause everything
+
+```text
+Pause all my active campaigns.
+```
+
+`list_campaigns` → `update_campaign` per campaign. Progress is kept; resuming
+picks up where it stopped.
+
+## A one-off email
+
+```text
+Send a short note to the lead at acme.de from my lena@ inbox —
+they replied on LinkedIn and asked for the pricing page.
+```
+
+`search_leads` → `send_email`
+
+## Scrape something
+
+```text
+Run my "competitor pricing" scraper against
+https://example.com/pricing and show me what came back.
+```
+
+`list_scrapers` → `run_scraper` → `get_scraper_runs`
+
+## Chain it with your own work
+
+Because MCP clients hold several servers at once, ManyPI composes with whatever
+else you have connected:
+
+```text
+Take the leads from that search, look up each company in our
+CRM, and only enroll the ones that aren't already customers.
+```
+
+`search_leads` → your CRM's tools → `enroll_leads`
+
+## Habits worth keeping
+
+<AccordionGroup>
+  <Accordion title="Read before you send" icon="eye">
+    Ask to see the drafted email and the lead list in the conversation before
+    enrolling. It costs one message and prevents the mistake that cannot be
+    undone.
+  </Accordion>
+  <Accordion title="Start with five leads" icon="flask">
+    Enroll a handful, read what actually lands in the recipient's inbox, then
+    scale.
+  </Accordion>
+  <Accordion title="Give the assistant a research-only key" icon="key">
+    A key without `outreach:send` lets an assistant do all the finding and
+    drafting while sending stays under your own hand.
+  </Accordion>
+  <Accordion title="Check inbox health before a big push" icon="heart-pulse">
+    `list_inboxes` first. A paused inbox or a low health score means the volume
+    you are planning will not go out anyway.
+  </Accordion>
+</AccordionGroup>

@@ -1,0 +1,107 @@
+---
+title: "The agent"
+description: "Chat with an agent that browses, scrapes, analyses and acts on your workspace."
+---
+
+The chat at the centre of the dashboard is a full agent, not a chatbot. It
+browses the live web, runs your scrapers, reads spreadsheets, queries your
+connected databases, saves leads, and asks you questions when it is unsure.
+
+## Runs
+
+Every message that requires work becomes a **run**:
+
+```
+queued → planning → running → completed
+                  ↘ paused (waiting on you)
+                  ↘ failed / cancelled
+```
+
+While a run is going you see its steps stream live. When it finishes you get a
+result summary plus any **artifacts** — CSV files, datasets, documents — which
+stay downloadable from the run.
+
+Over the API, runs are
+[`POST /api/agents/runs`](/api-reference/agent/create-run) and
+[`GET /api/agents/runs/{id}`](/api-reference/agent/get-run).
+
+## It asks questions
+
+When your instruction is ambiguous, the agent **pauses and asks** instead of
+guessing. That is a feature: a lead search that guesses wrongly about your ICP
+spends real credits producing the wrong list.
+
+In the dashboard, answer in the chat. Headlessly:
+
+<Steps>
+  <Step title="Poll the run">
+    `GET /api/agents/runs/{id}` returns `status: "paused"` and the question in
+    `result_summary`.
+  </Step>
+  <Step title="Answer it">
+    `POST /api/agents/runs/{id}/reply` with `{ "message": "…" }` resumes the
+    **same** run mid-thought — no new run, no lost context.
+  </Step>
+</Steps>
+
+Replying to a run that has already finished starts a follow-up run in the same
+conversation, inheriting its context and playbook. So *"find 25 more like
+those"* keeps saving leads rather than starting from nothing.
+
+Pass `"interrupt": true` to stop a still-working run and immediately start a new
+one with your message.
+
+## Cancelling
+
+[`POST /api/agents/runs/{id}/cancel`](/api-reference/agent/cancel-run) stops a
+run right away. Cancellation is authoritative, not advisory — the run is marked
+cancelled immediately, so a wedged executor cannot keep it "running" forever and
+occupying one of your parallel-run slots.
+
+## What the agent can do
+
+| Capability | Notes |
+| --- | --- |
+| Search and browse the web | Costs crawl credits per page. |
+| Run your saved scrapers | Structured, schema-validated extraction. |
+| Find and enrich leads | The `lead_generation` playbook — see [Finding leads](/leads/finding-leads). |
+| Analyse spreadsheets and files | Upload them or point at Vault artifacts. |
+| Query connected databases | Read-only Postgres, MySQL or BigQuery — see [Data](/agent/data). |
+| Build charts | The visualization Studio (Pro and Business). |
+| Call your MCP connectors | Third-party MCP servers you have connected. |
+
+## Playbooks and sources
+
+A run can be pointed at specific inputs and behaviours:
+
+| Field | Meaning |
+| --- | --- |
+| `goal` | What you want, in plain language. |
+| `playbook` | A named behaviour, e.g. `lead_generation`. |
+| `sources` | Files, scraper runs or URLs to ground the run in. |
+| `output_schema` | A JSON schema the result must conform to. |
+| `max_steps` / `max_pages` | Budget guards for a long run. |
+
+## Conversations, folders and brands
+
+Runs hang off **conversations**, which are scoped to your workspace and narrowed
+to the brand you are working in. `?brand=all` widens a listing to every brand in
+the workspace — useful for agencies — but never past the workspace.
+
+Organise conversations into **folders** from the sidebar.
+
+## Parallel runs
+
+| Plan | Runs at once |
+| --- | --- |
+| Free | 1 |
+| Starter | 2 |
+| Pro | 5 |
+| Business | 10 |
+
+Pro and Business also get the full-size model with configurable reasoning
+effort; lower tiers run on the lighter models.
+
+<Card title="Skills" icon="wand-magic-sparkles" href="/agent/skills" horizontal>
+  Save an instruction set as a reusable, selectable playbook.
+</Card>

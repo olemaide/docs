@@ -1,0 +1,96 @@
+---
+title: "MCP authentication"
+description: "Browser sign-in or an API key — how each works and which to choose."
+---
+
+The MCP server accepts two credentials, and both resolve to the same ManyPI
+user. Either way the server itself stores nothing: it forwards your credential
+to the ManyPI REST API on every call, which is where authorization, rate
+limiting and credit accounting happen.
+
+## Option 1 — Sign in with your browser (OAuth 2.1)
+
+Supported by **Claude Code**, **Claude.ai & Desktop**, **Cursor** and
+**VS Code**.
+
+Nothing to paste. The client registers itself with ManyPI, opens a browser, you
+approve, and it connects.
+
+<Steps>
+  <Step title="Add the server without a header">
+    ```bash
+    claude mcp add --transport http manypi https://mcp.manypi.com/mcp -s user
+    ```
+  </Step>
+  <Step title="The client discovers the auth flow">
+    Its first call gets a `401` carrying a `WWW-Authenticate` challenge that
+    points at ManyPI's protected-resource document, which names the
+    authorization server and its dynamic-registration endpoint.
+  </Step>
+  <Step title="You approve">
+    Your browser opens ManyPI's consent screen. Approve, and the client receives
+    an access token.
+  </Step>
+  <Step title="It just works">
+    Every subsequent tool call carries that token.
+  </Step>
+</Steps>
+
+### Why prefer it
+
+- No long-lived secret sitting in a config file.
+- Revocable per client from **Settings → Connected apps** — revoking kills that
+  client's sessions and invalidates its tokens immediately, so a connected agent
+  stops being able to act as you the moment you say so.
+- Standards-based: RFC 7591 dynamic client registration, RFC 9728
+  protected-resource metadata, OAuth 2.1 with PKCE.
+
+<Note>
+  Reviewing and revoking grants is a session-only operation. An API key or an
+  OAuth token cannot enumerate or tear down your other connections — you have to
+  be signed in to the dashboard.
+</Note>
+
+## Option 2 — API key
+
+Works with **every** client.
+
+Create a key in **Settings → API keys** and send it as a header:
+
+```
+Authorization: Bearer mpi_your_api_key
+```
+
+### Which permissions to grant
+
+| Doing this over MCP | Needs |
+| --- | --- |
+| `search_leads`, `list_*`, `get_*`, `outreach_stats`, `draft_email` | `read` |
+| `generate_leads`, `run_agent`, `reply_to_agent` | `agents` |
+| `create_sequence`, `create_campaign`, `update_campaign` | `write` |
+| `run_scraper` | `scraper` |
+| `enroll_leads`, `send_email` | `outreach:send` |
+
+A key that lacks a permission fails that tool with a permission error while the
+rest keep working — so you can hand an assistant a research-only key and keep
+sending under your own control.
+
+<Warning>
+  A key with `outreach:send` can email your prospects from your domain. Keep it
+  out of shared configs and out of version control.
+</Warning>
+
+<Card title="API keys and permissions" icon="key" href="/platform/api-keys" horizontal>
+  The full permission catalogue, rate limits and rotation guidance.
+</Card>
+
+## Scope of a connection
+
+One credential means one ManyPI workspace. The tools act on whichever workspace
+that credential belongs to, using the brand you are currently working in.
+
+## Rate limits
+
+60 requests per minute, whether you authenticate with a key or an OAuth token.
+A burst of tool calls in one conversation is well inside that; a runaway loop is
+not, and will start receiving `429`.

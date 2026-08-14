@@ -1,273 +1,178 @@
 ---
 title: "Quickstart"
-description: "Extract structured data from any website in minutes with AI-powered scraping"
+description: "Find your first leads, verify them, and send your first campaign."
 ---
 
-## Get started in two ways
+This walkthrough takes you from a new account to a live cold-email campaign.
+Every step also has an API and MCP equivalent, linked as you go.
 
-Choose your preferred method: use the web interface for quick testing or integrate via API for production use.
+<Note>
+  The free plan finds and stores up to 50 leads and includes 50 email
+  validations, so you can complete steps 1–3 without paying. **Sending** to
+  leads (step 5) requires a paid plan.
+</Note>
 
-## Option 1: Web Interface (No Code)
-
-Perfect for testing and one-off scraping tasks.
-
-### Step 1: Create your account
+## Step 1 — Create your workspace
 
 <Steps>
   <Step title="Sign up">
-    Go to [app.manypi.com](https://app.manypi.com) and create your free account. You'll get 20,000 credits to start.
+    Go to [app.manypi.com](https://app.manypi.com) and create an account.
   </Step>
-  <Step title="Verify email">
-    Check your inbox and verify your email address to activate your account.
+  <Step title="Verify your email">
+    Confirm the address so the workspace is activated.
+  </Step>
+  <Step title="Describe your brand">
+    In **Settings → Brands**, tell ManyPI what you sell: website, a short
+    description, your value proposition and who you sell to.
+
+    This is not paperwork. The brand is injected into every lead search (so the
+    agent can judge *"would this company want it?"*) and into every AI-drafted
+    email. Skipping it is the single most common reason results feel generic.
   </Step>
 </Steps>
 
-### Step 2: Create your first scraper
+## Step 2 — Find your first leads
 
-<AccordionGroup>
-  <Accordion icon="wand-magic-sparkles" title="Use AI to generate your scraper">
-    1. Click **"Create Scraper"** in your dashboard
-    2. Enter a target URL (e.g., `https://example.com/product`)
-    3. Describe what data you want to extract in plain English:
-       - "Extract the product title, price, and rating"
-       - "Get all article titles and publication dates"
-       - "Scrape company name, location, and job listings"
-    4. Click **"Generate Schema"** - AI will create the data structure
-    5. Review and adjust the schema if needed
-    6. Click **"Create Scraper"**
-    
-    <Tip>Be specific in your prompt for better results. Include field names and data types you expect.</Tip>
-  </Accordion>
-  
-  <Accordion icon="code" title="Or define schema manually">
-    If you prefer full control, you can manually define your JSON schema:
+Open **Leads → Find leads** and describe your ideal customer.
 
-    ```json
-    {
-      "type": "object",
-      "properties": {
-        "title": { "type": "string" },
-        "price": { "type": "string" },
-        "rating": { "type": "number" },
-        "inStock": { "type": "boolean" }
-      },
-      "required": ["title", "price"]
-    }
-    ```
-  </Accordion>
-</AccordionGroup>
+```text Example search
+E-commerce agencies in Germany and Austria, 5–50 employees,
+that build Shopify stores. I need a contact email and the
+founder or head of growth. Skip anyone who only does SEO.
+```
 
-### Step 3: Test your scraper
+Fill in the structured fields next to the description — locations, industries,
+titles, required fields, and any **extra columns** you want researched (for
+example `pricing_page` or `tech_stack`). Then set how many leads you want and
+start the run.
+
+The agent works asynchronously. It searches, crawls, cross-checks and saves
+leads as it goes, and it will **pause and ask you a question** if your criteria
+are ambiguous — answer it in the chat and the same run continues.
+
+<Tip>
+  Save the search as a profile. Re-running it later only saves *new* companies,
+  so a saved search becomes a recurring lead source.
+</Tip>
+
+<Card title="Lead generation in depth" icon="crosshairs" href="/leads/finding-leads" horizontal>
+  Criteria, seed leads ("find more like these"), custom columns and limits.
+</Card>
+
+## Step 3 — Verify the email addresses
+
+Select your new leads and choose **Verify emails**. ManyPI does a real SMTP
+mailbox probe from a dedicated sending IP and writes a status back onto each
+lead: `valid`, `invalid`, `catch_all`, `no_mx`, `disposable` or `unknown`.
+
+Addresses that are already known-good are free — you are only charged for
+probes that actually run.
+
+<Card title="Email validation" icon="circle-check" href="/leads/email-validation" horizontal>
+  What each status means, what it costs, and how sends are blocked automatically.
+</Card>
+
+## Step 4 — Connect a sending inbox
+
+Go to **Outreach → Sending** and connect the mailbox you want to send from.
+Gmail and Outlook connect over OAuth; anything else works over SMTP.
+
+Leave **warmup** on for a new domain. ManyPI ramps the daily volume up over
+time instead of blasting from day one, and it stops sending automatically if
+your bounce rate spikes.
+
+<Warning>
+  Send from a *secondary* domain, not your primary one. Cold outreach reputation
+  damage is hard to undo and you do not want it on the domain your invoices come
+  from.
+</Warning>
+
+## Step 5 — Write a sequence and launch
 
 <Steps>
-  <Step title="Run a test">
-    Click **"Run Now"** on your scraper to test it with the target URL.
+  <Step title="Create a sequence">
+    **Outreach → Sequences → New**. Write step 1, then add follow-ups with a
+    `wait_days` gap. Use merge variables so one template personalises across
+    every lead:
+
+    ```html
+    <p>Hi {{first_name}},</p>
+    <p>I noticed {{company}} builds Shopify stores — we help agencies
+    like yours find their next 20 clients without cold-calling.</p>
+    <p>Worth a 15-minute look?</p>
+    ```
+
+    Or click **Draft with AI**, describe what you are selling, and let ManyPI
+    write the whole sequence against your brand.
   </Step>
-  <Step title="View results">
-    See the extracted data in clean, structured JSON format. Results appear instantly in your dashboard.
+  <Step title="Create a campaign">
+    A campaign binds one sequence to one sending inbox, and carries the send
+    window, daily limit and tracking settings.
   </Step>
-  <Step title="Refine if needed">
-    If the results aren't perfect, edit your scraper's prompt or schema and test again. Each test only costs credits when successful.
+  <Step title="Enroll your leads">
+    Select leads in the Leads grid and enroll them. Step 1 goes out on the next
+    send slot; follow-ups are scheduled automatically and stop the moment
+    someone replies.
   </Step>
 </Steps>
 
 <Check>
-  **Success!** You've created and tested your first scraper. Now you can run it anytime from the dashboard.
+  You now have a running campaign. Watch **Outreach → Replies** for what comes
+  back, and **Outreach → Overview** for sends, opens, replies and bounces.
 </Check>
 
----
+## Do the same thing over the API
 
-## Option 2: API Integration (Production)
-
-Perfect for automation, scheduled jobs, and production applications.
-
-### Step 1: Get your API key
-
-<Steps>
-  <Step title="Navigate to settings">
-    Go to **Settings** → **API Keys** in your dashboard.
-  </Step>
-  <Step title="Generate key">
-    Click **"Create API Key"**, give it a name, and copy the key. 
-    
-    <Warning>Store it securely - you won't be able to see it again!</Warning>
-  </Step>
-</Steps>
-
-### Step 2: Create a scraper
-
-Follow the same process as the web interface to create and test your scraper. You'll need the scraper ID for API calls.
-
-<Tip>Find your scraper ID in the dashboard - it's shown in the scraper details.</Tip>
-
-### Step 3: Make your first API call
+Everything above is a REST call. Create an API key in **Settings → API keys**
+and grant it the permissions you need.
 
 <CodeGroup>
 
-```bash cURL
-curl -X POST \
-  'https://app.manypi.com/api/scrape/YOUR_SCRAPER_ID' \
-  -H 'Authorization: Bearer YOUR_API_KEY' \
-  -H 'Content-Type: application/json' \
+```bash Find leads
+curl -X POST https://app.manypi.com/api/leads/research \
+  -H "Authorization: Bearer mpi_your_api_key" \
+  -H "Content-Type: application/json" \
   -d '{
-    "url": "https://example.com/product/123"
+    "criteria": {
+      "description": "E-commerce agencies building Shopify stores",
+      "locations": ["Germany", "Austria"],
+      "titles": ["Founder", "Head of Growth"],
+      "required_fields": ["email"],
+      "count": 25
+    }
   }'
 ```
 
-```javascript Node.js
-const response = await fetch('https://app.manypi.com/api/scrape/YOUR_SCRAPER_ID', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer YOUR_API_KEY',
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    url: 'https://example.com/product/123'
-  })
-});
-
-const data = await response.json();
-console.log(data);
+```bash Verify addresses
+curl -X POST https://app.manypi.com/api/leads/validate \
+  -H "Authorization: Bearer mpi_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{ "lead_ids": ["8f1c…", "b207…"] }'
 ```
 
-```python Python
-import requests
-
-response = requests.post(
-    'https://app.manypi.com/api/scrape/YOUR_SCRAPER_ID',
-    headers={
-        'Authorization': 'Bearer YOUR_API_KEY',
-        'Content-Type': 'application/json'
-    },
-    json={
-        'url': 'https://example.com/product/123'
-    }
-)
-
-data = response.json()
-print(data)
-```
-
-```php PHP
-<?php
-$ch = curl_init('https://app.manypi.com/api/scrape/YOUR_SCRAPER_ID');
-
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'Authorization: Bearer YOUR_API_KEY',
-    'Content-Type: application/json'
-]);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
-    'url' => 'https://example.com/product/123'
-]));
-
-$response = curl_exec($ch);
-$data = json_decode($response, true);
-
-print_r($data);
-?>
+```bash Enroll into a campaign
+curl -X POST https://app.manypi.com/api/outreach/enroll \
+  -H "Authorization: Bearer mpi_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{ "campaign_id": "…", "lead_ids": ["8f1c…"] }'
 ```
 
 </CodeGroup>
 
-### Step 4: Handle the response
+<Card title="API reference" icon="terminal" href="/api-reference/introduction" horizontal>
+  Full endpoint reference, authentication and permission scopes.
+</Card>
 
-```json Response
-{
-  "success": true,
-  "data": {
-    "title": "Wireless Bluetooth Headphones",
-    "price": "$79.99",
-    "rating": 4.5,
-    "inStock": true
-  },
-  "metadata": {
-    "scraperId": "550e8400-e29b-41d4-a716-446655440000",
-    "timestamp": "2024-01-15T10:30:00.000Z",
-    "tokensUsed": 1500,
-    "creditsCost": 1500,
-    "creditsRemaining": 8500
-  }
-}
+## Or drive it from your AI assistant
+
+Connect the ManyPI MCP server once and your assistant can run the entire
+workflow in conversation — find leads, draft the sequence, create the campaign
+and enroll.
+
+```bash Claude Code
+claude mcp add --transport http manypi https://mcp.manypi.com/mcp -s user
 ```
 
-<Check>
-  **You're live!** Your scraper is now integrated and ready for production use.
-</Check>
-
----
-
-## Common use cases
-
-<CardGroup cols={2}>
-
-<Card title="E-commerce monitoring" icon="cart-shopping">
-  Track competitor prices, product availability, and reviews across multiple sites.
+<Card title="MCP server" icon="plug" href="/mcp/introduction" horizontal>
+  Setup for Claude, Cursor, VS Code, ChatGPT, Codex, Gemini CLI and more.
 </Card>
-
-<Card title="Lead generation" icon="users">
-  Extract company information, contact details, and job postings from business directories.
-</Card>
-
-<Card title="Content aggregation" icon="newspaper">
-  Collect articles, blog posts, and news from multiple sources for your platform.
-</Card>
-
-<Card title="Market research" icon="chart-line">
-  Gather product data, pricing trends, and customer sentiment at scale.
-</Card>
-
-</CardGroup>
-
----
-
-## Next steps
-
-<CardGroup cols={2}>
-
-<Card title="API Reference" icon="code" href="/api-reference">
-  Explore the complete API documentation with all endpoints and parameters.
-</Card>
-
-<Card title="Manage credits" icon="coins" href="https://app.manypi.com/dashboard/billing">
-  View your usage and purchase additional credits as needed.
-</Card>
-
-<Card title="Email notifications" icon="bell" href="https://app.manypi.com/dashboard/integrations">
-  Set up automatic email alerts when scrapers complete.
-</Card>
-
-<Card title="View usage" icon="chart-simple" href="https://app.manypi.com/dashboard/usage">
-  Monitor your credit consumption and scraper performance.
-</Card>
-
-</CardGroup>
-
----
-
-## Tips for success
-
-<AccordionGroup>
-  <Accordion icon="lightbulb" title="Write clear prompts">
-    Be specific about what data you want. Instead of "get product info", say "extract product title, price in USD, star rating out of 5, and availability status".
-  </Accordion>
-  
-  <Accordion icon="flask" title="Test with multiple URLs">
-    Test your scraper on 2-3 different pages from the same site to ensure it works consistently.
-  </Accordion>
-  
-  <Accordion icon="shield-check" title="Handle errors gracefully">
-    Always check the `success` field in API responses and handle errors appropriately in your code.
-  </Accordion>
-  
-  <Accordion icon="clock" title="Monitor your credits">
-    Keep an eye on your credit usage in the dashboard. Set up alerts to avoid running out during important jobs.
-  </Accordion>
-</AccordionGroup>
-
----
-
-<Note>
-  **Need help?** Contact us at [support@manypi.com](mailto:support@manypi.com) or check out our [full documentation](https://docs.manypi.com).
-</Note>

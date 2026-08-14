@@ -1,0 +1,85 @@
+---
+title: "Brands and teams"
+description: "Run several companies from one workspace, and invite people into it."
+---
+
+## Brands
+
+A **brand** is the company you are selling. It owns that company's inboxes,
+campaigns, sequences, folders and chats, and it carries the context that makes
+the agent's output specific rather than generic.
+
+### What to fill in
+
+| Field | Why it matters |
+| --- | --- |
+| Name | Used in drafts and in the brand switcher. |
+| Website | The agent reads it to understand what you actually do. |
+| Description | What you sell, in one paragraph. |
+| Value proposition | Why a prospect should care. This lands in cold emails. |
+| Personas | Who you sell to. Drives lead qualification and email tone. |
+
+<Tip>
+  This is the highest-leverage five minutes in ManyPI. The brand is injected
+  into every lead search — so the agent can judge *"would this company want
+  it?"* — and into every AI-drafted email. A workspace with a thin brand
+  produces exactly the generic output people complain about.
+</Tip>
+
+### One brand or several
+
+One workspace with several brands is the **agency case**: one client per brand,
+each with its own sending domain, its own idea of a good lead, and its own
+campaigns and replies.
+
+| Plan | Brands |
+| --- | --- |
+| Free | 1 |
+| Starter | 1 |
+| Pro | 3 |
+| Business | Unlimited |
+
+### What is and is not brand-scoped
+
+| Brand-scoped | Workspace-wide |
+| --- | --- |
+| Inboxes | Leads |
+| Campaigns | Suppression list |
+| Sequences | Billing and credits |
+| Chats and folders | Seats and members |
+| Deliverability settings | API keys |
+
+Leads being pooled is deliberate: the public API has callers relying on it, and
+the brand filter in the grid is a lens you apply, not a wall the server imposes.
+Most list endpoints accept `?brand=<id>` to narrow or `?brand=all` to widen
+across the workspace.
+
+Per-brand deliverability settings — **validate on enroll** and **skip
+unverifiable** — let an agency's cold-outbound brand and its warm-referral brand
+behave differently, which is the whole point of the separation.
+
+## Teams
+
+Every paid plan is team-capable. Invite members from **Settings →
+Organization**; credits pool across seats rather than being divided per person.
+
+| Plan | Seats |
+| --- | --- |
+| Free | 1 |
+| Starter | up to 3 |
+| Pro | up to 10 |
+| Business | unlimited |
+
+### What teammates share
+
+Leads, campaigns, sequences, chats and folders inside the workspace are shared,
+not private to whoever created them. That is what makes a pooled lead list
+workable — a teammate can act on a lead you found without you handing it over.
+
+Members can be restricted to specific brands, in which case those are the only
+brands they see anywhere: the switcher, the picker and the brands screen.
+
+<Note>
+  Exceeding your seat limit blocks sending rather than silently over-billing you.
+  The API returns `403` with a seats-exceeded error.
+</Note>

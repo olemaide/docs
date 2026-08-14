@@ -1,0 +1,147 @@
+---
+title: "Inboxes and warmup"
+description: "Connect your sending mailboxes, ramp them safely, and watch their health."
+---
+
+An **inbox** is a mailbox ManyPI sends through. Everything about your
+deliverability — the cap, the ramp, the pause guard, the health score — hangs
+off it.
+
+Manage them in **Outreach → Sending**, or read them over the API with
+[`GET /api/outreach/inboxes`](/api-reference/outreach/list-inboxes).
+
+## Connecting
+
+<Tabs>
+  <Tab title="Gmail / Google Workspace">
+    Click **Connect Gmail** and authorise. OAuth means no app password to
+    rotate, and revoking access in your Google account revokes it here too.
+  </Tab>
+  <Tab title="Outlook / Microsoft 365">
+    Click **Connect Outlook** and authorise. Same OAuth flow.
+  </Tab>
+  <Tab title="SMTP">
+    Any provider: host, port, username, password, TLS. Credentials are
+    encrypted at rest and never returned by the API.
+
+    Use **Test connection** before you save — it does a real handshake and a
+    test send to yourself.
+  </Tab>
+</Tabs>
+
+<Warning>
+  Send cold outreach from a **secondary domain** (`getacme.com`,
+  `acme-team.com`), never the domain your invoices and support mail come from.
+  Reputation damage on your primary domain is slow and painful to undo.
+</Warning>
+
+### Before you send anything
+
+Set up authentication on the sending domain. Without it you will land in spam
+regardless of how good ManyPI's throttling is.
+
+| Record | Why |
+| --- | --- |
+| **SPF** | Authorises your provider to send for the domain. |
+| **DKIM** | Cryptographically signs your mail. |
+| **DMARC** | Tells receivers what to do with failures, and gets you reports. |
+
+## Warmup
+
+A brand-new domain sending 500 emails on day one gets filtered. Warmup ramps the
+daily cap gradually instead.
+
+| Setting | What it does |
+| --- | --- |
+| `warmup_enabled` | Turns the ramp on. Leave it on for any new domain or mailbox. |
+| `warmup_start` | Emails allowed on day one. |
+| `warmup_increment` | How much the cap grows each day. |
+| `daily_limit` | The ceiling the ramp climbs toward. |
+
+The effective cap is always `min(warmup cap for today, daily_limit)`. The
+scheduler uses that number — not the raw limit — so a campaign can never
+out-send its inbox's warmup.
+
+<Tip>
+  A reasonable ramp for a fresh Google Workspace mailbox: start at 10, increment
+  by 5 per day, ceiling 150. Faster than that is where people get burned.
+</Tip>
+
+## Health
+
+Each inbox reports a rolling picture over the last 14 days:
+
+- sends today versus today's cap
+- delivered, failed, opened, bounced
+- a 24-hour bounce rate
+- whether the **bounce guard** has paused it
+- a 0–100 **health score**
+
+The score is delivery success, lightly penalised while un-warmed and heavily
+penalised for bounces. That weighting is deliberate: a failed send never reached
+anyone, while a bounce is a receiving server recording that you wrote to an
+address which does not exist — that is the thing that actually costs an inbox
+its reputation.
+
+### The bounce guard
+
+If the 24-hour bounce rate crosses the safety threshold, ManyPI **pauses the
+inbox automatically** and records why. Sends stop; nothing is lost. Fix the
+cause — almost always an unvalidated list — and resume.
+
+<Card title="Email validation" icon="circle-check" href="/leads/email-validation" horizontal>
+  Validating before you enroll is the fix for nearly every bounce problem.
+</Card>
+
+## Multiple inboxes
+
+More inboxes means more daily volume without pushing any single mailbox past a
+safe cap. Campaigns can use them in several ways:
+
+| Strategy | Behaviour |
+| --- | --- |
+| `single` | Every send goes through one inbox. |
+| `rotate` | Cycle through the campaign's inboxes. |
+| `round_robin` | Even distribution across inboxes. |
+| `provider_match` | Match the sending inbox to the recipient's provider (Google → Google, Microsoft → Microsoft). |
+
+Per-seat inbox limits: 2 on Starter, 5 on Pro, 15 on Business. The workspace cap
+is that number times your seat count.
+
+## Priority
+
+When several campaigns share an inbox they compete for the same paced send
+slots. Each campaign has a priority from 1 to 10 — higher wins the next slot.
+Use it to make sure a hot campaign is not starved by a long-running background
+one.
+
+## Reading inbox health over the API
+
+```bash
+curl https://app.manypi.com/api/outreach/inboxes \
+  -H "Authorization: Bearer mpi_your_api_key"
+```
+
+```json
+{
+  "inboxes": [
+    {
+      "id": "…",
+      "name": "Lena — outbound",
+      "from_email": "lena@getacme.com",
+      "sentToday": 34,
+      "capToday": 60,
+      "sent14d": 402,
+      "failed14d": 3,
+      "opened14d": 121,
+      "bounced14d": 2,
+      "bounceRate24h": 0.0,
+      "sending_paused_at": null,
+      "health": 92
+    }
+  ]
+}
+```
+
+Use an inbox `id` as the `smtp_config_id` when creating a campaign or sending a
+one-off email.

@@ -1,0 +1,62 @@
+---
+title: "Skills"
+description: "Reusable instruction sets you can select in chat."
+---
+
+A **skill** is a saved playbook: a title, a description and a block of
+instructions that gets injected into the agent's system prompt for that run.
+
+Use one whenever you find yourself pasting the same paragraph of context into
+chat repeatedly — *"always check the company's careers page"*, *"score every
+lead 1–10 against our ICP and explain why"*, *"format findings as a table with
+these columns"*.
+
+## Premade and custom
+
+ManyPI ships a set of system skills. On top of those you can create your own,
+which are private to your workspace.
+
+```bash Create a skill
+curl -X POST https://app.manypi.com/api/skills \
+  -H "Authorization: Bearer mpi_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Company research",
+    "description": "Deep-dive a single company before a sales call",
+    "emoji": "🔍",
+    "system_prompt": "For the company given, research: what they sell, who their customers are, recent funding or hiring news, the tech on their site, and the two people most likely to own the buying decision. Present it as a one-page brief with sources."
+  }'
+```
+
+List them with [`GET /api/skills`](/api-reference/agent/list-skills) — the
+response includes both the premade skills and your own.
+
+## What a skill can and cannot change
+
+A skill shapes **behaviour**: what to look for, how to judge it, how to present
+it, what to never do.
+
+A skill cannot widen the agent's **access**. Custom skills are always created
+with the safe tool defaults, so instructions can direct the agent but never
+grant it capabilities your plan or your workspace does not already have.
+
+## Writing a good skill
+
+<AccordionGroup>
+  <Accordion title="Be specific about the output" icon="table">
+    "Return a markdown table with columns Company, Fit score, Why, Source URL"
+    beats "summarise the findings" every time.
+  </Accordion>
+  <Accordion title="State the disqualifiers" icon="ban">
+    Telling the agent what makes something *not* a match is usually more
+    valuable than describing what does.
+  </Accordion>
+  <Accordion title="Demand sources" icon="link">
+    "Cite the URL you found each fact on" turns a plausible answer into a
+    checkable one.
+  </Accordion>
+  <Accordion title="Keep it one job" icon="scissors">
+    A skill that researches companies *and* writes emails *and* scores leads
+    does all three worse than three separate skills.
+  </Accordion>
+</AccordionGroup>

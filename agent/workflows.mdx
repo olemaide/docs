@@ -1,0 +1,55 @@
+---
+title: "Workflows"
+description: "Chain steps together and run them on a schedule or a webhook."
+---
+
+<Info>Saving and running workflows requires a paid plan. Free workspaces can build one in the editor but must upgrade to save or run it.</Info>
+
+A **workflow** turns a repeated sequence of actions into something that runs
+without you: scrape a source, filter the results, enrich them, save leads,
+enroll into a campaign, post to a webhook.
+
+Build them in **Data → Workflows**.
+
+## Triggers
+
+| Trigger | Available on | Behaviour |
+| --- | --- | --- |
+| Manual | All paid plans | You press Run. |
+| Schedule | Pro, Business | Cron-style recurrence. |
+| Inbound webhook | Pro, Business | An external system POSTs to a unique URL and the workflow runs with that payload. |
+
+## Limits
+
+| Plan | Active workflows | Advanced triggers |
+| --- | --- | --- |
+| Free | 1 (build only) | — |
+| Starter | 3 | — |
+| Pro | 20 | ✓ |
+| Business | Unlimited | ✓ |
+
+## Running one over the API
+
+```bash
+curl -X POST https://app.manypi.com/api/workflows/{id}/run \
+  -H "Authorization: Bearer mpi_your_api_key"
+```
+
+Execution history is at `GET /api/workflow-executions`, including per-step
+status and output for debugging a run that did not do what you expected.
+
+## Inbound webhooks
+
+Each webhook-triggered workflow gets its own URL. POST JSON to it and the
+payload is available to the workflow's steps — that is how you wire ManyPI into
+a CRM, a form, or another automation tool.
+
+## Outbound webhooks
+
+Separately, **Dashboard → Webhooks** notifies your systems when something
+happens in ManyPI — a scraper run finishing, for example — so you do not have to
+poll.
+
+<Card title="Integrations" icon="plug" href="/platform/integrations" horizontal>
+  Webhooks, Zapier-style polling, MCP connectors and database connections.
+</Card>

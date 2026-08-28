@@ -798,14 +798,14 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "days": { "type": "array", "items": { "type": "object" } },
+                    "days": { "type": "array", "items": { "type": "object", "properties": { "date": { "type": "string", "description": "ISO date, `YYYY-MM-DD`." }, "label": { "type": "string", "description": "Short display label, e.g. `Aug 27`." }, "sent": { "type": "integer" }, "failed": { "type": "integer" }, "opened": { "type": "integer" }, "replied": { "type": "integer" }, "unsubscribed": { "type": "integer" }, "bounced": { "type": "integer", "description": "Bucketed by send date, not bounce date, so the figure lines up with the batch that caused it." } } } },
                     "totals": {
                       "type": "object",
                       "properties": {
                         "sent14d": { "type": "integer" }, "failed14d": { "type": "integer" }, "opened14d": { "type": "integer" },
-                        "replies14d": { "type": "integer" }, "unsub14d": { "type": "integer" }, "unsubRate14d": { "type": "number" },
-                        "bounced14d": { "type": "integer" }, "bounceRate14d": { "type": "number" },
-                        "activeEnrollments": { "type": "integer" }, "sentToday": { "type": "integer" }, "capToday": { "type": "integer" }
+                        "replies14d": { "type": "integer" }, "unsub14d": { "type": "integer" }, "unsubRate14d": { "type": "number", "description": "Percentage rounded to a whole number: `4` means 4%." },
+                        "bounced14d": { "type": "integer" }, "bounceRate14d": { "type": "number", "description": "Percentage to one decimal place: `9.2` means 9.2%." },
+                        "activeEnrollments": { "type": "integer" }, "sent24h": { "type": "integer", "description": "Sends in the last rolling 24 hours, which is the window `capToday` applies to." }, "capToday": { "type": "integer", "description": "Warmup-aware caps summed across every connected inbox." }
                       }
                     }
                   }
@@ -1412,19 +1412,22 @@
         "type": "object",
         "properties": {
           "id": { "type": "string", "format": "uuid", "description": "Use as `smtp_config_id`." },
-          "name": { "type": "string" },
-          "from_email": { "type": "string", "format": "email" },
-          "sentToday": { "type": "integer" },
-          "capToday": { "type": "integer", "description": "Warmup-aware cap, not the raw daily limit." },
+          "name": { "type": "string", "description": "The inbox label, which is often the address itself." },
+          "from": { "type": "string", "format": "email", "description": "The sending address. Falls back to the SMTP username when no from-address is set." },
+          "sent24h": { "type": "integer", "description": "Sends in the last rolling 24 hours — the window `cap` applies to." },
+          "cap": { "type": "integer", "description": "Warmup-aware cap for the current window, not the raw daily limit." },
+          "dailyLimit": { "type": "integer", "description": "The inbox's configured daily limit, before warmup is applied." },
           "sent14d": { "type": "integer" },
           "failed14d": { "type": "integer" },
           "opened14d": { "type": "integer" },
           "bounced14d": { "type": "integer" },
-          "bounceRate24h": { "type": "number" },
-          "warmup_enabled": { "type": "boolean" },
-          "sending_paused_at": { "type": "string", "format": "date-time", "nullable": true, "description": "Set when the bounce guard paused the inbox." },
-          "sending_paused_reason": { "type": "string", "nullable": true },
-          "health": { "type": "integer", "minimum": 0, "maximum": 100 }
+          "bounceRate14d": { "type": "number", "description": "Percentage to one decimal place: `9.2` means 9.2%." },
+          "bounceRate24h": { "type": "number", "description": "Percentage to one decimal place." },
+          "warmupEnabled": { "type": "boolean" },
+          "warmingUp": { "type": "boolean", "description": "True while the inbox is still ramping and `cap` is below `dailyLimit`." },
+          "sendingPausedAt": { "type": "string", "format": "date-time", "nullable": true, "description": "Set when the bounce guard paused the inbox." },
+          "sendingPausedReason": { "type": "string", "nullable": true },
+          "health": { "type": "integer", "minimum": 0, "maximum": 100, "description": "Delivery success rate, capped at 94 while warming up and reduced four points per percent of 14-day bounce rate." }
         }
       },
       "SequenceStep": {
@@ -1459,13 +1462,17 @@
           "daily_limit": { "type": "integer", "nullable": true },
           "priority": { "type": "integer" },
           "schedule_enabled": { "type": "boolean" },
-          "send_days": { "type": "array", "items": { "type": "integer" } },
+          "send_days": { "type": "array", "items": { "type": "integer", "minimum": 0, "maximum": 6 }, "description": "Weekdays to send on, as `Date.getDay()` numbers: 0 is Sunday, 1 is Monday, 6 is Saturday. Values outside 0-6 are discarded, so an ISO-style Sunday of 7 is dropped rather than honoured. Defaults to `[1,2,3,4,5]` when omitted, or when every supplied value is discarded." },
           "send_from": { "type": "string", "nullable": true },
           "send_to": { "type": "string", "nullable": true },
           "timezone": { "type": "string", "nullable": true },
           "track_opens": { "type": "boolean" },
-          "stats": { "type": "object", "properties": { "enrolled": { "type": "integer" }, "active": { "type": "integer" }, "completed": { "type": "integer" }, "sent": { "type": "integer" }, "opened": { "type": "integer" }, "replied": { "type": "integer" } } },
-          "created_at": { "type": "string", "format": "date-time" }
+          "inbox_strategy": { "type": "string", "enum": ["single", "rotate", "round_robin", "provider_match"], "description": "How sends are spread when several inboxes are available." },
+          "include_unsubscribe": { "type": "boolean", "description": "Whether an unsubscribe link is appended to each email." },
+          "require_verified": { "type": "boolean", "description": "Whether unverified addresses are validated before enrollment." },
+          "stats": { "type": "object", "properties": { "enrolled": { "type": "integer" }, "active": { "type": "integer" }, "completed": { "type": "integer" }, "sent": { "type": "integer" }, "failed": { "type": "integer" }, "opened": { "type": "integer" }, "replied": { "type": "integer" }, "bounced": { "type": "integer" }, "unsubscribed": { "type": "integer", "description": "Leads who opted out." }, "unsubscribed_sends": { "type": "integer", "description": "Sends that went to an address which later opted out." } } },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
         }
       },
       "Reply": {

@@ -412,7 +412,7 @@
         "responses": {
           "200": {
             "description": "The job was queued, or (with `estimate_only`) priced.",
-            "content": { "application/json": { "schema": { "type": "object", "properties": { "job_id": { "type": "string", "format": "uuid" }, "total": { "type": "integer" }, "estimate": { "type": "object", "properties": { "billable": { "type": "integer" }, "free": { "type": "integer" } } } } } } }
+            "content": { "application/json": { "schema": { "type": "object", "description": "Two shapes. A normal call queues a job and returns `job_id`, `total` and `estimate`. An `estimate_only` call queues nothing and returns `estimate` alone — with no `job_id` and no `total` — so test for `job_id` before treating the response as a queued job.", "properties": { "job_id": { "type": "string", "format": "uuid", "description": "Absent when `estimate_only` was set." }, "total": { "type": "integer", "description": "Absent when `estimate_only` was set." }, "estimate": { "type": "object", "description": "Always present.", "properties": { "billable": { "type": "integer", "description": "Probes that will actually run and be charged." }, "free": { "type": "integer", "description": "Cached results and addresses the cheap pre-check rejected." } } } } } } }
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
@@ -529,7 +529,7 @@
           }
         },
         "responses": {
-          "200": { "description": "The created sequence.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Sequence" } } } },
+          "200": { "description": "The created sequence, wrapped.", "content": { "application/json": { "schema": { "type": "object", "properties": { "sequence": { "$ref": "#/components/schemas/Sequence" } } } } } },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "403": { "description": "A/B variants require Pro or Business." }
@@ -688,10 +688,10 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "campaign": { "$ref": "#/components/schemas/Campaign" },
-                    "stats": { "type": "object", "properties": { "enrolled": { "type": "integer" }, "active": { "type": "integer" }, "completed": { "type": "integer" }, "sent": { "type": "integer" }, "opened": { "type": "integer" }, "replied": { "type": "integer" } } },
-                    "steps": { "type": "array", "items": { "type": "object", "properties": { "step": { "type": "integer" }, "sent": { "type": "integer" }, "opened": { "type": "integer" } } } },
-                    "enrollments": { "type": "array", "items": { "type": "object" } }
+                    "campaign": { "allOf": [{ "$ref": "#/components/schemas/Campaign" }], "description": "The campaign, with an added `inboxes` array describing the sending identities it uses." },
+                    "stats": { "type": "object", "properties": { "enrolled": { "type": "integer" }, "active": { "type": "integer" }, "completed": { "type": "integer" }, "sent": { "type": "integer" }, "failed": { "type": "integer" }, "opened": { "type": "integer" }, "replied": { "type": "integer" }, "bounced": { "type": "integer" }, "unsubscribed": { "type": "integer" }, "unsubscribed_sends": { "type": "integer" } } },
+                    "perStep": { "type": "array", "description": "Per-step sent and opened breakdown. Named `perStep`, not `steps`.", "items": { "type": "object", "properties": { "step": { "type": "integer" }, "sent": { "type": "integer" }, "opened": { "type": "integer" } } } },
+                    "leads": { "type": "array", "description": "The enrolled leads with their progress. Named `leads`, not `enrollments`.", "items": { "type": "object" } }
                   }
                 }
               }
@@ -727,7 +727,7 @@
         "responses": {
           "200": {
             "description": "Enrollment outcome.",
-            "content": { "application/json": { "schema": { "type": "object", "properties": { "enrolled": { "type": "integer" }, "skipped": { "type": "integer" }, "reasons": { "type": "object" } } } } }
+            "content": { "application/json": { "schema": { "type": "object", "description": "Skips are reported as separate counters rather than a single `skipped` total with a reasons map. Add the four skip counters together for the number of leads that were not enrolled.", "properties": { "enrolled": { "type": "integer", "description": "Leads whose first step was queued." }, "skipped_no_email": { "type": "integer", "description": "Leads with no email address." }, "skipped_suppressed": { "type": "integer", "description": "Addresses on the do-not-contact list, or already unsubscribed." }, "skipped_invalid": { "type": "integer", "description": "Addresses already known to be undeliverable." }, "already_enrolled": { "type": "integer", "description": "Leads already enrolled in this campaign." }, "queued_for_validation": { "type": "integer", "description": "Unchecked addresses sent for validation first, when the brand has validate-on-enroll turned on. These are not yet enrolled." } } } } }
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
@@ -744,7 +744,7 @@
           { "name": "lead_ids", "in": "query", "required": true, "description": "Comma-separated lead ids.", "schema": { "type": "string" } }
         ],
         "responses": {
-          "200": { "description": "Removed." },
+          "200": { "description": "Enrollments cancelled.", "content": { "application/json": { "schema": { "type": "object", "properties": { "removed": { "type": "integer", "description": "Enrollments cancelled. Can be lower than the number of leads supplied — a lead that already finished the sequence has nothing left to cancel." } } } } } },
           "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
@@ -880,7 +880,7 @@
           "content": { "application/json": { "schema": { "type": "object", "required": ["emails"], "properties": { "emails": { "type": "array", "items": { "type": "string", "format": "email" } } } }, "example": { "emails": ["someone@example.com"] } } }
         },
         "responses": {
-          "200": { "description": "Added." },
+          "200": { "description": "Addresses added.", "content": { "application/json": { "schema": { "type": "object", "properties": { "added": { "type": "integer", "description": "Addresses submitted. Re-adding one already on the list is a no-op and still counts here." } } } } } },
           "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       },
@@ -891,7 +891,7 @@
         "tags": ["Outreach"],
         "parameters": [{ "name": "email", "in": "query", "required": true, "schema": { "type": "string", "format": "email" } }],
         "responses": {
-          "200": { "description": "Removed." },
+          "200": { "description": "Address removed.", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } } } } },
           "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
@@ -1035,7 +1035,7 @@
         "operationId": "listSkills",
         "tags": ["Agent"],
         "responses": {
-          "200": { "description": "Skills.", "content": { "application/json": { "schema": { "type": "object", "properties": { "skills": { "type": "array", "items": { "$ref": "#/components/schemas/Skill" } } } } } } },
+          "200": { "description": "Skills, as a bare array rather than an object wrapper.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Skill" } } } } },
           "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       },
@@ -1137,7 +1137,7 @@
           { "name": "runId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
         ],
         "responses": {
-          "200": { "description": "The run and its data.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ScraperRun" } } } },
+          "200": { "description": "The extracted data itself. This endpoint returns the scraped JSON directly — there is no run envelope, so no id, status, error or timestamp is included. The shape follows the scraper's own `scraper_schema`. Large results are hydrated from storage transparently, so the full result is always returned rather than a truncated preview.", "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true, "description": "Matches the scraper's configured output schema." } } } },
           "400": { "description": "Invalid scraper id format." },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": { "$ref": "#/components/responses/NotFound" }
@@ -1546,14 +1546,16 @@
       },
       "ScraperRun": {
         "type": "object",
+        "description": "A scraper run as returned by `GET /api/runs`. The extracted data is also spread onto the root of each run, so a completed run carries that scraper's own fields alongside the ones below; the fields here win on a name collision.",
         "properties": {
           "id": { "type": "string", "format": "uuid" },
-          "scraper_id": { "type": "string", "format": "uuid" },
-          "url": { "type": "string" },
+          "scraperId": { "type": "string", "format": "uuid" },
           "status": { "type": "string", "enum": ["pending", "running", "completed", "failed"] },
-          "result": { "type": "object", "nullable": true, "description": "Present once the run is completed." },
-          "error": { "type": "string", "nullable": true },
-          "created_at": { "type": "string", "format": "date-time" }
+          "result": { "type": "object", "nullable": true, "description": "The extracted data. Null until the run completes." },
+          "downloadUrl": { "type": "string", "nullable": true, "description": "Storage path for the full JSON result." },
+          "metadata": { "type": "object", "properties": { "tokensConsumed": { "type": "integer", "nullable": true }, "creditsUsed": { "type": "integer", "nullable": true }, "storageSizeBytes": { "type": "integer", "nullable": true } } },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
         }
       },
       "Endpoint": {

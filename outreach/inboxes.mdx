@@ -128,15 +128,20 @@ curl https://app.manypi.com/api/outreach/inboxes \
     {
       "id": "…",
       "name": "Lena — outbound",
-      "from_email": "lena@getacme.com",
-      "sentToday": 34,
-      "capToday": 60,
+      "from": "lena@getacme.com",
+      "sent24h": 34,
+      "cap": 60,
+      "dailyLimit": 60,
       "sent14d": 402,
       "failed14d": 3,
       "opened14d": 121,
       "bounced14d": 2,
+      "bounceRate14d": 0.5,
       "bounceRate24h": 0.0,
-      "sending_paused_at": null,
+      "warmupEnabled": true,
+      "warmingUp": false,
+      "sendingPausedAt": null,
+      "sendingPausedReason": null,
       "health": 92
     }
   ]
@@ -145,3 +150,10 @@ curl https://app.manypi.com/api/outreach/inboxes \
 
 Use an inbox `id` as the `smtp_config_id` when creating a campaign or sending a
 one-off email.
+
+`sent24h` is measured over a rolling 24 hours rather than the calendar day,
+because that is the window `cap` itself rolls over — comparing calendar-day
+sends against a rolling cap would read as headroom the inbox does not have.
+`cap` is the warmup-aware limit actually in force; `dailyLimit` is the
+configured ceiling it ramps toward. Both bounce rates are percentages, so
+`0.5` means 0.5%.

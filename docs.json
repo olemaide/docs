@@ -79,6 +79,7 @@
             "group": "Leads",
             "pages": [
               "api-reference/leads/list-leads",
+              "api-reference/leads/get-lead",
               "api-reference/leads/bulk-update-leads",
               "api-reference/leads/bulk-delete-leads",
               "api-reference/leads/update-lead",
@@ -86,6 +87,8 @@
               "api-reference/leads/start-research",
               "api-reference/leads/list-research-profiles",
               "api-reference/leads/save-research-profile",
+              "api-reference/leads/update-research-profile",
+              "api-reference/leads/delete-research-profile",
               "api-reference/leads/import-leads",
               "api-reference/leads/export-leads",
               "api-reference/leads/get-capacity",
@@ -142,6 +145,7 @@
             "pages": [
               "api-reference/scraping/list-scrapers",
               "api-reference/scraping/run-scraper",
+              "api-reference/scraping/get-scraper-run",
               "api-reference/scraping/get-scraper-run-data",
               "api-reference/scraping/list-scraper-runs"
             ]
@@ -151,7 +155,12 @@
             "pages": [
               "api-reference/endpoints/list-endpoints",
               "api-reference/endpoints/create-endpoint",
-              "api-reference/endpoints/invoke-endpoint"
+              "api-reference/endpoints/get-endpoint",
+              "api-reference/endpoints/update-endpoint",
+              "api-reference/endpoints/delete-endpoint",
+              "api-reference/endpoints/invoke-endpoint",
+              "api-reference/endpoints/invoke-endpoint-post",
+              "api-reference/endpoints/get-endpoint-result"
             ]
           },
           {

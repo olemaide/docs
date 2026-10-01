@@ -9,7 +9,7 @@ through the MCP consent flow.
 
 ## Creating a key
 
-**Settings → API keys → Create key.** Pick the permissions it needs, then copy
+Open the profile menu → **API Access** → **Create new API key**. Pick the permissions it needs, then copy
 the key — it starts with `mpi_` and is shown once.
 
 ```bash
@@ -22,8 +22,11 @@ user, the key's permissions and its rate limit.
 
 ## Permissions
 
-Keys are scoped. A key only carries the permissions you granted it, and a call
-outside them is rejected exactly as an invalid key would be.
+Keys are scoped. A key only carries the permissions you granted it. On most
+routes a call outside them is answered `401`, exactly as an invalid key would
+be — so when a key that works elsewhere gets a `401`, check its permissions
+before you replace it. The scraper routes (`/api/scrape*`) and published
+endpoints (`/v1/e/…`) say so explicitly with a `403` instead.
 
 | Permission | Grants |
 | --- | --- |

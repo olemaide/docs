@@ -39,14 +39,20 @@ Replies are classified so you can triage a hundred of them in a minute:
 | `referral` | Pointing you at the right person. |
 
 Each classified reply also carries an `intent`, a short `summary` and a
-`sentiment_score`, plus workspace-level **insights** at
-[`GET /api/outreach/insights`](/api-reference/outreach/get-insights) — patterns
-across your replies and concrete, approvable suggestions for what to change.
+`sentiment_score`. Per campaign,
+[`GET /api/outreach/insights?campaign=…`](/api-reference/outreach/get-insights)
+adds the reply mix, a sentiment breakdown and concrete, approvable suggestions
+for what to change.
 
 <Note>
   On plans without reply intelligence the sentiment fields are stripped from the
   API response entirely, not merely hidden in the UI — the endpoint is reachable
   with an API key, and a client-side gate is not a gate.
+
+  On those plans the `sentiment` filter on
+  [`GET /api/outreach/replies`](/api-reference/outreach/list-replies) is ignored
+  rather than rejected, so every reply comes back. The response says
+  `canSeeSentiment: false` — check it before treating the list as filtered.
 </Note>
 
 ## Bounces

@@ -54,6 +54,18 @@ curl "https://app.manypi.com/v1/e/product-price?url=https://example.com/p/42" \
   -H "Authorization: Bearer mpi_your_api_key"
 ```
 
+Query-string values arrive as text and are converted to the types your
+`param_schema` declares. To send numbers, booleans or nested objects as they
+are, `POST` the parameters as a JSON body instead — that works for every
+endpoint, whichever method it was created with:
+
+```bash
+curl -X POST https://app.manypi.com/v1/e/product-price \
+  -H "Authorization: Bearer mpi_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{ "url": "https://example.com/p/42" }'
+```
+
 The call requires the **`endpoints:invoke`** permission on the key. Slugs
 resolve within the key owner's endpoints, so your slug namespace is your own.
 
@@ -70,9 +82,16 @@ resolve within the key owner's endpoints, so your slug namespace is your own.
   </Step>
   <Step title="202 fallback">
     If it exceeds the budget — or the endpoint is `async` — you get `202` with a
-    run id. Poll `GET /v1/e/{slug}/results/{runId}` for the result.
+    `run_id` and a `poll` path (also sent as `Location`). Poll
+    [`GET /v1/e/{slug}/results/{runId}`](/api-reference/endpoints/get-endpoint-result)
+    until it answers `200` with the result.
   </Step>
 </Steps>
+
+`X-ManyPI-Cache` on a `200` says whether the result came from the cache (`hit`)
+or a fresh scrape (`miss`). A `502` means the scrape failed, or it finished but
+did not match your `output_schema` — then `details` lists the mismatches and
+`raw` carries the result that was produced.
 
 That escalation is why an endpoint stays usable from a browser or a Lambda even
 when the target site is slow: you never hold a connection open indefinitely, and

@@ -1,6 +1,6 @@
 ---
 title: "Integrations"
-description: "Webhooks, polling, MCP and databases — how ManyPI talks to the rest of your stack."
+description: "Webhooks, polling, n8n, MCP and databases — how ManyPI talks to the rest of your stack."
 ---
 
 ## Outbound webhooks
@@ -13,6 +13,11 @@ Typical use: a scraper run completes → ManyPI POSTs the result to your endpoin
 
 Endpoints should respond `2xx` quickly and do the real work asynchronously; a
 slow consumer is the usual cause of "missing" deliveries.
+
+Webhook targets are managed in the dashboard only: the webhook routes do not
+accept API keys, so they cannot be created or changed over the REST API. To
+react to runs from an integration that can only authenticate with a key, poll
+instead — see [Polling integrations](#polling-integrations).
 
 ## Inbound webhooks
 
@@ -32,6 +37,23 @@ new form submission in, enriched and validated lead out.
 `GET /api/runs?limit=20` returns recent scraper runs as a flat array, which is
 the shape polling-based tools such as Zapier expect for a trigger. Use it when
 you cannot receive a webhook.
+
+A run keeps the same id from `pending` to `completed`. A trigger that fires on
+new ids therefore fires once, while the run is still queued and before any data
+exists. Filter to `status: completed` before you deduplicate, so each run enters
+the trigger once, when its data is ready.
+
+## n8n
+
+The ManyPI node for n8n, [`n8n-nodes-manypi`](https://www.npmjs.com/package/n8n-nodes-manypi),
+covers the REST API: run scrapers and wait for their data, run the agent, find,
+verify and manage leads, and run campaigns. The **ManyPI Trigger** starts a
+workflow when a scraper run or agent run finishes, a lead is saved, or a reply
+comes in. The node also works as a tool for n8n's AI Agent.
+
+Install it from **Settings → Community Nodes** in n8n with the package name
+`n8n-nodes-manypi`, then add a **ManyPI API** credential with an API key that
+has the permissions your workflow needs.
 
 ## MCP — both directions
 

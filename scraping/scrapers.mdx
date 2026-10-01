@@ -71,13 +71,21 @@ curl -X POST https://app.manypi.com/api/scrape/{scraperId} \
 ```
 
 `url` is optional — omit it to use the scraper's saved target, pass it to point
-the same extractor at a different page.
+the same extractor at a different page. It is the only field the body takes.
 
 Requires the **`scraper`** permission on your API key.
 
 ### Getting the result
 
-Poll:
+Poll the run until `status` is `completed` (or `failed`):
+
+```bash
+curl https://app.manypi.com/api/runs/{runId} \
+  -H "Authorization: Bearer mpi_your_api_key"
+```
+
+Then read the extracted data. This returns the full result however large it is,
+but it carries no status — it answers `null` until the run has completed:
 
 ```bash
 curl https://app.manypi.com/api/{scraperId}/data/{runId} \

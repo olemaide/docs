@@ -62,12 +62,20 @@ Up to 1,000 leads per call. ManyPI skips, rather than fails on:
 
 - leads with no email address,
 - leads already enrolled in this campaign,
-- suppressed or unsubscribed addresses,
-- addresses known to be undeliverable.
+- unsubscribed or suppressed addresses,
+- addresses that bounced the last time you wrote,
+- addresses known to be undeliverable,
+- unconfirmed addresses, when the brand only writes to confirmed ones.
 
-If the brand has **validate on enroll** turned on (the default), unchecked
-addresses are validated first and undeliverable ones are dropped before a single
-email goes out.
+Each cause comes back as its own counter (`skipped_no_email`,
+`skipped_unsubscribed`, `skipped_bounced` and so on), next to `enrolled`,
+`requested` and a plain-language `summary`. For the number left out, use
+`requested - enrolled`.
+
+If the brand has **validate on enroll** turned on (the default), leads with
+unchecked addresses are enrolled and checked in the background
+(`queued_for_validation`). The result is applied at send time, so an address
+that turns out undeliverable is never sent to.
 
 <Warning>
   Enrollment is not reversible in the sense that matters: an email that has gone

@@ -27,7 +27,7 @@
     "/api/leads": {
       "get": {
         "summary": "List leads",
-        "description": "List and filter the workspace's leads. Also returns the declared custom columns, the past lead searches that produced these leads, the workspace total and the plan's lead limit — everything a grid needs in one call.\n\nRequires the `read` permission.",
+        "description": "List and filter the workspace's leads, newest first. Also returns the declared custom columns, the past lead searches that produced these leads, the workspace total and the plan's lead limit — everything a grid needs in one call.\n\nWhen the workspace is locked for billing, the response keeps the same shape but carries `billingLock`, and `leads` holds placeholder rows rather than real leads. Check for `billingLock` before you store or act on the rows.\n\nRequires the `read` permission.",
         "operationId": "listLeads",
         "tags": ["Leads"],
         "parameters": [
@@ -64,7 +64,8 @@
                         }
                       }
                     },
-                    "leadLimit": { "type": "integer", "description": "Stored-lead cap for the plan." }
+                    "leadLimit": { "type": "integer", "description": "Stored-lead cap for the plan." },
+                    "billingLock": { "type": "object", "nullable": true, "description": "Present only when the workspace is locked for billing. `leads` then holds placeholder rows and `total` is the number of real leads waiting behind the lock." }
                   }
                 }
               }
@@ -125,6 +126,18 @@
       }
     },
     "/api/leads/{id}": {
+      "get": {
+        "summary": "Get a lead",
+        "description": "Fetch one lead with its custom columns and email status.\n\nRequires the `read` permission.",
+        "operationId": "getLead",
+        "tags": ["Leads"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "The lead.", "content": { "application/json": { "schema": { "type": "object", "properties": { "lead": { "$ref": "#/components/schemas/Lead" } } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
       "patch": {
         "summary": "Update a lead",
         "description": "Update one field, the status, the score, or the archive flag on a single lead. Setting `field` to a name that is not a core field writes into the lead's custom columns.\n\nRequires the `write` permission.",
@@ -157,7 +170,7 @@
       },
       "delete": {
         "summary": "Delete a lead",
-        "description": "Permanently delete one lead.\n\nRequires the `write` permission.",
+        "description": "Permanently delete one lead.\n\nThe response is `{ \"ok\": true }` whether or not a lead with that id existed. To confirm the lead was there, fetch it first with `GET /api/leads/{id}`.\n\nRequires the `write` permission.",
         "operationId": "deleteLead",
         "tags": ["Leads"],
         "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
@@ -170,7 +183,7 @@
     "/api/leads/research": {
       "post": {
         "summary": "Start a lead search",
-        "description": "Launch the lead-generation agent against structured criteria, a saved search, or a set of seed leads (\"find more like these\").\n\nThe run is asynchronous: poll `GET /api/agents/runs` with the returned `conversation_id`. The run may pause with a clarifying question — answer it with `POST /api/agents/runs/{id}/reply` and the same run continues.\n\n`count` is clamped to the workspace's remaining lead capacity; when that happens the response carries a `clamped` block. A full workspace returns `403` with `code: \"lead_limit\"`.\n\nRequires the `agents` permission.",
+        "description": "Launch the lead-generation agent against structured criteria, a saved search, or a set of seed leads (\"find more like these\").\n\nThe run is asynchronous: poll `GET /api/agents/runs` with the returned `conversation_id`. The run may pause with a clarifying question — answer it with `POST /api/agents/runs/{id}/reply` and the same run continues.\n\n`count` is clamped to the workspace's remaining lead capacity; when that happens the response carries a `clamped` block. A full workspace returns `403` with `code: \"lead_limit\"`.\n\n**With a saved search.** `criteria` sent alongside `profile_id` replaces the saved criteria as a whole — fields you leave out fall back to their defaults, not to the saved values. To change one field, read the saved search from `GET /api/leads/research-profiles`, merge your change, and send the full criteria. Because `save` defaults to `true`, the criteria you send are also written back to that saved search; send `save: false` to run without changing it.\n\n**Two responses that start no lead search.** Both apply only to a typed request, with no `profile_id` and no `seed_lead_ids`:\n- When `criteria` carries only a free-text `description` that does not read as a request for leads, ManyPI starts a plain agent run instead and the response includes `redirected: true`. Send `check_intent: false` to skip that check.\n- When the description names leads the workspace already has, the response is `{ \"known\": {...}, \"description\": \"...\" }` with no `run_id`, and no run starts. Send `force_search: true` to search anyway.\n\nRequires the `agents` permission.",
         "operationId": "startLeadResearch",
         "tags": ["Leads"],
         "requestBody": {
@@ -181,11 +194,13 @@
                 "type": "object",
                 "properties": {
                   "criteria": { "$ref": "#/components/schemas/LeadResearchCriteria" },
-                  "profile_id": { "type": "string", "format": "uuid", "description": "Re-run a saved search. Its criteria are used unless `criteria` overrides them." },
+                  "profile_id": { "type": "string", "format": "uuid", "description": "Re-run a saved search. Its criteria are used when `criteria` is omitted; when `criteria` is sent, it replaces them entirely." },
                   "seed_lead_ids": { "type": "array", "maxItems": 50, "items": { "type": "string", "format": "uuid" }, "description": "Seed the search from existing leads (\"find similar\")." },
-                  "save": { "type": "boolean", "default": true, "description": "Persist as a reusable saved search." },
+                  "save": { "type": "boolean", "default": true, "description": "Persist the criteria as a reusable saved search. With `profile_id`, writes them back to that saved search." },
                   "name": { "type": "string", "maxLength": 120 },
-                  "kind": { "type": "string", "enum": ["icp", "similar"] }
+                  "kind": { "type": "string", "enum": ["icp", "similar"] },
+                  "check_intent": { "type": "boolean", "default": true, "description": "Check that a free-text-only request reads as a lead search, and start a plain agent run when it does not. Send `false` when your integration only ever sends lead searches." },
+                  "force_search": { "type": "boolean", "default": false, "description": "Search even when the description names leads the workspace already has." }
                 }
               },
               "example": {
@@ -206,13 +221,13 @@
         },
         "responses": {
           "200": {
-            "description": "The run was created.",
+            "description": "A run was created — or, when `known` is present instead of `run_id`, the workspace already holds the leads the description names and no run was started.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "run_id": { "type": "string", "format": "uuid" },
+                    "run_id": { "type": "string", "format": "uuid", "description": "Absent when the response carries `known`." },
                     "conversation_id": { "type": "string", "format": "uuid" },
                     "status": { "type": "string" },
                     "count": { "type": "integer", "description": "Leads the run will actually try to save, after clamping." },
@@ -221,7 +236,10 @@
                       "type": "object",
                       "description": "Present only when `count` was reduced to fit the plan.",
                       "properties": { "requested": { "type": "integer" }, "allowed": { "type": "integer" }, "limit": { "type": "integer" } }
-                    }
+                    },
+                    "redirected": { "type": "boolean", "description": "Present and `true` when the request did not read as a lead search and a plain agent run was started instead. See `check_intent`." },
+                    "known": { "type": "object", "description": "Present instead of `run_id` when the description names leads the workspace already has. Holds those leads; no run was started. See `force_search`." },
+                    "description": { "type": "string", "description": "The description that was matched, returned alongside `known`." }
                   }
                 }
               }
@@ -249,7 +267,7 @@
       },
       "post": {
         "summary": "Create or update a saved search",
-        "description": "Store a search without running it. Pass `id` to update an existing profile in place.\n\nRequires the `write` permission.",
+        "description": "Store a search without running it. Pass `id` to replace an existing profile in place: `criteria` replaces the stored criteria, and an omitted `name` is replaced by one generated from the criteria. To change only some fields — a rename, say — use `PATCH /api/leads/research-profiles/{id}`, which keeps whatever you leave out.\n\nRequires the `write` permission.",
         "operationId": "saveResearchProfile",
         "tags": ["Leads"],
         "requestBody": {
@@ -272,6 +290,48 @@
         "responses": {
           "200": { "description": "The saved profile.", "content": { "application/json": { "schema": { "type": "object", "properties": { "profile": { "$ref": "#/components/schemas/ResearchProfile" } } } } } },
           "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/leads/research-profiles/{id}": {
+      "patch": {
+        "summary": "Update a saved search",
+        "description": "Rename a saved search, change its kind, or replace its criteria. Anything you leave out keeps its stored value. `criteria`, when sent, replaces the stored criteria as a whole.\n\nRequires the `write` permission.",
+        "operationId": "updateResearchProfile",
+        "tags": ["Leads"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+                  "kind": { "type": "string", "enum": ["icp", "similar"] },
+                  "criteria": { "$ref": "#/components/schemas/LeadResearchCriteria" }
+                }
+              },
+              "example": { "name": "DACH Shopify agencies" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "The updated profile.", "content": { "application/json": { "schema": { "type": "object", "properties": { "profile": { "$ref": "#/components/schemas/ResearchProfile" } } } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "summary": "Delete a saved search",
+        "description": "Delete a saved search. Leads it already found are kept.\n\nThe response is `{ \"ok\": true }` whether or not a saved search with that id existed.\n\nRequires the `write` permission.",
+        "operationId": "deleteResearchProfile",
+        "tags": ["Leads"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Deleted.", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } } } } },
           "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
@@ -663,12 +723,12 @@
       },
       "delete": {
         "summary": "Delete a campaign",
-        "description": "Delete a campaign. Archiving (`PATCH` with `status: \"archived\"`) is usually the better choice — it keeps the history.\n\nRequires the `write` permission.",
+        "description": "Delete a campaign. Archiving (`PATCH` with `status: \"archived\"`) is usually the better choice — it keeps the history.\n\nThe campaign's sequence is deleted with it when no other campaign uses that sequence.\n\nThe response is `{ \"ok\": true }` whether or not a campaign with that id existed. To confirm it was there, fetch it first with `GET /api/outreach/campaigns/{id}`.\n\nRequires the `write` permission.",
         "operationId": "deleteCampaign",
         "tags": ["Outreach"],
         "parameters": [{ "name": "id", "in": "query", "required": true, "schema": { "type": "string", "format": "uuid" } }],
         "responses": {
-          "200": { "description": "Deleted." },
+          "200": { "description": "Deleted, or there was nothing to delete.", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } } } } },
           "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
@@ -705,7 +765,7 @@
     "/api/outreach/enroll": {
       "post": {
         "summary": "Enroll leads into a campaign",
-        "description": "Queue the campaign's sequence for real sending, respecting the inbox's warmup and daily caps. Up to 1,000 leads per call.\n\nSkipped rather than failed: leads with no email, leads already enrolled, suppressed or unsubscribed addresses, and addresses known to be undeliverable. When the brand has *validate on enroll* turned on (the default), unchecked addresses are validated first and undeliverable ones dropped before anything is sent.\n\n**Sending cannot be undone.** Requires a paid plan and the `outreach:send` permission.",
+        "description": "Queue the campaign's sequence for real sending, respecting the inbox's warmup and daily caps. Up to 1,000 leads per call; ids past the first 1,000 are counted in `skipped_over_limit`.\n\nSkipped rather than failed: leads with no email, leads already enrolled, unsubscribed or suppressed addresses, addresses that bounced, addresses known to be undeliverable, and — when the brand only writes to confirmed addresses — addresses that could not be confirmed. Each cause has its own counter; `summary` explains them in plain language.\n\nWhen the brand has *validate on enroll* turned on (the default), unchecked addresses are enrolled and checked in the background (`queued_for_validation`). The result is applied at send time, so an address that turns out undeliverable is never sent to.\n\n**Sending cannot be undone.** Requires a paid plan and the `outreach:send` permission.",
         "operationId": "enrollLeads",
         "tags": ["Outreach"],
         "requestBody": {
@@ -727,7 +787,29 @@
         "responses": {
           "200": {
             "description": "Enrollment outcome.",
-            "content": { "application/json": { "schema": { "type": "object", "description": "Skips are reported as separate counters rather than a single `skipped` total with a reasons map. Add the four skip counters together for the number of leads that were not enrolled.", "properties": { "enrolled": { "type": "integer", "description": "Leads whose first step was queued." }, "skipped_no_email": { "type": "integer", "description": "Leads with no email address." }, "skipped_suppressed": { "type": "integer", "description": "Addresses on the do-not-contact list, or already unsubscribed." }, "skipped_invalid": { "type": "integer", "description": "Addresses already known to be undeliverable." }, "already_enrolled": { "type": "integer", "description": "Leads already enrolled in this campaign." }, "queued_for_validation": { "type": "integer", "description": "Unchecked addresses sent for validation first, when the brand has validate-on-enroll turned on. These are not yet enrolled." } } } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Skips are reported as one counter per cause rather than a single total. Counters for causes that did not occur may be omitted. For the number of leads that were not enrolled, add up every `skipped_*` counter and `already_enrolled` — or compute `requested - enrolled`.",
+                  "properties": {
+                    "enrolled": { "type": "integer", "description": "Leads that now have an enrollment they did not have before. Includes `queued_for_validation`." },
+                    "requested": { "type": "integer", "description": "Lead ids in the request, before any skipping." },
+                    "already_enrolled": { "type": "integer", "description": "Leads already enrolled in this campaign." },
+                    "skipped_not_found": { "type": "integer", "description": "Ids that match no lead this workspace can see." },
+                    "skipped_no_email": { "type": "integer", "description": "Leads with no email address." },
+                    "skipped_unsubscribed": { "type": "integer", "description": "Leads who unsubscribed or are on the do-not-contact list." },
+                    "skipped_bounced": { "type": "integer", "description": "Leads whose address bounced the last time you wrote." },
+                    "skipped_invalid": { "type": "integer", "description": "Addresses known to be dead: invalid, disposable, or a domain that takes no mail." },
+                    "skipped_unverifiable": { "type": "integer", "description": "Addresses the mail server would not confirm, skipped because the brand only writes to confirmed addresses." },
+                    "skipped_over_limit": { "type": "integer", "description": "Ids past the first 1,000 in this request." },
+                    "queued_for_validation": { "type": "integer", "description": "Enrolled leads whose unchecked address is being verified in the background, when the brand has validate-on-enroll turned on." },
+                    "summary": { "type": "string", "description": "What happened, in plain language — the same text the dashboard shows." }
+                  }
+                },
+                "example": { "enrolled": 214, "requested": 240, "already_enrolled": 9, "skipped_no_email": 12, "skipped_unsubscribed": 3, "skipped_bounced": 2, "queued_for_validation": 4, "summary": "Added 214 of 240 leads. 9 leads are already in this campaign. 12 leads have no email address yet, so there is nothing to send to. Find their address first, then add them again. 3 leads unsubscribed, so they stay on your do-not-contact list. Remove them from Suppressions if that was a mistake. 2 leads bounced the last time you wrote. Sending again would only damage the reputation of the inbox you send from." }
+              }
+            }
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
@@ -767,7 +849,9 @@
                   "subject": { "type": "string" },
                   "html": { "type": "string" },
                   "lead_id": { "type": "string", "format": "uuid", "description": "Used for merge variables and as the default recipient." },
-                  "to": { "type": "string", "format": "email", "description": "Explicit recipient; defaults to the lead's address." }
+                  "to": { "type": "string", "format": "email", "description": "Explicit recipient; defaults to the lead's address." },
+                  "cc": { "type": "array", "items": { "type": "string", "format": "email" }, "description": "Copy recipients. `to`, `cc` and `bcc` together may hold at most 10 addresses." },
+                  "bcc": { "type": "array", "items": { "type": "string", "format": "email" }, "description": "Blind-copy recipients, counted in the same 10-address limit." }
                 }
               },
               "example": { "smtp_config_id": "…", "lead_id": "…", "subject": "Following up, {{first_name}}", "html": "<p>Hi {{first_name}}, …</p>" }
@@ -779,7 +863,8 @@
           "400": { "$ref": "#/components/responses/BadRequest" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "403": { "description": "Outreach requires a paid plan (`code: \"outreach_locked\"`)." },
-          "404": { "description": "The inbox was not found." }
+          "404": { "description": "The inbox was not found." },
+          "429": { "description": "A sending limit is spent: the inbox has sent its warmup-aware cap for the last 24 hours, or the workspace has reached its plan's monthly outreach allowance. `error` says which. Retrying immediately will not succeed — wait for the window to reset or raise the limit.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
         }
       }
     },
@@ -820,20 +905,20 @@
     "/api/outreach/replies": {
       "get": {
         "summary": "List replies",
-        "description": "Everything that came back from your campaigns — human replies, auto-replies and bounces — with counts for filter chips and a sentiment summary.\n\nReading replies requires any paid plan. The **sentiment fields** (`sentiment`, `sentiment_score`, `intent`, `summary`, `analyzed_at`) require Pro or Business and are stripped from the response on other plans.\n\nRequires the `read` permission.",
+        "description": "Everything that came back from your campaigns — human replies, auto-replies and bounces — with counts for filter chips and a sentiment summary.\n\nReading replies requires any paid plan. The **sentiment fields** (`sentiment`, `sentiment_score`, `intent`, `summary`, `analyzed_at`) require Pro or Business and are stripped from the response on other plans.\n\nOn those other plans the `sentiment` filter is **ignored, not rejected**: every reply comes back, and the response says `canSeeSentiment: false`. Check that flag before treating the results as filtered — otherwise, say, every reply gets routed as positive.\n\nRequires the `read` permission.",
         "operationId": "listReplies",
         "tags": ["Outreach"],
         "parameters": [
           { "name": "campaign", "in": "query", "schema": { "type": "string", "format": "uuid" } },
           { "name": "kind", "in": "query", "schema": { "type": "string", "enum": ["reply", "bounce", "auto_reply"] } },
-          { "name": "sentiment", "in": "query", "schema": { "type": "string", "enum": ["positive", "neutral", "negative", "objection", "unsubscribe", "ooo", "referral"] } },
-          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 100 } },
+          { "name": "sentiment", "in": "query", "description": "Applied only when the plan includes reply intelligence (`canSeeSentiment: true`); ignored otherwise.", "schema": { "type": "string", "enum": ["positive", "neutral", "negative", "objection", "unsubscribe", "ooo", "referral"] } },
+          { "name": "limit", "in": "query", "description": "Max 200.", "schema": { "type": "integer", "default": 50, "maximum": 200 } },
           { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } }
         ],
         "responses": {
           "200": {
             "description": "Replies.",
-            "content": { "application/json": { "schema": { "type": "object", "properties": { "replies": { "type": "array", "items": { "$ref": "#/components/schemas/Reply" } }, "total": { "type": "integer" }, "counts": { "type": "object" }, "sentiment": { "type": "object", "nullable": true } } } } }
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "replies": { "type": "array", "items": { "$ref": "#/components/schemas/Reply" } }, "total": { "type": "integer" }, "counts": { "type": "object" }, "sentiment": { "type": "object", "nullable": true }, "canSeeSentiment": { "type": "boolean", "description": "Whether the plan includes reply intelligence. When `false`, the sentiment fields are stripped and the `sentiment` filter was not applied." } } } } }
           },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "403": { "description": "Outreach requires a paid plan (`code: \"outreach_locked\"`)." }
@@ -843,13 +928,53 @@
     "/api/outreach/insights": {
       "get": {
         "summary": "Get reply insights",
-        "description": "Patterns across your replies and concrete, approvable suggestions for what to change.\n\nRequires Pro or Business, and the `read` permission.",
+        "description": "What one campaign's replies add up to: how many were real answers rather than bounces or auto-replies, how they read, and concrete, approvable suggestions for what to change.\n\n`campaign` is required. The reply mix is available on every plan; the `sentiment` breakdown needs reply intelligence (Pro or Business), which the response reports as `canUseAi`.\n\nRequires the `read` permission.",
         "operationId": "getOutreachInsights",
         "tags": ["Outreach"],
+        "parameters": [
+          { "name": "campaign", "in": "query", "required": true, "description": "The campaign whose replies to analyse.", "schema": { "type": "string", "format": "uuid" } }
+        ],
         "responses": {
-          "200": { "description": "Insights and suggestions." },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "403": { "description": "Reply intelligence requires Pro or Business." }
+          "200": {
+            "description": "Insights and suggestions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "suggestions": {
+                      "type": "array",
+                      "description": "Suggested changes, newest first, up to 50.",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "format": "uuid" },
+                          "campaign_id": { "type": "string", "format": "uuid", "nullable": true },
+                          "sequence_id": { "type": "string", "format": "uuid", "nullable": true },
+                          "kind": { "type": "string", "enum": ["lead_action", "campaign_config", "sequence_copy"] },
+                          "action": { "type": "string", "enum": ["suppress_lead", "stop_enrollment", "mark_interested", "snooze", "draft_reply", "pause_variant", "narrow_send_window", "lower_daily_limit", "pause_campaign", "rewrite_step"] },
+                          "title": { "type": "string" },
+                          "rationale": { "type": "string" },
+                          "payload": { "type": "object", "description": "The exact change applying the suggestion would make." },
+                          "evidence": { "type": "object" },
+                          "status": { "type": "string", "enum": ["pending", "applied", "dismissed", "failed"] },
+                          "applied_at": { "type": "string", "format": "date-time", "nullable": true },
+                          "created_at": { "type": "string", "format": "date-time" }
+                        }
+                      }
+                    },
+                    "mix": { "type": "object", "description": "Responses by kind. `reply` is the only one a person wrote.", "properties": { "reply": { "type": "integer" }, "bounce": { "type": "integer" }, "auto_reply": { "type": "integer" } } },
+                    "sentiment": { "type": "object", "additionalProperties": { "type": "integer" }, "description": "Human replies by sentiment. Empty unless `canUseAi` is `true`." },
+                    "lastReplyAt": { "type": "string", "format": "date-time", "nullable": true, "description": "When the most recent response of any kind arrived." },
+                    "canUseAi": { "type": "boolean", "description": "Whether the plan includes reply intelligence." }
+                  }
+                },
+                "example": { "suggestions": [], "mix": { "reply": 14, "bounce": 3, "auto_reply": 5 }, "sentiment": { "positive": 6, "neutral": 4, "objection": 3, "negative": 1 }, "lastReplyAt": "2026-08-21T16:12:00.000Z", "canUseAi": true }
+              }
+            }
+          },
+          "400": { "description": "`campaign` is missing.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
     },
@@ -872,7 +997,7 @@
       },
       "post": {
         "summary": "Suppress addresses",
-        "description": "Add addresses to the do-not-contact list. Import your existing list on day one — customers, competitors, anyone who has already asked you to stop.\n\nRequires the `write` permission.",
+        "description": "Add addresses to the do-not-contact list. Import your existing list on day one — customers, competitors, anyone who has already asked you to stop.\n\nUp to 5,000 addresses per call. Addresses past the first 5,000 are dropped without an error, so split larger lists across calls.\n\nRequires the `write` permission.",
         "operationId": "addSuppressions",
         "tags": ["Outreach"],
         "requestBody": {
@@ -886,7 +1011,7 @@
       },
       "delete": {
         "summary": "Unsuppress an address",
-        "description": "Remove one address from the list. This only clears the block — it does not re-enroll anyone, so a mistaken removal cannot by itself restart emails to someone who opted out.\n\nRequires the `write` permission.",
+        "description": "Remove one address from the list. This only clears the block — it does not re-enroll anyone, so a mistaken removal cannot by itself restart emails to someone who opted out.\n\nThe response is `{ \"ok\": true }` whether or not the address was on the list. To know whether it was, search for it first with `GET /api/outreach/suppressions?q=`.\n\nRequires the `write` permission.",
         "operationId": "removeSuppression",
         "tags": ["Outreach"],
         "parameters": [{ "name": "email", "in": "query", "required": true, "schema": { "type": "string", "format": "email" } }],
@@ -973,12 +1098,12 @@
       },
       "delete": {
         "summary": "Delete an agent run",
-        "description": "Delete a run along with its events and artifacts.\n\nRequires the `write` permission.",
+        "description": "Delete a run along with its events and artifacts.\n\nThe response is `{ \"ok\": true }` whether or not a run with that id existed. To confirm it was there, fetch it first with `GET /api/agents/runs/{id}`.\n\nRequires the `write` permission.",
         "operationId": "deleteAgentRun",
         "tags": ["Agent"],
         "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
         "responses": {
-          "200": { "description": "Deleted." },
+          "200": { "description": "Deleted, or there was nothing to delete.", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } } } } },
           "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
@@ -1018,12 +1143,12 @@
     "/api/agents/runs/{id}/cancel": {
       "post": {
         "summary": "Cancel an agent run",
-        "description": "Stop a run immediately. Cancellation is authoritative rather than advisory — the run is marked cancelled at once, so a wedged executor cannot keep it \"running\" and occupying one of your parallel-run slots.\n\nRequires the `agents` permission.",
+        "description": "Stop a run immediately. Cancellation is authoritative rather than advisory — a `queued`, `planning` or `running` run is marked `cancelled` at once, so a wedged executor cannot keep it \"running\" and occupying one of your parallel-run slots. A `paused` run is cancelled through its cancel flag.\n\nRuns that already finished (`completed`, `failed`, `cancelled`) are left as they are. The response is `{ \"ok\": true }` in every case, including for an id that matches no run — read the run with `GET /api/agents/runs/{id}` to see its status.\n\nRequires the `agents` permission.",
         "operationId": "cancelAgentRun",
         "tags": ["Agent"],
         "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
         "responses": {
-          "200": { "description": "Cancelled." },
+          "200": { "description": "Cancelled, or there was nothing to cancel.", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } } } } },
           "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
@@ -1084,7 +1209,7 @@
     "/api/scrape/{scraperId}": {
       "post": {
         "summary": "Run a scraper",
-        "description": "Queue a scraper run. **Asynchronous** — the call returns `202` immediately with a `runId`, so a slow page never times your request out.\n\nRead the result with `GET /api/{scraperId}/data/{runId}`, or configure an outbound webhook to be notified when it completes.\n\nRequires the `scraper` permission.",
+        "description": "Queue a scraper run. **Asynchronous** — the call returns `202` immediately with a `runId`, so a slow page never times your request out.\n\nPoll `GET /api/runs/{runId}` until `status` is `completed` (or `failed`), then read the full result with `GET /api/{scraperId}/data/{runId}`. Or configure an outbound webhook to be notified when it completes.\n\nThe body takes `url` only. Run settings such as timeouts and retries are not configurable per call.\n\nRequires the `scraper` permission.",
         "operationId": "runScraper",
         "tags": ["Scraping"],
         "parameters": [{ "name": "scraperId", "in": "path", "required": true, "description": "Find this in the dashboard under Scrapers.", "schema": { "type": "string", "format": "uuid" } }],
@@ -1095,8 +1220,7 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "url": { "type": "string", "format": "uri", "description": "Override the scraper's saved target for this run." },
-                  "options": { "type": "object", "properties": { "timeout": { "type": "integer" }, "retries": { "type": "integer" } } }
+                  "url": { "type": "string", "format": "uri", "description": "Override the scraper's saved target for this run." }
                 }
               },
               "example": { "url": "https://example.com/product/42" }
@@ -1129,15 +1253,15 @@
     "/api/{scraperId}/data/{runId}": {
       "get": {
         "summary": "Get scraper run results",
-        "description": "The status and extracted data for one run. Poll this after `POST /api/scrape/{scraperId}` until `status` is `completed`.\n\nRequires the `read` permission.",
+        "description": "The extracted data for one run. It carries no status: until the run completes, the body is `null`. Check progress with `GET /api/runs/{runId}` and call this once `status` is `completed`.\n\nRequires the `read` permission.",
         "operationId": "getScraperRunData",
         "tags": ["Scraping"],
         "parameters": [
           { "name": "scraperId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
-          { "name": "runId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+          { "name": "runId", "in": "path", "required": true, "description": "A run id. Also accepts `latest` for the scraper's most recent run, a number for the run that many places back (`1` is the one before `latest`), or the run's exact `created_at` timestamp.", "schema": { "type": "string" } }
         ],
         "responses": {
-          "200": { "description": "The extracted data itself. This endpoint returns the scraped JSON directly — there is no run envelope, so no id, status, error or timestamp is included. The shape follows the scraper's own `scraper_schema`. Large results are hydrated from storage transparently, so the full result is always returned rather than a truncated preview.", "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true, "description": "Matches the scraper's configured output schema." } } } },
+          "200": { "description": "The extracted data itself, or `null` while the run has not completed. This endpoint returns the scraped JSON directly — there is no run envelope, so no id, status, error or timestamp is included. The shape follows the scraper's own `scraper_schema`. Large results are hydrated from storage transparently, so the full result is always returned rather than a truncated preview.", "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true, "description": "Matches the scraper's configured output schema." } } } },
           "400": { "description": "Invalid scraper id format." },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": { "$ref": "#/components/responses/NotFound" }
@@ -1157,6 +1281,46 @@
         "responses": {
           "200": { "description": "Runs.", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ScraperRun" } } } } },
           "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/runs/{runId}": {
+      "get": {
+        "summary": "Get a scraper run",
+        "description": "The status of one scraper run — the call to poll after `POST /api/scrape/{scraperId}`.\n\n`result` holds the inline copy of the extracted data once the run completes. Large results keep only a preview inline, so read the full data from `GET /api/{scraperId}/data/{runId}`.\n\nRequires the `read` permission.",
+        "operationId": "getScraperRun",
+        "tags": ["Scraping"],
+        "parameters": [{ "name": "runId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": {
+            "description": "The run.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "runId": { "type": "string", "format": "uuid" },
+                        "scraperId": { "type": "string", "format": "uuid" },
+                        "status": { "type": "string", "enum": ["pending", "running", "completed", "failed", "cancelled"] },
+                        "metadata": { "type": "object", "properties": { "tokensConsumed": { "type": "integer", "nullable": true }, "creditsUsed": { "type": "number", "nullable": true }, "storageSizeBytes": { "type": "integer", "nullable": true }, "createdAt": { "type": "string", "format": "date-time" }, "updatedAt": { "type": "string", "format": "date-time" } } },
+                        "result": { "type": "object", "additionalProperties": true, "description": "Present once `status` is `completed`. May be a preview for large results." },
+                        "downloadUrl": { "type": "string", "description": "Storage path of the full result, when one was written." },
+                        "error": { "type": "string", "description": "Present when `status` is `failed`." }
+                      }
+                    }
+                  }
+                },
+                "example": { "success": true, "data": { "runId": "b3c4d5e6-7f80-4912-a3b4-c5d6e7f8a901", "scraperId": "9f1c2a44-0c3e-4b7a-8f61-2d5e8b9a1c33", "status": "completed", "metadata": { "tokensConsumed": 1240, "creditsUsed": 3, "storageSizeBytes": 8904, "createdAt": "2026-08-08T08:53:30.710Z", "updatedAt": "2026-08-08T08:53:49.409Z" }, "result": { "price": 49 } } }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "description": "The run belongs to another account." },
+          "404": { "$ref": "#/components/responses/NotFound" }
         }
       }
     },
@@ -1210,10 +1374,91 @@
         }
       }
     },
+    "/api/endpoints/{id}": {
+      "get": {
+        "summary": "Get an API endpoint",
+        "description": "One endpoint's settings and its 50 most recent invocations.\n\nRequires the `read` permission.",
+        "operationId": "getEndpoint",
+        "tags": ["Endpoints"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": {
+            "description": "The endpoint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Endpoint" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "invocations": {
+                          "type": "array",
+                          "description": "Most recent first, up to 50.",
+                          "items": { "type": "object", "properties": { "id": { "type": "string", "format": "uuid" }, "status": { "type": "string" }, "cache_hit": { "type": "boolean" }, "latency_ms": { "type": "integer" }, "credits_used": { "type": "number" }, "created_at": { "type": "string", "format": "date-time" }, "run_id": { "type": "string", "format": "uuid", "nullable": true } } }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "patch": {
+        "summary": "Update an API endpoint",
+        "description": "Change an endpoint's settings, or take it offline with `is_active: false`. The slug and the backing scraper cannot be changed — create a new endpoint for that.\n\nRequires the `write` permission.",
+        "operationId": "updateEndpoint",
+        "tags": ["Endpoints"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+                  "description": { "type": "string", "maxLength": 2000, "nullable": true },
+                  "method": { "type": "string", "enum": ["GET", "POST"] },
+                  "param_schema": { "type": "object", "nullable": true },
+                  "output_schema": { "type": "object", "nullable": true },
+                  "freshness": { "type": "string", "enum": ["cached_ok", "always_fresh"] },
+                  "cache_ttl_seconds": { "type": "integer", "minimum": 0, "maximum": 604800 },
+                  "mode": { "type": "string", "enum": ["sync", "async"] },
+                  "is_active": { "type": "boolean", "description": "`false` takes the endpoint offline: calls to its URL return `404` until it is turned back on." }
+                }
+              },
+              "example": { "cache_ttl_seconds": 900, "freshness": "cached_ok" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "The updated endpoint.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Endpoint" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "summary": "Delete an API endpoint",
+        "description": "Delete an endpoint permanently. Its URL stops answering at once.\n\nThe response is `{ \"ok\": true }` whether or not an endpoint with that id existed.\n\nRequires the `write` permission.",
+        "operationId": "deleteEndpoint",
+        "tags": ["Endpoints"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Deleted, or there was nothing to delete.", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
     "/v1/e/{slug}": {
       "get": {
         "summary": "Invoke an endpoint",
-        "description": "Call one of your published endpoints.\n\nHow a call resolves: a fresh cached result is returned immediately (no crawl credits spent); otherwise the scrape runs inline, up to a ~110 second budget; if it exceeds that — or the endpoint is `async` — you get `202` with a run id to poll at `GET /v1/e/{slug}/results/{runId}`.\n\nRequires the `endpoints:invoke` permission.",
+        "description": "Call one of your published endpoints, passing its parameters in the query string. Query values arrive as strings and are converted to the types the endpoint's `param_schema` declares. To send typed values or nested objects, use `POST` with a JSON body instead — it works whatever method the endpoint was created with.\n\nHow a call resolves: a fresh cached result is returned immediately (no crawl credits spent; `X-ManyPI-Cache: hit`); otherwise the scrape runs inline, up to a ~110 second budget; if it exceeds that — or the endpoint is `async` — you get `202` with a run id to poll at `GET /v1/e/{slug}/results/{runId}`.\n\nRequires the `endpoints:invoke` permission.",
         "operationId": "invokeEndpoint",
         "tags": ["Endpoints"],
         "parameters": [
@@ -1221,12 +1466,58 @@
           { "name": "url", "in": "query", "description": "Endpoint-defined parameters, validated against its `param_schema`.", "schema": { "type": "string" } }
         ],
         "responses": {
-          "200": { "description": "The extracted data, matching the endpoint's output schema.", "content": { "application/json": { "schema": { "type": "object" } } } },
-          "202": { "description": "Still running. Poll `GET /v1/e/{slug}/results/{runId}`.", "content": { "application/json": { "schema": { "type": "object", "properties": { "runId": { "type": "string", "format": "uuid" }, "status": { "type": "string" } } } } } },
-          "400": { "description": "Parameters failed validation against the endpoint's schema." },
+          "200": { "$ref": "#/components/responses/EndpointResult" },
+          "202": { "$ref": "#/components/responses/EndpointAccepted" },
+          "400": { "description": "Parameters failed validation against the endpoint's schema. `details` lists what was wrong.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "403": { "description": "The key lacks the `endpoints:invoke` permission." },
-          "404": { "description": "No endpoint with that slug for this account." }
+          "404": { "description": "No active endpoint with that slug for this account." },
+          "502": { "$ref": "#/components/responses/EndpointFailed" }
+        }
+      },
+      "post": {
+        "summary": "Invoke an endpoint with a JSON body",
+        "description": "Call one of your published endpoints with its parameters as a JSON object. Values keep their JSON types, so numbers, booleans and nested objects arrive as sent. Works for every endpoint, whichever method it was created with.\n\nResolves exactly like `GET`: a fresh cached result immediately, otherwise the scrape runs inline for up to ~110 seconds, then `202` with a run id.\n\nRequires the `endpoints:invoke` permission.",
+        "operationId": "invokeEndpointWithBody",
+        "tags": ["Endpoints"],
+        "parameters": [{ "name": "slug", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "additionalProperties": true, "description": "The endpoint's parameters, validated against its `param_schema`." },
+              "example": { "url": "https://example.com/product/42" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "$ref": "#/components/responses/EndpointResult" },
+          "202": { "$ref": "#/components/responses/EndpointAccepted" },
+          "400": { "description": "Parameters failed validation against the endpoint's schema. `details` lists what was wrong.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "description": "The key lacks the `endpoints:invoke` permission." },
+          "404": { "description": "No active endpoint with that slug for this account." },
+          "502": { "$ref": "#/components/responses/EndpointFailed" }
+        }
+      }
+    },
+    "/v1/e/{slug}/results/{runId}": {
+      "get": {
+        "summary": "Get an endpoint result",
+        "description": "Collect the result of a call that returned `202` — an `async` endpoint, or a sync one that ran past the inline budget. Returns `202` again while the run is still going.\n\nRequires the `endpoints:invoke` permission.",
+        "operationId": "getEndpointResult",
+        "tags": ["Endpoints"],
+        "parameters": [
+          { "name": "slug", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "runId", "in": "path", "required": true, "description": "The `run_id` from the `202` response.", "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/EndpointResult" },
+          "202": { "description": "Still running. Poll again shortly.", "content": { "application/json": { "schema": { "type": "object", "properties": { "status": { "type": "string" }, "run_id": { "type": "string", "format": "uuid" } } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "description": "The key lacks the `endpoints:invoke` permission." },
+          "404": { "description": "No endpoint with that slug, or no such run, for this account." },
+          "502": { "$ref": "#/components/responses/EndpointFailed" }
         }
       }
     },
@@ -1270,7 +1561,7 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "description": "A ManyPI API key (`mpi_...`) from Settings → API keys, or an OAuth 2.1 access token obtained through the MCP consent flow."
+        "description": "A ManyPI API key (`mpi_...`) from the profile menu → API Access in the dashboard, or an OAuth 2.1 access token obtained through the MCP consent flow."
       }
     },
     "responses": {
@@ -1285,14 +1576,44 @@
       "NotFound": {
         "description": "No such resource in this workspace.",
         "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "EndpointResult": {
+        "description": "The extracted data, matching the endpoint's output schema. `X-ManyPI-Cache` says whether it came from the cache (`hit`) or a fresh scrape (`miss`); `X-ManyPI-Run-Id` names the run behind it.",
+        "headers": {
+          "X-ManyPI-Cache": { "schema": { "type": "string", "enum": ["hit", "miss"] } },
+          "X-ManyPI-Run-Id": { "schema": { "type": "string", "format": "uuid" } },
+          "X-ManyPI-Cached-At": { "description": "When the cached result was produced. Sent on cache hits only.", "schema": { "type": "string", "format": "date-time" } }
+        },
+        "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } }
+      },
+      "EndpointAccepted": {
+        "description": "Still running — the endpoint is `async`, or the scrape ran past the ~110 second inline budget. Poll the URL in `poll` (also sent as `Location`) with `GET /v1/e/{slug}/results/{runId}`.",
+        "headers": { "Location": { "schema": { "type": "string" } } },
+        "content": {
+          "application/json": {
+            "schema": { "type": "object", "properties": { "status": { "type": "string", "enum": ["accepted"] }, "run_id": { "type": "string", "format": "uuid" }, "poll": { "type": "string", "description": "Path of the result to poll, e.g. `/v1/e/{slug}/results/{runId}`." } } },
+            "example": { "status": "accepted", "run_id": "b3c4d5e6-7f80-4912-a3b4-c5d6e7f8a901", "poll": "/v1/e/product-price/results/b3c4d5e6-7f80-4912-a3b4-c5d6e7f8a901" }
+          }
+        }
+      },
+      "EndpointFailed": {
+        "description": "The scrape failed (`error: \"Scrape failed\"`), or it finished but the result did not match the endpoint's output schema. In the second case `details` lists the mismatches and `raw` carries the result that was produced — the credits for it are already spent.",
+        "content": { "application/json": { "schema": { "type": "object", "properties": { "error": { "type": "string" }, "details": {}, "run_id": { "type": "string", "format": "uuid" }, "raw": { "type": "object", "additionalProperties": true } } } } }
       }
     },
     "schemas": {
       "Error": {
         "type": "object",
         "properties": {
-          "error": { "type": "string", "description": "Human-readable message." },
-          "code": { "type": "string", "description": "A machine-readable code on gated failures: `lead_limit`, `outreach_locked`, `validation_credits_exhausted`." }
+          "error": {
+            "description": "Human-readable message. A few validation failures (creating or updating an endpoint, bulk lead updates and deletes) send a list of the individual problems here instead of one string.",
+            "oneOf": [
+              { "type": "string" },
+              { "type": "array", "items": { "type": "object", "properties": { "path": { "type": "array", "items": { "type": ["string", "integer"] } }, "message": { "type": "string" } } } }
+            ]
+          },
+          "code": { "type": "string", "description": "A machine-readable code on gated failures: `lead_limit`, `outreach_locked`, `validation_credits_exhausted`." },
+          "details": { "description": "Extra detail on some failures, such as the list of parameters that failed an endpoint's `param_schema`." }
         }
       },
       "Lead": {
@@ -1550,7 +1871,7 @@
         "properties": {
           "id": { "type": "string", "format": "uuid" },
           "scraperId": { "type": "string", "format": "uuid" },
-          "status": { "type": "string", "enum": ["pending", "running", "completed", "failed"] },
+          "status": { "type": "string", "enum": ["pending", "running", "completed", "failed", "cancelled"] },
           "result": { "type": "object", "nullable": true, "description": "The extracted data. Null until the run completes." },
           "downloadUrl": { "type": "string", "nullable": true, "description": "Storage path for the full JSON result." },
           "metadata": { "type": "object", "properties": { "tokensConsumed": { "type": "integer", "nullable": true }, "creditsUsed": { "type": "integer", "nullable": true }, "storageSizeBytes": { "type": "integer", "nullable": true } } },

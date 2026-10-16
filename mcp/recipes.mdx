@@ -55,8 +55,8 @@ Good. Save that as a sequence called "Agency outbound Q3".
 Which inboxes do I have?
 ```
 
-`list_inboxes` — check the health score and today's remaining cap before you
-commit to a volume.
+`list_inboxes`: check the health score and the remaining headroom
+(`cap - sent24h`, a rolling 24 hours) before you commit to a volume.
 
 ```text
 Create a campaign called "DACH agencies Q3" using that sequence
@@ -103,6 +103,34 @@ Pause all my active campaigns.
 
 `list_campaigns` → `update_campaign` per campaign. Progress is kept; resuming
 picks up where it stopped.
+
+## Move over from Instantly
+
+```text
+I'm moving from Instantly. Here is my API V2 key: …
+Show me what's in the account before importing anything.
+```
+
+`scan_import`. The answer lists the campaigns, lead counts, the do-not-contact
+list and the mailboxes. Nothing has been imported yet.
+
+```text
+Bring the two "Q3" campaigns and their leads, plus the
+do-not-contact list. Keep going until it's done.
+```
+
+`start_import` → `continue_import` until `done` → `get_import`
+
+The campaigns arrive as **drafts** with their email steps, and leads Instantly
+never emailed are already queued in them. Nothing sends until you pick an inbox
+and launch each one under **Outreach → Campaigns** in ManyPI. Smartlead,
+lemlist, Apollo, Snov.io and Saleshandy work the same way.
+
+<Note>
+  The key passes through the conversation. To keep it out of the chat, start
+  the import from **Integrations → Switch from another tool** in the dashboard
+  and ask your assistant to follow it with `get_import`.
+</Note>
 
 ## A one-off email
 

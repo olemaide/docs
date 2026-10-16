@@ -65,9 +65,10 @@ Authorization: Bearer mpi_your_api_key
 
 | Doing this over MCP | Needs |
 | --- | --- |
-| `search_leads`, `list_*`, `get_*`, `outreach_stats`, `draft_email` | `read` |
+| `search_leads`, `list_*`, `get_*`, `outreach_stats` | `read` |
 | `generate_leads`, `run_agent`, `reply_to_agent` | `agents` |
-| `create_sequence`, `create_campaign`, `update_campaign` | `write` |
+| `create_sequence`, `create_campaign`, `update_campaign`, `draft_email` | `write` |
+| `scan_import`, `start_import`, `continue_import`, `cancel_import` | `write` |
 | `run_scraper` | `scraper` |
 | `enroll_leads`, `send_email` | `outreach:send` |
 

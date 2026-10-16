@@ -1,7 +1,37 @@
 ---
 title: "Integrations"
-description: "Webhooks, polling, n8n, MCP and databases — how ManyPI talks to the rest of your stack."
+description: "Imports from other tools, webhooks, polling, n8n, MCP and databases: how ManyPI talks to the rest of your stack."
 ---
+
+## Switch from another tool
+
+Coming from Instantly, Smartlead, lemlist, Apollo, Snov.io or Saleshandy? Open
+**Integrations → Switch from another tool**, paste that tool's API key, and
+ManyPI scans the account before importing anything. Then it brings over:
+
+- the do-not-contact list, plus leads that bounced or unsubscribed there;
+- your campaigns, recreated as **drafts** with their email steps;
+- their leads, with custom variables as lead fields, merged into any you
+  already have.
+
+Leads the old tool never emailed can be queued in their new campaign, so the
+sequence carries on once you launch it. Nothing sends until you pick an inbox
+and launch. The key is stored encrypted and erased when the import ends.
+
+The import keeps running if you close the tab. CRM and support tools connected
+under **Integrations** (HubSpot, Pipedrive, Attio, Close, Zendesk, Intercom,
+Freshdesk) can import their contacts the same way.
+
+The same import is available over REST and from your AI assistant:
+
+<Columns cols={2}>
+  <Card title="Imports API" icon="terminal" href="/api-reference/imports/scan-import">
+    Scan, start, advance and cancel an import.
+  </Card>
+  <Card title="MCP import tools" icon="wrench" href="/mcp/tools#imports-from-other-tools">
+    `scan_import`, `start_import` and friends.
+  </Card>
+</Columns>
 
 ## Outbound webhooks
 

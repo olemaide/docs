@@ -21,7 +21,8 @@
     { "name": "Agent", "description": "Agent runs, replies and skills." },
     { "name": "Scraping", "description": "Scrapers, runs and extracted data." },
     { "name": "Endpoints", "description": "Publish scrapers as typed REST endpoints." },
-    { "name": "Account", "description": "Key validation and account information." }
+    { "name": "Account", "description": "Key validation and account information." },
+    { "name": "Imports", "description": "Bring campaigns, leads and the do-not-contact list over from another outreach tool." }
   ],
   "paths": {
     "/api/leads": {
@@ -1521,6 +1522,426 @@
         }
       }
     },
+    "/api/integrations/migrations": {
+      "post": {
+        "summary": "Scan another tool",
+        "description": "Check a key for another outreach tool and scan that account, before anything is imported. Opens an import in status `scanned` that holds the scan; `POST /api/integrations/migrations/{id}` starts it.\n\nSupported tools and the credentials each takes:\n\n| `provider` | `credentials` |\n| --- | --- |\n| `instantly` | `api_key` (an API V2 key) |\n| `smartlead` | `api_key` |\n| `lemlist` | `api_key` |\n| `apollo` | `api_key` (a master key, for sequences to come over) |\n| `snovio` | `client_id`, `client_secret` |\n| `saleshandy` | `api_key` |\n\nOnly the fields a tool takes are kept. The key is stored encrypted on the import and erased when the import finishes or is cancelled. It is never returned.\n\nTo import contacts from a CRM or support tool already connected under **Integrations** (HubSpot, Pipedrive, Attio, Close, Zendesk, Intercom, Freshdesk), send `connection_id` instead. The connection's stored credentials are used and nothing is pasted.\n\nRequires the `write` permission.",
+        "operationId": "scanImport",
+        "tags": [
+          "Imports"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "title": "From another outreach tool",
+                    "type": "object",
+                    "required": [
+                      "provider",
+                      "credentials"
+                    ],
+                    "properties": {
+                      "provider": {
+                        "type": "string",
+                        "enum": [
+                          "instantly",
+                          "smartlead",
+                          "lemlist",
+                          "apollo",
+                          "snovio",
+                          "saleshandy"
+                        ]
+                      },
+                      "credentials": {
+                        "type": "object",
+                        "description": "The tool's credential fields, see the table above.",
+                        "additionalProperties": {
+                          "type": "string",
+                          "maxLength": 4000
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "title": "From a connected CRM or support tool",
+                    "type": "object",
+                    "required": [
+                      "connection_id"
+                    ],
+                    "properties": {
+                      "connection_id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    }
+                  }
+                ]
+              },
+              "example": {
+                "provider": "instantly",
+                "credentials": {
+                  "api_key": "your-instantly-v2-key"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The import, in status `scanned`, with what the scan found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "job": {
+                      "$ref": "#/components/schemas/MigrationJob"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body failed validation, the tool is not supported, a required credential field is empty, or the other tool rejected the key (`code: provider_auth`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "description": "The workspace is locked for billing (past due or ended plan).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The other tool refused the key the access it needs (`code: provider_forbidden`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such connection in this workspace (`connection_id`), or the other tool answered not found (`code: provider_not_found`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The other tool is rate limiting (`code: provider_rate_limited`). Retry shortly.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The other tool's API failed (`code: provider_unavailable`). Retry shortly.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Imports are not switched on for this deployment yet.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List imports",
+        "description": "The workspace's 20 most recent imports, newest first. Works while the workspace is locked for billing, so a finished import can still be read.\n\nRequires the `read` permission.",
+        "operationId": "listImports",
+        "tags": [
+          "Imports"
+        ],
+        "responses": {
+          "200": {
+            "description": "Recent imports.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "jobs": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MigrationJob"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/integrations/migrations/{id}": {
+      "get": {
+        "summary": "Get an import",
+        "description": "One import: its status, scan, progress and, once finished, its result. Poll this while it runs.\n\nRequires the `read` permission.",
+        "operationId": "getImport",
+        "tags": [
+          "Imports"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The import id, from `POST /api/integrations/migrations`.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The import.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "job": {
+                      "$ref": "#/components/schemas/MigrationJob"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "post": {
+        "summary": "Start an import",
+        "description": "Say what to bring and start. The order is fixed: the do-not-contact list first, so nothing that arrives later is queued before its opt-out is known; then the chosen campaigns, recreated as **draft** campaigns with their email steps; then their leads, with custom variables as lead fields.\n\nNothing is sent. The campaigns stay drafts with no inbox until you launch them in ManyPI. With `enrollNotContacted`, leads the old tool never emailed are queued in their new campaign, so the sequence carries on once it is launched. Leads that replied, bounced or unsubscribed are never queued.\n\nThe first slice runs inside this request, so the response already shows progress. After that the import runs in slices: call `POST /api/integrations/migrations/{id}/advance` until `status` is `done`. An import nobody advances is picked up by ManyPI's scheduler, a few seconds every five minutes, so it finishes either way.\n\nOnly campaign ids the scan found are used; others are dropped. Calling this on an import that is not `scanned` returns it unchanged.\n\nAt most 100,000 leads per import, and the plan's lead allowance applies (leads over it are counted in `overLimit`). Custom fields need the Starter plan and queuing leads needs a paid plan; without them the import still runs and says what stayed behind in `warnings`.\n\nRequires the `write` permission.",
+        "operationId": "startImport",
+        "tags": [
+          "Imports"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The import id, from `POST /api/integrations/migrations`.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "options": {
+                    "$ref": "#/components/schemas/MigrationOptions"
+                  }
+                }
+              },
+              "example": {
+                "options": {
+                  "campaigns": [
+                    "c1f0a2b3-instantly-campaign-id"
+                  ],
+                  "recreateCampaigns": true,
+                  "importLeads": true,
+                  "doNotContact": true,
+                  "enrollNotContacted": true,
+                  "duplicates": "merge"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The import, now `running` (or already `done` for a small account).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "job": {
+                      "$ref": "#/components/schemas/MigrationJob"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "description": "The workspace is locked for billing (past due or ended plan).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Cancel an import",
+        "description": "Stop an import that has not finished and erase its stored key. What already came over stays: leads, draft campaigns and do-not-contact entries are not removed. A cancelled import cannot be resumed; scan again to start a new one. An import that already finished is returned unchanged.\n\nRequires the `write` permission.",
+        "operationId": "cancelImport",
+        "tags": [
+          "Imports"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The import id, from `POST /api/integrations/migrations`.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The import, now `cancelled`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "job": {
+                      "$ref": "#/components/schemas/MigrationJob"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/integrations/migrations/{id}/advance": {
+      "post": {
+        "summary": "Advance an import",
+        "description": "Run the next slice of a running import, about 15 seconds of work, and return where it stands. Call it in a loop until `job.status` is `done`, `failed` or `cancelled`.\n\n`worked: false` means another slice held the import at that moment (the scheduler, or a second caller), the other tool asked for a pause, or the import has finished. Nothing is lost; ask again a few seconds later.\n\nEvery slice is safe to repeat. Leads dedupe on the same identity the CSV import uses, do-not-contact entries skip what is already listed, and queued leads and campaigns are never created twice.\n\nRequires the `write` permission.",
+        "operationId": "advanceImport",
+        "tags": [
+          "Imports"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The import id, from `POST /api/integrations/migrations`.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The import after this slice.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "job": {
+                      "$ref": "#/components/schemas/MigrationJob"
+                    },
+                    "worked": {
+                      "type": "boolean",
+                      "description": "False when nothing ran in this call."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "description": "The workspace is locked for billing (past due or ended plan).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
     "/api/user": {
       "get": {
         "summary": "Validate a key / get account info",
@@ -1602,6 +2023,273 @@
       }
     },
     "schemas": {
+      "MigrationOptions": {
+        "type": "object",
+        "properties": {
+          "campaigns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 500,
+            "default": [],
+            "description": "Campaign ids from `scan.campaigns`. Leads are read through these campaigns, so for lemlist and Smartlead a lead in no chosen campaign stays behind; Instantly also brings leads that sit in lists, and Apollo, Snov.io and Saleshandy bring every contact."
+          },
+          "recreateCampaigns": {
+            "type": "boolean",
+            "default": true,
+            "description": "Recreate the chosen campaigns as drafts with their email steps."
+          },
+          "importLeads": {
+            "type": "boolean",
+            "default": true
+          },
+          "doNotContact": {
+            "type": "boolean",
+            "default": true,
+            "description": "Bring the block list, plus leads that bounced or unsubscribed there."
+          },
+          "enrollNotContacted": {
+            "type": "boolean",
+            "default": true,
+            "description": "Queue leads the old tool never emailed into their new draft campaign. Needs `recreateCampaigns` and a paid plan."
+          },
+          "duplicates": {
+            "type": "string",
+            "enum": [
+              "merge",
+              "overwrite",
+              "skip"
+            ],
+            "default": "merge",
+            "description": "A lead that already exists: `merge` fills in only its empty fields, `overwrite` replaces its fields, `skip` leaves it alone."
+          },
+          "asCustomers": {
+            "type": "boolean",
+            "default": false,
+            "description": "Contact imports: also put every imported address on do-not-contact (existing customers)."
+          }
+        }
+      },
+      "MigrationJob": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": "string",
+            "description": "The tool imported from, e.g. `instantly` or `hubspot`."
+          },
+          "account_label": {
+            "type": "string",
+            "nullable": true,
+            "description": "The account as the other tool names it."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scanned",
+              "running",
+              "done",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "scan": {
+            "type": "object",
+            "description": "What the scan found.",
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "campaigns": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "The other tool's own word for it."
+                    },
+                    "emailSteps": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "leads": {
+                      "type": "integer",
+                      "nullable": true
+                    }
+                  }
+                }
+              },
+              "leadsTotal": {
+                "type": "integer",
+                "nullable": true,
+                "description": "Null when the tool cannot count cheaply."
+              },
+              "blocklistTotal": {
+                "type": "integer",
+                "nullable": true
+              },
+              "accounts": {
+                "type": "array",
+                "description": "Sending mailboxes in the other tool. They are listed, not moved.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "email": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string",
+                      "enum": [
+                        "google",
+                        "microsoft",
+                        "smtp",
+                        "other"
+                      ]
+                    },
+                    "name": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              },
+              "notes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Worth knowing before starting, e.g. a key that cannot read sequences."
+              }
+            }
+          },
+          "options": {
+            "$ref": "#/components/schemas/MigrationOptions"
+          },
+          "progress": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "phase": {
+                "type": "string",
+                "enum": [
+                  "blocklist",
+                  "campaigns",
+                  "leads",
+                  "done"
+                ]
+              },
+              "campaignIndex": {
+                "type": "integer"
+              },
+              "campaignMap": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Other tool's campaign id to ManyPI campaign id."
+              },
+              "counts": {
+                "type": "object",
+                "properties": {
+                  "suppressed": {
+                    "type": "integer",
+                    "description": "Addresses and domains added to do-not-contact."
+                  },
+                  "campaigns": {
+                    "type": "integer",
+                    "description": "Draft campaigns created."
+                  },
+                  "steps": {
+                    "type": "integer",
+                    "description": "Email steps recreated across them."
+                  },
+                  "created": {
+                    "type": "integer",
+                    "description": "New leads."
+                  },
+                  "updated": {
+                    "type": "integer",
+                    "description": "Existing leads merged into."
+                  },
+                  "skipped": {
+                    "type": "integer",
+                    "description": "Rows not written: duplicates, rows with no email or other identity, and conflicts."
+                  },
+                  "overLimit": {
+                    "type": "integer",
+                    "description": "Leads left out because the plan's lead allowance was full."
+                  },
+                  "failed": {
+                    "type": "integer"
+                  },
+                  "enrolled": {
+                    "type": "integer",
+                    "description": "Leads queued in their new draft campaign."
+                  },
+                  "customFields": {
+                    "type": "integer",
+                    "description": "Custom variables created as lead fields."
+                  }
+                }
+              },
+              "warnings": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "skippedSteps": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "description": "Per ManyPI campaign, steps that could not come over, e.g. `2 LinkedIn steps`."
+              },
+              "leadsSeen": {
+                "type": "integer"
+              }
+            }
+          },
+          "result": {
+            "type": "object",
+            "nullable": true,
+            "description": "Set when the import ends: `counts`, `campaignMap`, `warnings` and `skippedSteps`, as in `progress`."
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why a `failed` import stopped. What came over before it is kept."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "finished_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
       "Error": {
         "type": "object",
         "properties": {

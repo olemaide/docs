@@ -3,7 +3,7 @@ title: "Tool reference"
 description: "Every tool the ManyPI MCP server exposes."
 ---
 
-Sixteen tools, grouped the way you use them. Each lists its arguments and its
+Twenty-four tools, grouped the way you use them. Each lists its arguments and its
 safety annotation — the hint MCP clients use to decide what to run
 automatically and what to confirm with you first.
 
@@ -82,15 +82,19 @@ Search the workspace's saved leads.
 
 <Info>Read-only</Info>
 
-List connected sending inboxes with per-inbox health: today's sends versus the
-warmup-aware cap, 14-day delivered/failed/opened, and a 0–100 health score. Use
-an inbox `id` as `smtp_config_id` elsewhere. Takes no arguments.
+List connected sending inboxes with per-inbox health: `sent24h` against the
+warmup-aware `cap`, 14-day delivered/failed/opened/bounced, and a 0–100 health
+score. `sent24h` is a rolling 24 hours, not a calendar day, so headroom is
+`cap - sent24h` at the moment you ask. Use an inbox `id` as `smtp_config_id`
+elsewhere. Takes no arguments.
 
 ### `list_sequences`
 
 <Info>Read-only</Info>
 
-List saved email sequences with their inline steps. Takes no arguments.
+List saved email sequences with their inline steps. A `reply` step has an empty
+subject on purpose: it goes out as "Re:" the first step's subject. Takes no
+arguments.
 
 ### `create_sequence`
 
@@ -113,11 +117,14 @@ Merge variables: `{{first_name}}`, `{{company}}`, `{{title}}`, `{{domain}}`,
 
 ### `draft_email`
 
-<Info>Read-only</Info>
+<Info>Write · reaches the web</Info>
 
 AI-draft a cold email or a whole follow-up sequence. Returns
-`{subject, html}` or `{steps: […]}`. **Persists nothing** — feed the result
+`{subject, html}` or `{steps: […]}`. **Persists nothing**: feed the result
 into `create_sequence` or `send_email`.
+
+Annotated as a write because it spends the workspace's AI credits and calls a
+model, so clients ask before running it rather than auto-approving it as a read.
 
 | Argument | Type | |
 | --- | --- | --- |
@@ -218,8 +225,106 @@ contacted.
 <Info>Read-only</Info>
 
 Workspace-wide activity: 14 days of sends (sent/failed/opened per day), replies
-per day, active enrollments, and today's sent versus the combined cap. Takes no
+per day, active enrollments, and `sent24h` against `capToday`, the combined cap
+of all inboxes. `sent24h` is a rolling 24 hours, the window the cap itself
+rolls over. Rates are percentages: a `bounceRate14d` of 9.2 means 9.2%. Takes no
 arguments.
+
+## Imports from other tools
+
+Move from Instantly, Smartlead, lemlist, Apollo, Snov.io or Saleshandy without
+leaving the conversation: scan the account, choose what to bring, and let the
+import run. It does what **Integrations → Switch from another tool** does in the
+dashboard, and nothing it creates sends email until you launch it.
+
+`scan_import` → `start_import` → `continue_import` (repeat) → `get_import`
+
+<Warning>
+  `scan_import` takes the other tool's API key as an argument, so the key passes
+  through your AI client's conversation. ManyPI stores it encrypted on the
+  import and erases it when the import ends. If you would rather the key never
+  touch the chat, start the import from **Integrations → Switch from another
+  tool** in the dashboard; `get_import` can still follow it from here.
+</Warning>
+
+### `scan_import`
+
+<Info>Write · reaches the web</Info>
+
+Check the other tool's key and scan the account: campaigns with their step and
+lead counts, total leads, do-not-contact list size, and sending mailboxes.
+Opens an import in status `scanned`. Nothing is imported yet.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `provider` | enum | **Required.** `instantly` · `smartlead` · `lemlist` · `apollo` · `snovio` · `saleshandy` |
+| `api_key` | string | The tool's API key. Instantly needs a V2 key; Apollo a master key for sequences to come over. |
+| `client_id` | string | Snov.io only: the API user ID. |
+| `client_secret` | string | Snov.io only: the API secret. |
+
+### `start_import`
+
+<Info>Destructive · reaches the web</Info>
+
+Start a scanned import. In order: the do-not-contact list, then the chosen
+campaigns as **draft** campaigns with their email steps, then their leads, with
+custom variables as lead fields. Runs the first slice and returns the progress.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `import_id` | uuid | **Required.** From `scan_import`. |
+| `campaign_ids` | string[] | Campaign ids from the scan. Defaults to every campaign it found. |
+| `recreate_campaigns` | boolean | Recreate the campaigns as drafts. Defaults to `true`. |
+| `import_leads` | boolean | Defaults to `true`. |
+| `do_not_contact` | boolean | Bring the block list, bounces and unsubscribes. Defaults to `true`. |
+| `continue_sequences` | boolean | Queue leads the old tool never emailed into their new draft campaign. Defaults to `true`; needs a paid plan. |
+| `duplicates` | enum | An existing lead: `merge` fills its empty fields (default), `overwrite` replaces them, `skip` leaves it alone. |
+
+Annotated destructive because it merges into existing leads and adds to the
+do-not-contact list, which stops mail to those addresses from every campaign.
+It sends nothing: the campaigns have no inbox until you launch them in ManyPI.
+
+With lemlist and Smartlead, leads come over through the chosen campaigns, so a
+lead in no chosen campaign stays behind. One import brings at most 100,000
+leads, and your plan's lead allowance applies.
+
+### `continue_import`
+
+<Info>Write · reaches the web</Info>
+
+Run the next slice, about 15 seconds of work, of a running import. Repeat until
+`job.status` is `done`. `worked: false` means another process held the import
+at that moment; ask again shortly. Slices are safe to repeat. An import nobody
+continues still finishes on ManyPI's scheduler, only more slowly.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `import_id` | uuid | **Required.** |
+
+### `get_import`
+
+<Info>Read-only</Info>
+
+One import, or the 20 most recent when no id is given. Statuses: `scanned`,
+`running`, `done`, `failed`, `cancelled`. Progress carries the phase, counts of
+leads created and merged, campaigns and steps recreated, addresses put on
+do-not-contact and leads queued, plus warnings. A finished import maps each old
+campaign id to its new ManyPI campaign in `result.campaignMap`.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `import_id` | uuid | Omit for the recent imports. |
+
+### `cancel_import`
+
+<Info>Destructive · idempotent</Info>
+
+Stop an import that has not finished and erase its stored key. Everything
+already imported stays. A cancelled import cannot be resumed.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `import_id` | uuid | **Required.** |
 
 ## Scraping
 

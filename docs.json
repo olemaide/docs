@@ -128,6 +128,17 @@
             ]
           },
           {
+            "group": "Imports",
+            "pages": [
+              "api-reference/imports/scan-import",
+              "api-reference/imports/start-import",
+              "api-reference/imports/get-import",
+              "api-reference/imports/list-imports",
+              "api-reference/imports/advance-import",
+              "api-reference/imports/cancel-import"
+            ]
+          },
+          {
             "group": "Agent",
             "pages": [
               "api-reference/agent/create-run",

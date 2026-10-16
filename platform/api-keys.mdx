@@ -39,8 +39,9 @@ endpoints (`/v1/e/…`) say so explicitly with a `403` instead.
 | `outreach:send` | Send email from your inboxes and enroll leads into campaigns. |
 | `*` | Full access. |
 
-The default for a new key is `read`, `scraper` and `endpoints:invoke` — enough
-for most integrations, and nothing that can email your prospects.
+A new key starts with every permission ticked, so it works with any integration
+— Zapier, n8n, MCP — out of the box. Untick what the key will never need before
+you create it.
 
 <Warning>
   `outreach:send` is the one to think hardest about. A key with it can send mail
@@ -56,6 +57,7 @@ for most integrations, and nothing that can email your prospects.
 | `POST /api/agents/*` | `agents` |
 | `/api/scrape*` | `scraper` |
 | `POST /api/outreach/{send,test-send,enroll}` | `outreach:send` |
+| `POST /api/outreach/campaigns/{id}/launch` | `outreach:send` |
 | `GET /api/leads/validate*` | `read` or `leads:validate` |
 | `POST /api/leads/validate` | `leads:validate` |
 | `/v1/e/{slug}` | `endpoints:invoke` |

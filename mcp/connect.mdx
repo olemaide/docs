@@ -23,8 +23,8 @@ Two ways to authenticate:
 
 <Note>
   Replace `mpi_your_api_key` in every snippet below with your real key. A key
-  needs `read`, plus `agents` for lead generation, `leads:validate` for
-  verification, and `outreach:send` to send.
+  needs `read`, plus `agents` for lead generation, `write` to draft emails and
+  create sequences, campaigns and imports, and `outreach:send` to send.
 </Note>
 
 ## AI agent CLIs
@@ -323,7 +323,7 @@ npx -y mcp-remote https://mcp.manypi.com/mcp \
   </Accordion>
   <Accordion title="A tool returns a permission error" icon="circle-question">
     The key exists but lacks that permission. Lead generation needs `agents`,
-    verification needs `leads:validate`, sending needs `outreach:send`. See
+    drafting and creating things needs `write`, sending needs `outreach:send`. See
     [API keys and permissions](/platform/api-keys).
   </Accordion>
   <Accordion title="Sending tools fail with outreach_locked" icon="circle-question">

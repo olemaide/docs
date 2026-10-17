@@ -3,9 +3,9 @@
   "theme": "mint",
   "name": "ManyPI Docs",
   "colors": {
-    "primary": "#0369A1",
-    "light": "#38BDF8",
-    "dark": "#0284C7"
+    "primary": "#0281FF",
+    "light": "#4DA8FF",
+    "dark": "#0281FF"
   },
   "favicon": "/manypi-icon.svg",
   "navigation": {

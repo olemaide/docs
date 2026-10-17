@@ -1,0 +1,35 @@
+/*
+ * The navbar's primary button as ManyPI's primary action: the light sky pill
+ * the app uses for its main buttons (bg-sky-300/30, text-sky-700), not a
+ * solid fill. Mintlify draws the button as an absolutely positioned
+ * background span behind white text, so both are restyled here.
+ */
+#topbar-cta-button a > span:first-child {
+  background-color: rgb(125 211 252 / 0.3);
+  border-radius: 9999px;
+  opacity: 1;
+}
+
+#topbar-cta-button a:hover > span:first-child {
+  background-color: rgb(125 211 252 / 0.45);
+  opacity: 1;
+}
+
+#topbar-cta-button a .text-white,
+#topbar-cta-button a svg {
+  color: #0369a1;
+  font-weight: 600;
+}
+
+.dark #topbar-cta-button a > span:first-child {
+  background-color: rgb(56 189 248 / 0.2);
+}
+
+.dark #topbar-cta-button a:hover > span:first-child {
+  background-color: rgb(56 189 248 / 0.3);
+}
+
+.dark #topbar-cta-button a .text-white,
+.dark #topbar-cta-button a svg {
+  color: #bae6fd;
+}

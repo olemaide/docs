@@ -73,7 +73,8 @@
             "pages": [
               "integrations/overview",
               "integrations/webhooks",
-              "integrations/lead-intake-url"
+              "integrations/lead-intake-url",
+              "integrations/request"
             ]
           },
           {

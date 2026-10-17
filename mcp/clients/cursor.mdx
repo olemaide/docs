@@ -1,0 +1,45 @@
+---
+title: "Cursor"
+description: "Add ManyPI to Cursor and sign in with your browser."
+icon: "/images/logos/cursor.png"
+---
+
+import KeyNote from "/snippets/mcp-key-note.mdx";
+import Next from "/snippets/mcp-next.mdx";
+
+## Sign in with your browser
+
+<Steps>
+  <Step title="Add the server">
+    Create `~/.cursor/mcp.json` to use ManyPI in every project, or
+    `.cursor/mcp.json` in one project:
+
+    ```json
+    { "mcpServers": { "manypi": { "url": "https://mcp.manypi.com/mcp" } } }
+    ```
+  </Step>
+  <Step title="Log in">
+    Open **Cursor Settings → MCP**. **manypi** shows a **Login** button; click
+    it and approve in your browser.
+  </Step>
+  <Step title="Check it">
+    The server turns green and lists its tools. Ask in the Agent chat.
+  </Step>
+</Steps>
+
+## Use an API key instead
+
+```json
+{
+  "mcpServers": {
+    "manypi": {
+      "url": "https://mcp.manypi.com/mcp",
+      "headers": { "Authorization": "Bearer mpi_your_api_key" }
+    }
+  }
+}
+```
+
+<KeyNote />
+
+<Next />

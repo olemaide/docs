@@ -1,0 +1,68 @@
+---
+title: "Zapier"
+description: "Send leads into ManyPI, start Zaps from ManyPI events, and call the ManyPI API from Zapier."
+icon: "/images/logos/zapier.png"
+---
+
+Zapier talks to ManyPI through its built-in **Webhooks by Zapier** app, which
+needs a paid Zapier plan.
+
+## Send leads into ManyPI
+
+Use the [lead intake URL](/integrations/lead-intake-url), so there is no key
+to manage.
+
+<Steps>
+  <Step title="Copy your intake URL">
+    In ManyPI, open **Integrations → Lead intake URL** and copy the URL.
+  </Step>
+  <Step title="Add a POST action">
+    In your Zap, add **Webhooks by Zapier → POST**. Paste the URL and set
+    **Payload Type** to **JSON**.
+  </Step>
+  <Step title="Map the fields">
+    Under **Data**, add `email`, `first_name`, `company` and any other fields
+    from earlier steps. To add the lead to a campaign at the same time, add
+    `campaign_id`.
+  </Step>
+</Steps>
+
+## Start a Zap when something happens in ManyPI
+
+<Steps>
+  <Step title="Add a Catch Hook trigger">
+    Start the Zap with **Webhooks by Zapier → Catch Hook** and copy the URL
+    Zapier gives you.
+  </Step>
+  <Step title="Add a ManyPI webhook">
+    In ManyPI, open the profile menu, then **Developers → Webhooks**. Add a
+    webhook with Zapier's URL and the events you want, for example **Reply
+    received** and **Meeting booked**.
+  </Step>
+  <Step title="Send a test">
+    Click **Send test** on the webhook, then **Test trigger** in Zapier. The
+    event's fields show up under **Data**.
+  </Step>
+</Steps>
+
+See [Webhooks](/integrations/webhooks) for every event and its fields.
+
+## Call the ManyPI API
+
+To start a lead search, enroll leads or anything else the API does, add
+**Webhooks by Zapier → Custom Request** with a header:
+
+```
+Authorization: Bearer mpi_your_api_key
+```
+
+Pick the method and URL from the [API reference](/api-reference/introduction),
+and give the key only the permissions the Zap needs.
+
+## Polling for scraper runs
+
+If you cannot receive a webhook, `GET https://app.manypi.com/api/runs?limit=20`
+returns recent scraper runs as a flat list, the shape a polling trigger
+expects. A run keeps its id from `pending` to `completed`, so filter to
+`status: completed` before you deduplicate, or the Zap fires once while the
+run is still queued.

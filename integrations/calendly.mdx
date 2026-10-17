@@ -1,0 +1,28 @@
+---
+title: "Calendly"
+description: "Booked calls land on the lead and pause their sequence, and your scheduling link goes into every email."
+icon: "/images/logos/calendly.svg"
+---
+
+import CalendarActions from "/snippets/calendar-actions.mdx";
+
+## Connect
+
+<Steps>
+  <Step title="Create a personal access token">
+    In Calendly, open **Integrations & apps → API and webhooks** (or go
+    straight to [API and webhooks](https://calendly.com/integrations/api_webhooks)).
+    Under **Personal access tokens**, click **Generate new token** and copy
+    it.
+  </Step>
+  <Step title="Paste it in ManyPI">
+    Open **Integrations** in the sidebar, click **Calendly**, paste the token,
+    and click **Connect**.
+  </Step>
+</Steps>
+
+On Calendly's Standard plan and above, ManyPI registers a webhook and bookings
+arrive straight away. Calendly's free plan does not offer webhooks, so ManyPI
+checks for new bookings every few minutes instead.
+
+<CalendarActions name="Calendly" />

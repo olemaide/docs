@@ -1,0 +1,49 @@
+---
+title: "Google Calendar & Meet"
+description: "Stop follow-ups the moment a lead books, and book calls with a Meet link from any lead."
+icon: "/images/logos/google-calendar.png"
+---
+
+Connect Google Calendar and ManyPI notices meetings with your leads. A lead
+who has a call on your calendar stops getting follow-ups, and you can book a
+call with a Google Meet link straight from their record.
+
+<Note>
+  Google sign-in for Calendar is rolling out while Google reviews ManyPI's
+  access. If you do not see **Connect** yet, [Cal.com](/integrations/calcom)
+  or [Calendly](/integrations/calendly) work today.
+</Note>
+
+## Connect
+
+<Steps>
+  <Step title="Open Integrations">
+    In ManyPI, open **Integrations** in the sidebar and click **Google Calendar
+    & Meet**.
+  </Step>
+  <Step title="Sign in with Google">
+    Click **Connect**, choose your Google account, and approve.
+  </Step>
+</Steps>
+
+ManyPI watches your primary calendar. The first sync looks back 30 days to
+attach recent meetings to their leads, without pausing anything or sending
+notifications for them.
+
+## What it does
+
+- **Pause their campaigns when someone books** (on by default). When a
+  meeting with a lead lands on your calendar, their sequence stops, so nobody
+  gets a follow-up after saying yes.
+- **Book meeting** on a lead's record creates a calendar event with a Google
+  Meet link and invites them.
+- **Save Meet transcripts on the lead** (off by default). After a call, the
+  Meet transcript is stored on the lead. Turning it on asks Google for one
+  more permission.
+- Workflows and [webhooks](/integrations/webhooks) can react to bookings
+  through the `meeting.booked` event.
+
+## Disconnect
+
+Open the connection under **Integrations** and click **Disconnect**. You can
+also remove ManyPI from your Google account's third-party access page.

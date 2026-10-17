@@ -1,0 +1,32 @@
+---
+title: "Gemini CLI"
+description: "Add ManyPI to Google's Gemini CLI."
+icon: "/images/logos/gemini.png"
+---
+
+import KeyNote from "/snippets/mcp-key-note.mdx";
+import Next from "/snippets/mcp-next.mdx";
+
+<Steps>
+  <Step title="Edit the settings">
+    Add to `~/.gemini/settings.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "manypi": {
+          "httpUrl": "https://mcp.manypi.com/mcp",
+          "headers": { "Authorization": "Bearer mpi_your_api_key" }
+        }
+      }
+    }
+    ```
+  </Step>
+  <Step title="Check it">
+    Run `gemini`, then `/mcp`. ManyPI is listed with its tools.
+  </Step>
+</Steps>
+
+<KeyNote />
+
+<Next />

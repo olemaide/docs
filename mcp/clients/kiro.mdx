@@ -1,0 +1,30 @@
+---
+title: "Kiro"
+description: "Add ManyPI to Kiro for one workspace or for your user."
+icon: "/images/logos/kiro.png"
+---
+
+import KeyNote from "/snippets/mcp-key-note.mdx";
+import Next from "/snippets/mcp-next.mdx";
+
+Edit `.kiro/settings/mcp.json` in a workspace, or `~/.kiro/settings/mcp.json`
+for your user. Kiro reaches ManyPI through `mcp-remote`, which runs with `npx`
+(you need Node.js):
+
+```json
+{
+  "mcpServers": {
+    "manypi": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.manypi.com/mcp", "--header", "Authorization: Bearer mpi_your_api_key"]
+    }
+  }
+}
+```
+
+Save the file, then open the MCP servers panel in Kiro. ManyPI is listed with
+its tools; reconnect it there if it does not start on its own.
+
+<KeyNote />
+
+<Next />

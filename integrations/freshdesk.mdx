@@ -1,0 +1,24 @@
+---
+title: "Freshdesk"
+description: "Keep your Freshdesk contacts out of cold email, or import them as leads."
+icon: "/images/logos/freshdesk.svg"
+---
+
+import SupportActions from "/snippets/support-actions.mdx";
+
+## Connect
+
+<Steps>
+  <Step title="Copy your API key">
+    In Freshdesk, click your profile picture, then **Profile settings**. Under
+    **Your API Key** on the right, click **View API Key** and copy it.
+  </Step>
+  <Step title="Fill in the connection">
+    Open **Integrations** in ManyPI, click **Freshdesk**, and enter:
+
+    - **Helpdesk address**: `acme` if your help desk is `acme.freshdesk.com`
+    - **API key**: the key you copied
+  </Step>
+</Steps>
+
+<SupportActions name="Freshdesk" />

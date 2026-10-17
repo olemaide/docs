@@ -92,8 +92,9 @@ curl https://app.manypi.com/api/{scraperId}/data/{runId} \
   -H "Authorization: Bearer mpi_your_api_key"
 ```
 
-Or stop polling entirely and configure an outbound webhook in **Dashboard →
-Webhooks** to be notified when a run completes.
+Or stop polling and add a [webhook](/integrations/webhooks) for
+`scraper_run.completed`, for one scraper or all of them. ManyPI posts the run
+and its result to your server when it finishes.
 
 `GET /api/runs?limit=20` lists recent runs across all your scrapers with their
 status and extracted data — the shape polling-based integrations like Zapier

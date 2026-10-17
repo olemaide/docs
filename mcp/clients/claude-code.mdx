@@ -1,0 +1,44 @@
+---
+title: "Claude Code"
+description: "Add ManyPI to Claude Code with one command and sign in with your browser."
+icon: "/images/logos/claude.png"
+---
+
+import KeyNote from "/snippets/mcp-key-note.mdx";
+import Next from "/snippets/mcp-next.mdx";
+
+Claude Code connects to ManyPI over HTTP and can sign in with your browser, so
+there is no key to copy.
+
+## Sign in with your browser
+
+<Steps>
+  <Step title="Add the server">
+    ```bash
+    claude mcp add --transport http manypi https://mcp.manypi.com/mcp -s user
+    ```
+
+    `-s user` makes ManyPI available in every project. Leave it out to add it
+    to the current project only.
+  </Step>
+  <Step title="Authenticate">
+    Start Claude Code, run `/mcp`, choose **manypi**, then **Authenticate**.
+    Your browser opens ManyPI; approve the connection.
+  </Step>
+  <Step title="Check it">
+    Run `/mcp` again. **manypi** shows as connected with its tools listed.
+  </Step>
+</Steps>
+
+## Use an API key instead
+
+For CI, a shared machine, or anywhere a browser is not available:
+
+```bash
+claude mcp add --transport http manypi https://mcp.manypi.com/mcp \
+  --header "Authorization: Bearer mpi_your_api_key" -s user
+```
+
+<KeyNote />
+
+<Next />

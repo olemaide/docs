@@ -1,0 +1,37 @@
+---
+title: "Windsurf"
+description: "Add ManyPI to Windsurf's Cascade agent."
+icon: "/images/logos/windsurf.png"
+---
+
+import KeyNote from "/snippets/mcp-key-note.mdx";
+import Next from "/snippets/mcp-next.mdx";
+
+<Steps>
+  <Step title="Open the MCP config">
+    Go to **Settings → Cascade → MCP servers → Add**, or edit
+    `~/.codeium/windsurf/mcp_config.json` directly.
+  </Step>
+  <Step title="Add ManyPI">
+    Windsurf reaches HTTP servers through `mcp-remote`, which runs with `npx`
+    (you need Node.js):
+
+    ```json
+    {
+      "mcpServers": {
+        "manypi": {
+          "command": "npx",
+          "args": ["-y", "mcp-remote", "https://mcp.manypi.com/mcp", "--header", "Authorization: Bearer mpi_your_api_key"]
+        }
+      }
+    }
+    ```
+  </Step>
+  <Step title="Refresh">
+    Click **Refresh** in the MCP panel. ManyPI's tools appear in Cascade.
+  </Step>
+</Steps>
+
+<KeyNote />
+
+<Next />

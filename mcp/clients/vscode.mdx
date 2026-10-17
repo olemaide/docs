@@ -1,0 +1,52 @@
+---
+title: "VS Code"
+description: "Add ManyPI to GitHub Copilot in VS Code and sign in with your browser."
+icon: "/images/logos/vscode.png"
+---
+
+import KeyNote from "/snippets/mcp-key-note.mdx";
+import Next from "/snippets/mcp-next.mdx";
+
+## Sign in with your browser
+
+<Steps>
+  <Step title="Add the server">
+    Create `.vscode/mcp.json` in your project:
+
+    ```json
+    { "servers": { "manypi": { "type": "http", "url": "https://mcp.manypi.com/mcp" } } }
+    ```
+
+    Or add it for your user from a terminal:
+
+    ```bash
+    code --add-mcp '{"name":"manypi","type":"http","url":"https://mcp.manypi.com/mcp"}'
+    ```
+  </Step>
+  <Step title="Start it">
+    Run **MCP: List Servers** from the Command Palette, pick **manypi**, then
+    **Start**. VS Code opens ManyPI in your browser for approval.
+  </Step>
+  <Step title="Use it">
+    Open Copilot Chat in **Agent** mode. The ManyPI tools are in the tools
+    picker.
+  </Step>
+</Steps>
+
+## Use an API key instead
+
+```json
+{
+  "servers": {
+    "manypi": {
+      "type": "http",
+      "url": "https://mcp.manypi.com/mcp",
+      "headers": { "Authorization": "Bearer mpi_your_api_key" }
+    }
+  }
+}
+```
+
+<KeyNote />
+
+<Next />

@@ -1,0 +1,28 @@
+---
+title: "Factory (Droid)"
+description: "Add ManyPI to Factory's Droid agent."
+icon: "/images/logos/factory.png"
+---
+
+import KeyNote from "/snippets/mcp-key-note.mdx";
+import Next from "/snippets/mcp-next.mdx";
+
+Add to `~/.factory/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "manypi": {
+      "type": "http",
+      "url": "https://mcp.manypi.com/mcp",
+      "headers": { "Authorization": "Bearer mpi_your_api_key" }
+    }
+  }
+}
+```
+
+Start a new Droid session and run `/mcp` to see ManyPI and its tools.
+
+<KeyNote />
+
+<Next />

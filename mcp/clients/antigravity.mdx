@@ -1,0 +1,29 @@
+---
+title: "Antigravity"
+description: "Add ManyPI to Google Antigravity's agent."
+icon: "/images/logos/antigravity.png"
+---
+
+import KeyNote from "/snippets/mcp-key-note.mdx";
+import Next from "/snippets/mcp-next.mdx";
+
+In the Agent panel, open **MCP servers → Add server**, or edit the MCP config
+and add:
+
+```json
+{
+  "mcpServers": {
+    "manypi": {
+      "serverUrl": "https://mcp.manypi.com/mcp",
+      "headers": { "Authorization": "Bearer mpi_your_api_key" }
+    }
+  }
+}
+```
+
+Note the key is `serverUrl`, not `url`. Refresh the server list and ManyPI's
+tools are available to the agent.
+
+<KeyNote />
+
+<Next />

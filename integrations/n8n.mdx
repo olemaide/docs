@@ -1,0 +1,90 @@
+---
+title: "n8n"
+description: "The ManyPI node for n8n: find and verify leads, run campaigns, and start workflows when a lead, reply or run arrives."
+icon: "/images/logos/n8n.png"
+---
+
+The [`n8n-nodes-manypi`](https://www.npmjs.com/package/n8n-nodes-manypi)
+community node covers the ManyPI API, and its trigger starts workflows when
+something happens in ManyPI. It also works as a tool for n8n's AI Agent.
+
+## Install
+
+In n8n, open **Settings → Community Nodes**, click **Install**, and enter:
+
+```
+n8n-nodes-manypi
+```
+
+## Connect your account
+
+Pick **Authentication** on the node:
+
+<Tabs>
+  <Tab title="OAuth2">
+    Create a **ManyPI OAuth2 API** credential, click **Connect my account**,
+    and approve in ManyPI. There is nothing to copy. Needs n8n 1.119 or later.
+
+    An OAuth2 connection can do anything your ManyPI account can. Published
+    endpoints only accept API keys, so **Endpoint → Invoke** and **Get Result**
+    need the API key option.
+  </Tab>
+  <Tab title="API key">
+    Create a key under **API Access** in the ManyPI profile menu and add a
+    **ManyPI API** credential with it. Untick permissions the workflow never
+    needs. See [API keys and permissions](/platform/api-keys).
+  </Tab>
+</Tabs>
+
+## What the node does
+
+| Resource | Operations |
+| --- | --- |
+| Lead | Create or Update, Delete, Delete Many, Export, Get, Get Capacity, Get Many, Import, Update, Update Many |
+| Lead Search | Create or Update, Delete, Get Many, Start |
+| Lead Column | Create, Get Many |
+| Email Verification | Get, Get Many, Verify |
+| Campaign | Create, Delete, Enroll Leads, Get, Get Many, Get Stats, Remove Leads, Update |
+| Sequence | Create, Get Many |
+| Email | Draft With AI, Send |
+| Inbox | Get Many |
+| Reply | Get Insights, Get Many |
+| Suppression | Add, Get Many, Remove |
+| Agent Run | Cancel, Create, Delete, Get, Get Many, Reply |
+| Skill | Create, Get Many |
+| Scraper | Get Many, Run |
+| Scraper Run | Get, Get Data, Get Many |
+| Endpoint | Create, Delete, Get, Get Many, Get Result, Invoke |
+
+## ManyPI Trigger
+
+The **ManyPI Trigger** checks ManyPI on n8n's polling schedule and starts the
+workflow when:
+
+| Event | Fires when |
+| --- | --- |
+| New Lead | A lead is saved, optionally filtered by status, search text or lead search |
+| New Reply | A campaign gets a reply, auto-reply or bounce, optionally filtered by campaign and sentiment |
+| Email Verification Reached Status | A verification job finishes |
+| Agent Run Reached Status | An agent run reaches a status you pick. Add Paused to hear when it is waiting for an answer |
+| New Campaign | A campaign is created |
+| Scraper Run Reached Status | A scraper run reaches a status, Completed by default |
+
+When you activate the workflow, the trigger notes what already exists and
+fires only for what appears or changes after that.
+
+<Tip>
+  For events the trigger does not cover, or to react within seconds, add a
+  **Webhook** trigger node and point a [ManyPI webhook](/integrations/webhooks)
+  at its production URL.
+</Tip>
+
+## Example workflows
+
+- **Weekly lead search**: Schedule Trigger → ManyPI **Lead Search → Start** →
+  wait for **Agent Run Reached Status** (Completed) → **Campaign → Enroll
+  Leads**.
+- **Positive replies to your CRM**: ManyPI Trigger **New Reply** with
+  sentiment Positive → your CRM node.
+- **Verify before import**: Google Sheets → ManyPI **Email Verification →
+  Verify** → **Lead → Import**.

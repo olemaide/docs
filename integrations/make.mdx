@@ -1,0 +1,55 @@
+---
+title: "Make"
+description: "Send leads into ManyPI, start scenarios from ManyPI events, and call the ManyPI API from Make."
+icon: "/images/logos/make.png"
+---
+
+Make talks to ManyPI with its built-in **HTTP** and **Webhooks** apps.
+
+## Send leads into ManyPI
+
+<Steps>
+  <Step title="Copy your intake URL">
+    In ManyPI, open **Integrations → Lead intake URL** and copy the URL.
+  </Step>
+  <Step title="Add an HTTP module">
+    Add **HTTP → Make a request**. Set the URL, method **POST**, body type
+    **Raw**, and content type **JSON (application/json)**.
+  </Step>
+  <Step title="Build the body">
+    Map fields from earlier modules into JSON, for example:
+
+    ```json
+    { "email": "{{1.email}}", "first_name": "{{1.name}}", "company": "{{1.company}}" }
+    ```
+
+    Add `"campaign_id"` to put the leads straight into a campaign. See the
+    [lead intake URL](/integrations/lead-intake-url) for every option.
+  </Step>
+</Steps>
+
+## Start a scenario when something happens in ManyPI
+
+<Steps>
+  <Step title="Add a custom webhook">
+    Start the scenario with **Webhooks → Custom webhook**, click **Add**, and
+    copy the address Make creates.
+  </Step>
+  <Step title="Add a ManyPI webhook">
+    In ManyPI, open the profile menu, then **Developers → Webhooks**. Add a
+    webhook with Make's address and the events you want.
+  </Step>
+  <Step title="Learn the structure">
+    In Make, click **Redetermine data structure**, then **Send test** on the
+    ManyPI webhook. Make learns the payload's fields from it.
+  </Step>
+</Steps>
+
+See [Webhooks](/integrations/webhooks) for every event and its fields.
+
+## Call the ManyPI API
+
+Add **HTTP → Make a request** with a header `Authorization` set to
+`Bearer mpi_your_api_key`, and pick the method and URL from the
+[API reference](/api-reference/introduction). Give the key only the
+permissions the scenario needs.

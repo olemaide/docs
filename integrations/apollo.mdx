@@ -1,0 +1,35 @@
+---
+title: "Apollo"
+description: "Move your saved contacts and sequences from Apollo to ManyPI."
+icon: "/images/logos/apollo.svg"
+---
+
+import SwitchFlow from "/snippets/switch-flow.mdx";
+
+## What comes over
+
+- Every **saved** contact. Apollo's wider database is not copied, only the
+  people you saved.
+- Sequences as paused drafts, when the key is a master key
+- Contacts who unsubscribed, onto your do-not-contact list
+
+## Get your API key
+
+<Steps>
+  <Step title="Open Settings, then Integrations">
+    Or go straight to [Apollo's API settings](https://app.apollo.io/#/settings/integrations/api).
+  </Step>
+  <Step title="Open API keys">
+    Next to **API**, click **Connect**, then **API keys**.
+  </Step>
+  <Step title="Create a master key">
+    Create a new key, switch on **Set as master key**, and copy it.
+  </Step>
+</Steps>
+
+<Note>
+  Without **Set as master key**, Apollo does not let ManyPI read your
+  sequences. Contacts still come over.
+</Note>
+
+<SwitchFlow tool="Apollo" />

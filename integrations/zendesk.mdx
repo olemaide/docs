@@ -1,0 +1,27 @@
+---
+title: "Zendesk"
+description: "Keep your Zendesk customers out of cold email, or import them as leads."
+icon: "/images/logos/zendesk.svg"
+---
+
+import SupportActions from "/snippets/support-actions.mdx";
+
+## Connect
+
+Zendesk needs three things: your subdomain, an agent email and an API token.
+
+<Steps>
+  <Step title="Create an API token">
+    In Zendesk, open **Admin Center → Apps and integrations → Zendesk API**.
+    Turn on **Token access**, click **Add API token**, and copy it.
+  </Step>
+  <Step title="Fill in the connection">
+    Open **Integrations** in ManyPI, click **Zendesk**, and enter:
+
+    - **Subdomain**: `acme` if your help center is `acme.zendesk.com`
+    - **Agent email**: the email of the agent who created the token
+    - **API token**: the token you copied
+  </Step>
+</Steps>
+
+<SupportActions name="Zendesk" />

@@ -1,0 +1,31 @@
+---
+title: "Google Chat"
+description: "Post positive replies and booked meetings to a Google Chat space."
+icon: "/images/logos/google-chat.png"
+---
+
+import NotifyActions from "/snippets/notify-actions.mdx";
+
+Webhooks in Google Chat are available on Google Workspace accounts.
+
+## Connect
+
+<Steps>
+  <Step title="Open the space">
+    In Google Chat, open the space and click its name at the top.
+  </Step>
+  <Step title="Add a webhook">
+    Choose **Apps & integrations**, then **Add webhooks**. Give it a name (for
+    example, ManyPI) and save.
+  </Step>
+  <Step title="Copy the URL">
+    Copy the webhook URL. It starts with
+    `https://chat.googleapis.com/v1/spaces/`.
+  </Step>
+  <Step title="Paste it in ManyPI">
+    Open **Integrations** in the sidebar, click **Google Chat**, paste the URL,
+    and click **Connect**.
+  </Step>
+</Steps>
+
+<NotifyActions where="the space" />

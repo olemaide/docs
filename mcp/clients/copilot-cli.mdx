@@ -1,0 +1,30 @@
+---
+title: "GitHub Copilot CLI"
+description: "Add ManyPI to the GitHub Copilot command-line agent."
+icon: "/images/logos/github.png"
+---
+
+import KeyNote from "/snippets/mcp-key-note.mdx";
+import Next from "/snippets/mcp-next.mdx";
+
+In a Copilot CLI session, run `/mcp add` and choose an **HTTP** server with
+`https://mcp.manypi.com/mcp` and an `Authorization` header. Or add it to your
+Copilot MCP config directly:
+
+```json
+{
+  "mcpServers": {
+    "manypi": {
+      "type": "http",
+      "url": "https://mcp.manypi.com/mcp",
+      "headers": { "Authorization": "Bearer mpi_your_api_key" }
+    }
+  }
+}
+```
+
+Run `/mcp` to check that ManyPI is connected.
+
+<KeyNote />
+
+<Next />

@@ -1,0 +1,15 @@
+## What happens on a booking
+
+- The meeting shows up on the lead's timeline.
+- **Pause their campaigns when someone books** (on by default) stops the
+  sequence, so nobody gets a follow-up after saying yes.
+- **Add new bookers as leads** (on by default) creates a lead for someone who
+  books without being one yet.
+- Workflows and [webhooks](/integrations/webhooks) can react to it through
+  the `meeting.booked` event.
+
+## Your booking link
+
+Under **More settings**, pick the booking page {name} should use. Then write
+`{{booking_link}}` in any email, or insert it from **Sign off** in the email
+editor. Each send fills in that page's address.

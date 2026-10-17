@@ -1,0 +1,30 @@
+---
+title: "Codex"
+description: "Add ManyPI to the OpenAI Codex CLI."
+icon: "/images/logos/openai.png"
+---
+
+import KeyNote from "/snippets/mcp-key-note.mdx";
+import Next from "/snippets/mcp-next.mdx";
+
+Codex starts MCP servers as local processes, so ManyPI is reached through
+`mcp-remote`, a small bridge that runs with `npx`. You need Node.js installed.
+
+<Steps>
+  <Step title="Edit the config">
+    Add to `~/.codex/config.toml`:
+
+    ```toml
+    [mcp_servers.manypi]
+    command = "npx"
+    args = ["-y", "mcp-remote", "https://mcp.manypi.com/mcp", "--header", "Authorization: Bearer mpi_your_api_key"]
+    ```
+  </Step>
+  <Step title="Restart Codex">
+    Start a new `codex` session. Run `/mcp` to see ManyPI and its tools.
+  </Step>
+</Steps>
+
+<KeyNote />
+
+<Next />

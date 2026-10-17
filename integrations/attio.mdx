@@ -1,0 +1,29 @@
+---
+title: "Attio"
+description: "Import Attio people as leads, and send leads who reply or book back to Attio."
+icon: "/images/logos/attio.png"
+---
+
+import CrmActions from "/snippets/crm-actions.mdx";
+
+## Connect
+
+<Steps>
+  <Step title="Create an access token">
+    In Attio, open **Workspace settings → Developers** (or go straight to
+    [developer settings](https://app.attio.com/_/settings/developers)) and
+    click **New access token**.
+  </Step>
+  <Step title="Give it access">
+    Grant read-write access to **records** and **notes**, and read access to
+    **object configuration**. Copy the token.
+  </Step>
+  <Step title="Paste it in ManyPI">
+    Open **Integrations** in the sidebar, click **Attio**, paste the token, and
+    click **Connect**.
+  </Step>
+</Steps>
+
+<CrmActions name="Attio" />
+
+Leads go to Attio as people.

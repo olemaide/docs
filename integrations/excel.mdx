@@ -1,0 +1,19 @@
+---
+title: "Excel"
+description: "Import an Excel workbook as leads, with columns matched for you."
+icon: "/images/logos/excel.svg"
+---
+
+There is nothing to connect. Drop an `.xlsx` file anywhere on **Leads**, or
+open **Leads → Import** and pick it.
+
+- The first sheet with rows in it is imported.
+- Columns are matched the way a CSV's are: "Company Name", "companyName" and
+  "company" all land in Company.
+- Columns ManyPI does not recognize are kept as custom variables, so you can
+  use them in emails.
+- A lead with the same email as one you already have is merged, not
+  duplicated.
+
+The same importer takes CSV, TSV and JSON files, and rows pasted straight out
+of Excel. See [Managing leads](/leads/managing-leads).

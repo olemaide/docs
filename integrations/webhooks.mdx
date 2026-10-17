@@ -1,0 +1,163 @@
+---
+title: "Webhooks"
+description: "Get a signed POST on your own server when a reply comes in, a meeting is booked, a deal is won or a run finishes."
+icon: "webhook"
+---
+
+A webhook sends a `POST` to a URL you choose whenever one of the events you
+picked happens. It belongs to the workspace, so everyone in it sees the same
+list.
+
+## Add a webhook
+
+<Steps>
+  <Step title="Open Webhooks">
+    In ManyPI, open the profile menu, choose **Developers → Webhooks**, and
+    click **New webhook**.
+  </Step>
+  <Step title="Paste your URL">
+    It must be `https` and reachable from the internet.
+  </Step>
+  <Step title="Pick a scope">
+    What the webhook covers:
+
+    - **Whole workspace**: everything.
+    - **One brand**: only that brand's events.
+    - **One campaign**: replies, bounces, meetings and campaign events for
+      that campaign.
+    - **One scraper**: that scraper's runs.
+
+    The events on offer follow from the scope: a campaign scope cannot hear
+    "Deal won". Members limited to some brands can only pick those brands,
+    their campaigns, or their own scrapers.
+  </Step>
+  <Step title="Pick events and save">
+    Optionally add a **signing secret** so you can check each request came
+    from ManyPI. Then open the webhook's menu and click **Send test**.
+  </Step>
+</Steps>
+
+## Events
+
+| Event | When |
+| :--- | :--- |
+| `lead.created` | A lead was saved, by an agent, an import or by hand. |
+| `lead.status_changed` | A lead moved between new, qualified, contacted or disqualified. |
+| `reply.received` | Someone wrote back. Out-of-office replies are not included. |
+| `reply.analyzed` | A reply was scored, with `sentiment`, `intent` and `summary`. |
+| `email.bounced` | A message came back undelivered. |
+| `meeting.booked` | A lead booked a call through a connected calendar. |
+| `enrollment.completed` | A lead reached the end of a campaign without replying. |
+| `enrollment.unsubscribed` | A lead opted out of a campaign. |
+| `deal.created` | A deal was opened. |
+| `deal.stage_changed` | A deal moved between open stages. |
+| `deal.won`, `deal.lost` | A deal reached a won or lost stage. |
+| `agent_run.completed`, `agent_run.failed` | An agent run ended. Includes `leads_found`. |
+| `scraper_run.completed`, `scraper_run.failed` | A scraper run ended. Completed runs include `result`. |
+
+## Payload
+
+```json
+{
+  "id": "evt_8812",
+  "type": "reply.received",
+  "created_at": "2026-10-17T09:12:03.120Z",
+  "workspace_id": "5b0c…",
+  "brand_id": "9f1e…",
+  "data": {
+    "reply_id": "…",
+    "lead_id": "…",
+    "campaign_id": "…",
+    "from_email": "jordan@example.com",
+    "subject": "Re: Quick question",
+    "body_text": "Sounds good, send me some times."
+  }
+}
+```
+
+`data` holds the event's own fields. `id` is the same on every retry of the
+same event, so use it to ignore duplicates.
+
+Scraper events also carry the fields the older scraper-only webhooks sent
+(`event`, `runId`, `scraperId`, `status`, `result`, `metadata`), so receivers
+written for them keep working.
+
+## Headers
+
+| Header | Value |
+| :--- | :--- |
+| `X-Webhook-Event` | The event type, for example `reply.received` |
+| `X-Webhook-Id` | Same as `id` in the body |
+| `X-Webhook-Delivery` | Unique per webhook and event |
+| `X-Webhook-Attempt` | `1` on the first try, then `2`, `3`, … |
+| `X-Webhook-Signature` | Only when the webhook has a signing secret |
+
+## Verify the signature
+
+The signature is a hex HMAC SHA-256 of the **raw** request body, keyed with
+your signing secret. Compute it over the bytes you received, before parsing
+the JSON.
+
+<CodeGroup>
+
+```js Node.js
+import { createHmac, timingSafeEqual } from "node:crypto";
+
+export function verify(rawBody, signature, secret) {
+  const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
+  return (
+    typeof signature === "string" &&
+    signature.length === expected.length &&
+    timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+  );
+}
+```
+
+```python Python
+import hashlib
+import hmac
+
+def verify(raw_body: bytes, signature: str, secret: str) -> bool:
+    expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, signature or "")
+```
+
+</CodeGroup>
+
+`created_at` is inside the signed body. Refuse requests older than a few
+minutes if you want to block replays.
+
+## Delivery and retries
+
+- Answer with any `2xx` within 8 seconds. Do slow work after you respond.
+- Redirects are not followed, so use the final URL.
+- A failed delivery is retried after 1 minute, 5 minutes, 30 minutes,
+  2 hours and 8 hours: six attempts in all.
+- After 25 failed attempts in a row the webhook pauses itself and shows
+  **Paused after failures**. Fix the receiver, use **Send test**, then
+  **Resume**.
+- Events usually arrive within a minute or two.
+
+## Manage webhooks with the API
+
+The webhook routes accept a session or an API key
+(`Authorization: Bearer mpi_…`).
+
+| Method | Path | Body |
+| :--- | :--- | :--- |
+| `GET` | `/api/webhooks` | Lists webhooks, and the brands, campaigns and scrapers you can scope to |
+| `POST` | `/api/webhooks` | `{ "url", "scope_type", "scope_id", "events", "secret" }` |
+| `PATCH` | `/api/webhooks/{id}` | Any of the above, plus `"enabled"`. Leave out `secret` to keep it; send `null` to remove it |
+| `DELETE` | `/api/webhooks/{id}` | |
+| `POST` | `/api/webhooks/{id}/test` | Sends a `webhook.test` event now and returns the response code |
+
+`scope_type` is `workspace`, `brand`, `campaign` or `scraper`, and `scope_id`
+is the brand, campaign or scraper id (leave it out for `workspace`). A
+workspace can have up to 20 webhooks. The signing secret is never returned.
+
+```bash
+curl -X POST https://app.manypi.com/api/webhooks \
+  -H "Authorization: Bearer mpi_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com/manypi","scope_type":"workspace","events":["reply.received","meeting.booked"],"secret":"a-long-random-string"}'
+```

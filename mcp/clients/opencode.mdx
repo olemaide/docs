@@ -1,0 +1,31 @@
+---
+title: "OpenCode"
+description: "Add ManyPI to OpenCode as a remote MCP server."
+icon: "/images/logos/opencode.png"
+---
+
+import KeyNote from "/snippets/mcp-key-note.mdx";
+import Next from "/snippets/mcp-next.mdx";
+
+Add ManyPI to `opencode.json` in a project, or to
+`~/.config/opencode/opencode.json` to use it everywhere:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "manypi": {
+      "type": "remote",
+      "url": "https://mcp.manypi.com/mcp",
+      "enabled": true,
+      "headers": { "Authorization": "Bearer mpi_your_api_key" }
+    }
+  }
+}
+```
+
+Restart OpenCode and the ManyPI tools are available to the agent.
+
+<KeyNote />
+
+<Next />

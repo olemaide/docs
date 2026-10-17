@@ -1,0 +1,38 @@
+---
+title: "ChatGPT"
+description: "Add ManyPI to ChatGPT as a custom connector in developer mode."
+icon: "/images/logos/openai.png"
+---
+
+import KeyNote from "/snippets/mcp-key-note.mdx";
+import Next from "/snippets/mcp-next.mdx";
+
+Custom connectors need a paid ChatGPT plan with developer mode turned on.
+
+<Steps>
+  <Step title="Turn on developer mode">
+    Open **Settings → Connectors → Advanced** and switch on **Developer mode**.
+  </Step>
+  <Step title="Create the connector">
+    Under **Connectors**, click **Create**, name it `ManyPI`, and paste:
+
+    ```
+    https://mcp.manypi.com/mcp
+    ```
+  </Step>
+  <Step title="Add your key">
+    Add a custom header so every call is authenticated:
+
+    ```
+    Authorization: Bearer mpi_your_api_key
+    ```
+  </Step>
+  <Step title="Use it in a chat">
+    Start a new chat, open the **+** menu, choose **Developer mode**, and pick
+    **ManyPI**.
+  </Step>
+</Steps>
+
+<KeyNote />
+
+<Next />

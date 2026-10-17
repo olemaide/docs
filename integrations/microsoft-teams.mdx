@@ -1,0 +1,31 @@
+---
+title: "Microsoft Teams"
+description: "Post positive replies and booked meetings to a Teams channel."
+icon: "/images/logos/teams.svg"
+---
+
+import NotifyActions from "/snippets/notify-actions.mdx";
+
+Teams receives messages through a **Workflows** webhook. ManyPI sends them as
+Adaptive Cards, so they show a title, the details and an **Open in ManyPI**
+button.
+
+## Connect
+
+<Steps>
+  <Step title="Open Workflows on the channel">
+    In Teams, open the channel's **...** menu and choose **Workflows**.
+  </Step>
+  <Step title="Pick the webhook template">
+    Choose **Post to a channel when a webhook request is received**.
+  </Step>
+  <Step title="Copy the URL">
+    Finish the steps and copy the URL Teams gives you.
+  </Step>
+  <Step title="Paste it in ManyPI">
+    Open **Integrations** in the sidebar, click **Microsoft Teams**, paste the
+    URL, and click **Connect**.
+  </Step>
+</Steps>
+
+<NotifyActions where="the channel" />

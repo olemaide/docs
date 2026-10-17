@@ -3,9 +3,9 @@
   "theme": "mint",
   "name": "ManyPI Docs",
   "colors": {
-    "primary": "#2c3748",
-    "light": "#1b202c",
-    "dark": "#4a5568"
+    "primary": "#0369A1",
+    "light": "#38BDF8",
+    "dark": "#0284C7"
   },
   "favicon": "/manypi-icon.svg",
   "navigation": {
@@ -60,8 +60,82 @@
             "pages": [
               "platform/brands-and-teams",
               "platform/plans-and-credits",
-              "platform/api-keys",
-              "platform/integrations"
+              "platform/api-keys"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Integrations",
+        "groups": [
+          {
+            "group": "Integrations",
+            "pages": [
+              "integrations/overview",
+              "integrations/webhooks",
+              "integrations/lead-intake-url"
+            ]
+          },
+          {
+            "group": "Switch from another tool",
+            "pages": [
+              "integrations/switch",
+              "integrations/instantly",
+              "integrations/smartlead",
+              "integrations/lemlist",
+              "integrations/apollo",
+              "integrations/snovio",
+              "integrations/saleshandy"
+            ]
+          },
+          {
+            "group": "Calendars",
+            "pages": [
+              "integrations/google-calendar",
+              "integrations/calcom",
+              "integrations/calendly"
+            ]
+          },
+          {
+            "group": "CRM",
+            "pages": [
+              "integrations/hubspot",
+              "integrations/pipedrive",
+              "integrations/attio",
+              "integrations/close"
+            ]
+          },
+          {
+            "group": "Customer support",
+            "pages": [
+              "integrations/zendesk",
+              "integrations/intercom",
+              "integrations/freshdesk"
+            ]
+          },
+          {
+            "group": "Spreadsheets",
+            "pages": [
+              "integrations/google-sheets",
+              "integrations/excel"
+            ]
+          },
+          {
+            "group": "Notifications",
+            "pages": [
+              "integrations/slack",
+              "integrations/discord",
+              "integrations/google-chat",
+              "integrations/microsoft-teams"
+            ]
+          },
+          {
+            "group": "Automation",
+            "pages": [
+              "integrations/n8n",
+              "integrations/zapier",
+              "integrations/make",
+              "integrations/pipedream"
             ]
           }
         ]
@@ -194,6 +268,35 @@
               "mcp/tools",
               "mcp/recipes"
             ]
+          },
+          {
+            "group": "Chat apps",
+            "pages": [
+              "mcp/clients/claude",
+              "mcp/clients/chatgpt",
+              "mcp/clients/goose"
+            ]
+          },
+          {
+            "group": "IDEs",
+            "pages": [
+              "mcp/clients/cursor",
+              "mcp/clients/vscode",
+              "mcp/clients/windsurf",
+              "mcp/clients/antigravity",
+              "mcp/clients/kiro"
+            ]
+          },
+          {
+            "group": "Agent CLIs",
+            "pages": [
+              "mcp/clients/claude-code",
+              "mcp/clients/codex",
+              "mcp/clients/gemini-cli",
+              "mcp/clients/copilot-cli",
+              "mcp/clients/opencode",
+              "mcp/clients/factory"
+            ]
           }
         ]
       }
@@ -247,5 +350,11 @@
       "x": "https://x.com/manypicom",
       "linkedin": "https://linkedin.com/company/manypi"
     }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/platform/integrations",
+      "destination": "/integrations/overview"
+    }
+  ]
 }

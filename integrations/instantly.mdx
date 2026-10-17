@@ -1,0 +1,33 @@
+---
+title: "Instantly"
+description: "Move your leads, campaigns and block list from Instantly to ManyPI."
+icon: "/images/logos/instantly.png"
+---
+
+import SwitchFlow from "/snippets/switch-flow.mdx";
+
+## What comes over
+
+- Every lead with its custom variables
+- Campaigns as paused drafts, steps and A/B variants included
+- Your block list, bounces and unsubscribes, onto your do-not-contact list
+- Leads not contacted yet, queued in the new campaign
+
+## Get your API key
+
+<Steps>
+  <Step title="Open Settings in Instantly">
+    Or go straight to [Integrations settings](https://app.instantly.ai/app/settings/integrations).
+  </Step>
+  <Step title="Go to Integrations, then API Keys" />
+  <Step title="Create a key">
+    Click **Create API Key**, give it the scope `all:read` (or `all`), and copy
+    it.
+  </Step>
+</Steps>
+
+<Warning>
+  Use an **API V2** key. Keys made for Instantly's old V1 API do not work.
+</Warning>
+
+<SwitchFlow tool="Instantly" />

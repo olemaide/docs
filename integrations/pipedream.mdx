@@ -1,0 +1,71 @@
+---
+title: "Pipedream"
+description: "Receive ManyPI events in a Pipedream workflow, check their signature, and call the ManyPI API from code."
+icon: "/images/logos/pipedream.png"
+---
+
+Pipedream suits workflows that need a little code: checking webhook
+signatures, reshaping a payload, or calling several APIs in a row.
+
+## Start a workflow from ManyPI events
+
+<Steps>
+  <Step title="Add an HTTP trigger">
+    Create a workflow with the **HTTP / Webhook** trigger and copy its URL.
+  </Step>
+  <Step title="Add a ManyPI webhook">
+    In ManyPI, open the profile menu, then **Developers → Webhooks**. Add a
+    webhook with Pipedream's URL, the events you want, and a signing secret.
+    Store the same secret in Pipedream as an environment variable named
+    `MANYPI_WEBHOOK_SECRET`.
+  </Step>
+  <Step title="Check the signature">
+    Pipedream parses the JSON body for you. ManyPI sends compact JSON, so
+    serializing the parsed body again gives back the exact bytes that were
+    signed. Add a Node.js step:
+
+    ```js
+    import { createHmac, timingSafeEqual } from "node:crypto";
+
+    export default defineComponent({
+      async run({ steps, $ }) {
+        const raw = JSON.stringify(steps.trigger.event.body);
+        const sig = steps.trigger.event.headers["x-webhook-signature"] ?? "";
+        const expected = createHmac("sha256", process.env.MANYPI_WEBHOOK_SECRET)
+          .update(raw)
+          .digest("hex");
+        if (sig.length !== expected.length || !timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
+          return $.flow.exit("Bad signature");
+        }
+        return steps.trigger.event.body;
+      },
+    });
+    ```
+  </Step>
+</Steps>
+
+See [Webhooks](/integrations/webhooks) for every event and its fields.
+
+## Call the ManyPI API
+
+From any Node.js step:
+
+```js
+export default defineComponent({
+  async run() {
+    const res = await fetch("https://app.manypi.com/api/user", {
+      headers: { Authorization: `Bearer ${process.env.MANYPI_API_KEY}` },
+    });
+    return await res.json();
+  },
+});
+```
+
+Store the key as an environment variable and give it only the permissions
+the workflow needs. Every endpoint is in the
+[API reference](/api-reference/introduction).
+
+## Send leads into ManyPI
+
+Post to your [lead intake URL](/integrations/lead-intake-url) from a code
+step or the **Send any HTTP request** action, with the leads as JSON.

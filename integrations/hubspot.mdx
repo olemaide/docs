@@ -1,0 +1,33 @@
+---
+title: "HubSpot"
+description: "Import HubSpot contacts as leads, and send leads who reply or book back to HubSpot."
+icon: "/images/logos/hubspot.png"
+---
+
+import CrmActions from "/snippets/crm-actions.mdx";
+
+## Connect
+
+Open **Integrations** in the sidebar, click **HubSpot**, then **Connect**, and
+approve ManyPI in HubSpot.
+
+If ManyPI asks for a token instead, connect with a private app:
+
+<Steps>
+  <Step title="Open Private Apps">
+    In HubSpot, open **Settings → Integrations → Private Apps** (or go
+    straight to [private apps](https://app.hubspot.com/l/private-apps)).
+  </Step>
+  <Step title="Create a private app">
+    Under **Scopes**, tick `crm.objects.contacts.read` and
+    `crm.objects.contacts.write`.
+  </Step>
+  <Step title="Copy the token">
+    Create the app, copy its access token (it starts with `pat-`), and paste
+    it in ManyPI.
+  </Step>
+</Steps>
+
+<CrmActions name="HubSpot" />
+
+Leads go to HubSpot as contacts, matched by email.

@@ -1,0 +1,29 @@
+---
+title: "Discord"
+description: "Post positive replies and booked meetings to a Discord channel."
+icon: "/images/logos/discord.svg"
+---
+
+import NotifyActions from "/snippets/notify-actions.mdx";
+
+## Connect
+
+<Steps>
+  <Step title="Open the server's integrations">
+    In Discord, open **Server Settings → Integrations**. You need the Manage
+    Webhooks permission.
+  </Step>
+  <Step title="Create a webhook">
+    Click **Webhooks**, then **New Webhook**, and pick the channel.
+  </Step>
+  <Step title="Copy its URL">
+    Click **Copy Webhook URL**. It starts with
+    `https://discord.com/api/webhooks/`.
+  </Step>
+  <Step title="Paste it in ManyPI">
+    Open **Integrations** in the sidebar, click **Discord**, paste the URL, and
+    click **Connect**.
+  </Step>
+</Steps>
+
+<NotifyActions where="the channel" />

@@ -1,0 +1,33 @@
+---
+title: "Goose"
+description: "Add ManyPI to Goose as a remote extension, on desktop or the CLI."
+icon: "/images/logos/goose.png"
+---
+
+import KeyNote from "/snippets/mcp-key-note.mdx";
+import Next from "/snippets/mcp-next.mdx";
+
+<Steps>
+  <Step title="Add an extension">
+    On desktop, open **Settings → Extensions → Add**. On the CLI, run
+    `goose configure` and choose **Add Extension**.
+  </Step>
+  <Step title="Choose the remote type">
+    Pick **Remote Extension (Streamable HTTP)** and paste:
+
+    ```
+    https://mcp.manypi.com/mcp
+    ```
+  </Step>
+  <Step title="Add your key">
+    Add a request header:
+
+    ```
+    Authorization: Bearer mpi_your_api_key
+    ```
+  </Step>
+</Steps>
+
+<KeyNote />
+
+<Next />

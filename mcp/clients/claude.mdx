@@ -1,0 +1,51 @@
+---
+title: "Claude.ai and Claude Desktop"
+description: "Add ManyPI as a custom connector in Claude on the web, desktop and mobile."
+icon: "/images/logos/claude.png"
+---
+
+import KeyNote from "/snippets/mcp-key-note.mdx";
+import Next from "/snippets/mcp-next.mdx";
+
+A connector added on claude.ai is also available in Claude Desktop and the
+Claude mobile apps signed in to the same account.
+
+## Sign in with your browser
+
+<Steps>
+  <Step title="Add a custom connector">
+    Open **Settings → Connectors** and click **Add custom connector**.
+  </Step>
+  <Step title="Name it and paste the URL">
+    Name it `ManyPI` and paste:
+
+    ```
+    https://mcp.manypi.com/mcp
+    ```
+
+    Leave the advanced OAuth fields empty. Claude reads them from ManyPI.
+  </Step>
+  <Step title="Connect">
+    Click **Connect**. ManyPI opens in a new window; approve, and the connector
+    goes live.
+  </Step>
+  <Step title="Turn it on in a chat">
+    In a conversation, open the tools menu and make sure **ManyPI** is enabled.
+  </Step>
+</Steps>
+
+On Team and Enterprise plans, an owner may need to add the connector for the
+organization first under **Admin settings → Connectors**.
+
+## Use an API key instead
+
+Add the connector the same way. When Claude asks for an Authorization header,
+paste:
+
+```
+Authorization: Bearer mpi_your_api_key
+```
+
+<KeyNote />
+
+<Next />

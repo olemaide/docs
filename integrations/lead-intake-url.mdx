@@ -1,0 +1,101 @@
+---
+title: "Lead intake URL"
+description: "One private URL that Clay, Zapier, Make, n8n, a form or your own code can send leads to."
+icon: "inbox"
+---
+
+The lead intake URL takes leads as JSON and saves them in your workspace,
+matched and deduplicated exactly like a CSV import. There is no API key: the
+URL itself is the secret.
+
+## Get your URL
+
+Open **Integrations** in the sidebar, click **Lead intake URL**, then
+**Connect**. Copy the URL it shows:
+
+```
+https://app.manypi.com/api/integrations/inbound/<your-token>
+```
+
+<Warning>
+  Anyone with this URL can add leads to your workspace. Keep it in server-side
+  tools only, never in a public web page. To replace it, disconnect and connect
+  again; the old URL stops working.
+</Warning>
+
+## Send leads
+
+`POST` JSON in any of three shapes:
+
+<CodeGroup>
+
+```bash One lead
+curl -X POST https://app.manypi.com/api/integrations/inbound/<your-token> \
+  -H "Content-Type: application/json" \
+  -d '{"email":"sam@acme.com","first_name":"Sam","company":"Acme","custom":{"icebreaker":"Loved your post on pricing"}}'
+```
+
+```bash Several leads
+curl -X POST https://app.manypi.com/api/integrations/inbound/<your-token> \
+  -H "Content-Type: application/json" \
+  -d '[{"email":"sam@acme.com","company":"Acme"},{"email":"ana@globex.com","company":"Globex"}]'
+```
+
+```bash Straight into a campaign
+curl -X POST https://app.manypi.com/api/integrations/inbound/<your-token> \
+  -H "Content-Type: application/json" \
+  -d '{"campaign_id":"<campaign-id>","leads":[{"email":"sam@acme.com","company":"Acme"}]}'
+```
+
+</CodeGroup>
+
+- **Field names are forgiving.** "Company Name", "companyName" and "company"
+  all land in Company, the same as a CSV header.
+- **Custom variables go under `custom`.** Each key there becomes a custom
+  variable the first time it is seen. Other unknown keys are kept only if a
+  custom variable with that name already exists, so a payload full of
+  metadata does not create dozens of columns.
+- **Up to 100 leads per request.** Plan lead limits apply as for any import.
+- **Duplicates** follow the connection's setting under **More settings**:
+  merge (the default), overwrite, or skip.
+- **`campaign_id`** adds the new leads to that campaign, with the same checks
+  as adding them by hand.
+
+The response says what happened:
+
+```json
+{
+  "created": 1,
+  "updated": 0,
+  "skipped": 0,
+  "over_limit": 0,
+  "lead_ids": ["8c1f…"]
+}
+```
+
+Leads that arrive this way are grouped as one import called **Lead intake
+URL**, so you can filter the Leads grid to them.
+
+## Common setups
+
+<AccordionGroup>
+  <Accordion title="Clay" icon="table">
+    Add an **HTTP API** column. Set the method to **POST**, paste the URL, and
+    map your Clay columns into the JSON body, for example `"email"`,
+    `"first_name"`, `"company"`, and anything personal under `"custom"`.
+  </Accordion>
+  <Accordion title="Zapier" icon="bolt">
+    Add a **Webhooks by Zapier → POST** action with the URL and payload type
+    **JSON**. See [Zapier](/integrations/zapier).
+  </Accordion>
+  <Accordion title="Make" icon="gears">
+    Add an **HTTP → Make a request** module, method **POST**, body type JSON.
+    See [Make](/integrations/make).
+  </Accordion>
+  <Accordion title="A form" icon="rectangle-list">
+    Form tools such as Typeform nest their answers, so pass submissions
+    through Zapier, Make or n8n and map the answers to flat fields like
+    `email` and `company`. A form handler of your own can post to the URL
+    directly.
+  </Accordion>
+</AccordionGroup>

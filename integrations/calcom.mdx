@@ -1,0 +1,26 @@
+---
+title: "Cal.com"
+description: "Bookings land on the lead the moment they are made, and your booking page goes into every email."
+icon: "/images/logos/calcom.png"
+---
+
+import CalendarActions from "/snippets/calendar-actions.mdx";
+
+## Connect
+
+<Steps>
+  <Step title="Create an API key in Cal.com">
+    Open **Settings → Developer → API Keys** in Cal.com (or go straight to
+    [API keys](https://app.cal.com/settings/developer/api-keys)), click
+    **New**, give it a name, and copy the key. It starts with `cal_live_`.
+  </Step>
+  <Step title="Paste it in ManyPI">
+    Open **Integrations** in the sidebar, click **Cal.com**, paste the key,
+    and click **Connect**.
+  </Step>
+</Steps>
+
+ManyPI registers a webhook in your Cal.com account, so bookings arrive the
+moment they are made. Disconnecting removes it again.
+
+<CalendarActions name="Cal.com" />

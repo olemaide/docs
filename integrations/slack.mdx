@@ -1,0 +1,32 @@
+---
+title: "Slack"
+description: "A message in a Slack channel when someone replies positively or books a meeting."
+icon: "/images/logos/slack.png"
+---
+
+import NotifyActions from "/snippets/notify-actions.mdx";
+
+ManyPI posts to Slack through an incoming webhook, which belongs to one
+channel.
+
+## Connect
+
+<Steps>
+  <Step title="Create a Slack app">
+    Go to [api.slack.com/apps](https://api.slack.com/apps), click **Create New
+    App**, then **From scratch**, and pick your workspace.
+  </Step>
+  <Step title="Turn on incoming webhooks">
+    Open **Incoming Webhooks** and switch it on.
+  </Step>
+  <Step title="Add a webhook">
+    Click **Add New Webhook to Workspace**, pick the channel, and copy the URL.
+    It starts with `https://hooks.slack.com/services/`.
+  </Step>
+  <Step title="Paste it in ManyPI">
+    Open **Integrations** in the sidebar, click **Slack**, paste the URL, and
+    click **Connect**.
+  </Step>
+</Steps>
+
+<NotifyActions where="the channel" />

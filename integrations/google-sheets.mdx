@@ -1,0 +1,39 @@
+---
+title: "Google Sheets"
+description: "Import a sheet by its link, and export any list of leads to a new Google Sheet."
+icon: "/images/logos/google-sheets.png"
+---
+
+## Import a sheet
+
+A sheet shared with **Anyone with the link** imports without connecting
+anything.
+
+<Steps>
+  <Step title="Share the sheet">
+    In Google Sheets, click **Share** and set General access to **Anyone with
+    the link** (Viewer is enough).
+  </Step>
+  <Step title="Paste the link">
+    In ManyPI, open **Leads → Import**, choose **From a Google Sheets link**,
+    and paste the sheet's address.
+  </Step>
+  <Step title="Check the columns">
+    ManyPI matches the columns the way it does for a CSV. Columns it does not
+    recognize are kept as custom variables you can use in emails.
+  </Step>
+</Steps>
+
+To import a **private** sheet, connect Google first: open **Integrations**,
+click **Google Sheets**, then **Connect**.
+
+<Note>
+  Google sign-in for Sheets is rolling out while Google reviews ManyPI's
+  access. Sheets shared by link import today.
+</Note>
+
+## Export leads
+
+In **Leads**, filter or tick the leads you want, open **Export**, choose
+**Google Sheets**, and click **Send to Sheets**. ManyPI creates a new sheet in
+your Google Drive and opens it. Exporting needs the Google connection.

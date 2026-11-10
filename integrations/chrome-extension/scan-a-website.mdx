@@ -1,0 +1,45 @@
+---
+title: "Scan a page or a website"
+sidebarTitle: "Scan a website"
+description: "Pull names, titles, emails and phone numbers out of a company's site."
+icon: "magnifying-glass"
+---
+
+Open a company's website, open the ManyPI panel, and pick one:
+
+- **Scan website** reads the site: up to **30 pages**, or **100** on Deep
+  (Settings → Scanning). Contact, team, Impressum, about and leadership pages
+  come first, in English and German. It stops early once those are read and
+  new pages stop turning up new people.
+- **This page only** reads the page you are on, including pages built with
+  JavaScript.
+
+Contacts appear while it reads. If pages are left when it stops, **Scan more
+pages** carries on where it ended.
+
+## What you get
+
+Each contact shows a name, title, email and phone number where the site
+published them, grouped by company.
+
+| Type | Meaning |
+| --- | --- |
+| **Personal** | A person's own address, found on the site. |
+| **Inbox** | A shared address such as info@ or hello@. |
+| **Guess** | Worked out from the company's naming pattern (for example `first.last@`). Not confirmed: verify it before you send. |
+
+Titles like *Dr.*, *Mag.* or *MBA* are taken out of names and kept with the
+contact, so guesses use the person's real name.
+
+## What it reads, and what it skips
+
+- It respects each site's `robots.txt`.
+- It skips pages behind a login and cookie walls, and says how many.
+- It never opens LinkedIn or Meta pages.
+- An agency's address in a site's footer is filed under that agency, not
+  under the company you are scanning.
+
+<Tip>
+  Guessed addresses are a starting point. Run them through
+  [email verification](/leads/email-validation) before a campaign.
+</Tip>

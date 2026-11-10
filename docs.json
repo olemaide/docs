@@ -78,6 +78,17 @@
             ]
           },
           {
+            "group": "Chrome extension",
+            "pages": [
+              "integrations/chrome-extension/overview",
+              "integrations/chrome-extension/install",
+              "integrations/chrome-extension/scan-a-website",
+              "integrations/chrome-extension/find-companies",
+              "integrations/chrome-extension/send-to-manypi",
+              "integrations/chrome-extension/privacy"
+            ]
+          },
+          {
             "group": "Switch from another tool",
             "pages": [
               "integrations/switch",

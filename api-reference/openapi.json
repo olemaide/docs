@@ -337,6 +337,55 @@
         }
       }
     },
+    "/api/leads/web-search": {
+      "post": {
+        "summary": "Find company websites",
+        "description": "Company websites for a target such as \"marketing agencies in Austin\", found by ManyPI's own search. Directories, review sites, marketplaces, media and LinkedIn or Meta pages are left out, and each company appears once. Nothing is scanned: read the sites yourself, or with the ManyPI Chrome extension's Find companies.\n\nCosts **1 crawl credit per results page**, whether or not the page held companies. Up to 5 pages per target.\n\nRequires the `write` permission.",
+        "operationId": "findCompanySites",
+        "tags": ["Leads"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["query"],
+                "properties": {
+                  "query": { "type": "string", "minLength": 2, "maxLength": 200, "description": "Who to find, in plain words." },
+                  "page": { "type": "integer", "minimum": 0, "maximum": 4, "default": 0, "description": "Results page, starting at 0." },
+                  "country": { "type": "string", "pattern": "^[a-zA-Z]{2}$", "description": "Two-letter country code to search in, for example `de`." },
+                  "skip": { "type": "array", "maxItems": 1000, "items": { "type": "string" }, "description": "Domains you already have, left out of the answer." }
+                }
+              },
+              "example": { "query": "marketing agencies in Austin", "page": 0, "country": "us", "skip": ["acme.agency"] }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Company sites on this results page.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sites": { "type": "array", "items": { "type": "object", "properties": { "domain": { "type": "string" }, "url": { "type": "string", "format": "uri" }, "title": { "type": "string" }, "snippet": { "type": "string" } } } },
+                    "page": { "type": "integer" },
+                    "next_page": { "type": "integer", "nullable": true, "description": "The page to ask for next, or null after the last one." },
+                    "charged": { "type": "integer", "description": "Crawl credits this call used." }
+                  }
+                },
+                "example": { "sites": [{ "domain": "northwind.studio", "url": "https://northwind.studio/", "title": "Northwind Studio | Brand agency in Austin", "snippet": "Brand and web design for B2B companies." }], "page": 0, "next_page": 1, "charged": 1 }
+              }
+            }
+          },
+          "400": { "description": "The query is missing or too long, or there is no active workspace." },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "402": { "description": "Out of crawl credits (`code: \"crawl_credits_exhausted\"`)." },
+          "502": { "description": "Search is unavailable right now (`code: \"search_unavailable\"`). Retry in a minute." }
+        }
+      }
+    },
     "/api/leads/import": {
       "post": {
         "summary": "Import leads",
@@ -353,7 +402,11 @@
                 "properties": {
                   "rows": { "type": "array", "minItems": 1, "maxItems": 100, "items": { "$ref": "#/components/schemas/ImportRow" } },
                   "duplicates": { "type": "string", "enum": ["merge", "overwrite", "skip"], "default": "merge", "description": "`merge` fills blanks on the existing lead; `overwrite` lets incoming values win; `skip` leaves it untouched." },
-                  "declare_fields": { "type": "array", "maxItems": 60, "items": { "$ref": "#/components/schemas/LeadFieldInput" } }
+                  "declare_fields": { "type": "array", "maxItems": 60, "items": { "$ref": "#/components/schemas/LeadFieldInput" } },
+                  "import_id": { "type": "string", "format": "uuid", "description": "Omit on the first chunk; the response carries the id to send with every chunk after it, so all chunks land in one batch." },
+                  "source": { "type": "string", "enum": ["wizard", "paste", "manual", "api", "extension"], "default": "api", "description": "How the batch arrived, shown on it in the leads grid. First chunk only. `extension` is the ManyPI Chrome extension." },
+                  "label": { "type": "string", "maxLength": 200, "description": "The batch name in the leads grid. First chunk only." },
+                  "meta": { "type": "object", "maxProperties": 12, "additionalProperties": { "oneOf": [{ "type": "string", "maxLength": 200 }, { "type": "number" }, { "type": "boolean" }, { "type": "array", "maxItems": 50, "items": { "type": "string" } }] }, "description": "Small facts about the batch only the sender knows, for example `{ \"client\": \"chrome-extension\", \"version\": \"0.3.0\", \"scan\": \"site\" }`. First chunk only, at most 4 KB." }
                 }
               },
               "example": {
@@ -1945,7 +1998,7 @@
     "/api/user": {
       "get": {
         "summary": "Validate a key / get account info",
-        "description": "The cheapest way to confirm a key works. Returns the owning user, the key's permissions and its rate limit.",
+        "description": "The cheapest way to confirm a key works. Returns the owning user, the workspace and brand these credentials act in (where imported leads land) and, for an API key, its permissions and rate limit. Accepts an API key or an OAuth access token.",
         "operationId": "getUser",
         "tags": ["Account"],
         "responses": {
@@ -1963,7 +2016,11 @@
                         "userId": { "type": "string", "format": "uuid" },
                         "email": { "type": "string", "format": "email" },
                         "name": { "type": "string" },
-                        "apiKey": { "type": "object", "properties": { "id": { "type": "string" }, "scopes": { "type": "array", "items": { "type": "string" } }, "status": { "type": "string" }, "rateLimit": { "type": "integer" } } },
+                        "avatarUrl": { "type": "string", "nullable": true },
+                        "authMethod": { "type": "string", "enum": ["api_key", "oauth", "session"] },
+                        "workspace": { "type": "object", "nullable": true, "properties": { "id": { "type": "string", "format": "uuid" }, "name": { "type": "string" }, "avatarUrl": { "type": "string", "nullable": true }, "role": { "type": "string", "nullable": true } } },
+                        "brand": { "type": "object", "nullable": true, "description": "The brand inside the workspace. Imported leads land here.", "properties": { "id": { "type": "string", "format": "uuid" }, "name": { "type": "string" }, "avatarUrl": { "type": "string", "nullable": true }, "website": { "type": "string", "nullable": true } } },
+                        "apiKey": { "type": "object", "nullable": true, "description": "Present when an API key was used, null for an OAuth token.", "properties": { "id": { "type": "string" }, "scopes": { "type": "array", "items": { "type": "string" } }, "status": { "type": "string" }, "rateLimit": { "type": "integer" } } },
                         "createdAt": { "type": "string", "format": "date-time" }
                       }
                     }

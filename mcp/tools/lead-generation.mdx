@@ -1,0 +1,28 @@
+---
+title: "Lead generation tools"
+sidebarTitle: "Lead generation"
+description: "Find new leads and search the ones you have."
+---
+
+## `generate_leads`
+
+<Info>Write · reaches the web</Info>
+
+Find and enrich B2B leads. Describe your ideal customer; poll `get_agent_run`
+for progress and read results with `search_leads`.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `description` | string | **Required.** e.g. *"e-commerce agencies in Germany, 5–50 employees, with emails"*. |
+
+## `search_leads`
+
+<Info>Read-only</Info>
+
+Search the workspace's saved leads.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `query` | string | Matches company, name, email or domain. |
+| `status` | enum | `new` · `qualified` · `contacted` · `disqualified` |
+| `limit` | 1–500 | Defaults to 100. |

@@ -1,0 +1,54 @@
+---
+title: "Campaigns tools"
+sidebarTitle: "Campaigns"
+description: "Create, read and update outreach campaigns."
+---
+
+## `list_campaigns`
+
+<Info>Read-only</Info>
+
+List campaigns with per-campaign stats — enrolled, active, completed, sent,
+opened, replied. Takes no arguments.
+
+## `get_campaign`
+
+<Info>Read-only</Info>
+
+One campaign's full analytics: headline stats, a per-step sent/opened
+breakdown, and every enrolled lead with its progress.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `campaign_id` | uuid | **Required.** |
+
+## `create_campaign`
+
+<Info>Write</Info>
+
+Bind a sequence to a sending inbox.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `name` | string | **Required.** |
+| `sequence_id` | uuid | **Required.** From `list_sequences` / `create_sequence`. |
+| `smtp_config_id` | uuid | **Required.** From `list_inboxes`. |
+| `reply_to` | email | Override the reply-to address. |
+| `daily_limit` | 1–2000 | Never exceeds the inbox's own cap. |
+
+## `update_campaign`
+
+<Info>Destructive · idempotent</Info>
+
+Pause, resume, archive, or change a campaign's name, reply-to or daily limit.
+Pausing stops further sends without losing progress.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `campaign_id` | uuid | **Required.** |
+| `status` | `active` \| `paused` \| `archived` | |
+| `name`, `reply_to`, `daily_limit` | | |
+
+Annotated destructive because it overwrites existing fields and archiving is
+this API's closest thing to a delete — but applying the same patch twice lands
+on the same state, so it is also idempotent.

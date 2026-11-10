@@ -1,0 +1,99 @@
+---
+title: "Import tools"
+sidebarTitle: "Imports"
+description: "Move from Instantly, Smartlead, lemlist, Apollo and others."
+---
+
+Move from Instantly, Smartlead, lemlist, Apollo, Snov.io or Saleshandy without
+leaving the conversation: scan the account, choose what to bring, and let the
+import run. It does what **Integrations → Switch from another tool** does in the
+dashboard, and nothing it creates sends email until you launch it.
+
+`scan_import` → `start_import` → `continue_import` (repeat) → `get_import`
+
+<Warning>
+  `scan_import` takes the other tool's API key as an argument, so the key passes
+  through your AI client's conversation. ManyPI stores it encrypted on the
+  import and erases it when the import ends. If you would rather the key never
+  touch the chat, start the import from **Integrations → Switch from another
+  tool** in the dashboard; `get_import` can still follow it from here.
+</Warning>
+
+## `scan_import`
+
+<Info>Write · reaches the web</Info>
+
+Check the other tool's key and scan the account: campaigns with their step and
+lead counts, total leads, do-not-contact list size, and sending mailboxes.
+Opens an import in status `scanned`. Nothing is imported yet.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `provider` | enum | **Required.** `instantly` · `smartlead` · `lemlist` · `apollo` · `snovio` · `saleshandy` |
+| `api_key` | string | The tool's API key. Instantly needs a V2 key; Apollo a master key for sequences to come over. |
+| `client_id` | string | Snov.io only: the API user ID. |
+| `client_secret` | string | Snov.io only: the API secret. |
+
+## `start_import`
+
+<Info>Destructive · reaches the web</Info>
+
+Start a scanned import. In order: the do-not-contact list, then the chosen
+campaigns as **draft** campaigns with their email steps, then their leads, with
+custom variables as lead fields. Runs the first slice and returns the progress.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `import_id` | uuid | **Required.** From `scan_import`. |
+| `campaign_ids` | string[] | Campaign ids from the scan. Defaults to every campaign it found. |
+| `recreate_campaigns` | boolean | Recreate the campaigns as drafts. Defaults to `true`. |
+| `import_leads` | boolean | Defaults to `true`. |
+| `do_not_contact` | boolean | Bring the block list, bounces and unsubscribes. Defaults to `true`. |
+| `continue_sequences` | boolean | Queue leads the old tool never emailed into their new draft campaign. Defaults to `true`; needs a paid plan. |
+| `duplicates` | enum | An existing lead: `merge` fills its empty fields (default), `overwrite` replaces them, `skip` leaves it alone. |
+
+Annotated destructive because it merges into existing leads and adds to the
+do-not-contact list, which stops mail to those addresses from every campaign.
+It sends nothing: the campaigns have no inbox until you launch them in ManyPI.
+
+With lemlist and Smartlead, leads come over through the chosen campaigns, so a
+lead in no chosen campaign stays behind. One import brings at most 100,000
+leads, and your plan's lead allowance applies.
+
+## `continue_import`
+
+<Info>Write · reaches the web</Info>
+
+Run the next slice, about 15 seconds of work, of a running import. Repeat until
+`job.status` is `done`. `worked: false` means another process held the import
+at that moment; ask again shortly. Slices are safe to repeat. An import nobody
+continues still finishes on ManyPI's scheduler, only more slowly.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `import_id` | uuid | **Required.** |
+
+## `get_import`
+
+<Info>Read-only</Info>
+
+One import, or the 20 most recent when no id is given. Statuses: `scanned`,
+`running`, `done`, `failed`, `cancelled`. Progress carries the phase, counts of
+leads created and merged, campaigns and steps recreated, addresses put on
+do-not-contact and leads queued, plus warnings. A finished import maps each old
+campaign id to its new ManyPI campaign in `result.campaignMap`.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `import_id` | uuid | Omit for the recent imports. |
+
+## `cancel_import`
+
+<Info>Destructive · idempotent</Info>
+
+Stop an import that has not finished and erase its stored key. Everything
+already imported stays. A cancelled import cannot be resumed.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `import_id` | uuid | **Required.** |

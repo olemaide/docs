@@ -267,8 +267,20 @@
               "mcp/introduction",
               "mcp/connect",
               "mcp/authentication",
-              "mcp/tools",
               "mcp/recipes"
+            ]
+          },
+          {
+            "group": "Tool reference",
+            "pages": [
+              "mcp/tools",
+              "mcp/tools/agent",
+              "mcp/tools/lead-generation",
+              "mcp/tools/outreach-content",
+              "mcp/tools/campaigns",
+              "mcp/tools/sending",
+              "mcp/tools/imports",
+              "mcp/tools/scraping"
             ]
           },
           {

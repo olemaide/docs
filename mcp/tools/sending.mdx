@@ -1,0 +1,49 @@
+---
+title: "Sending tools"
+sidebarTitle: "Sending"
+description: "Enroll leads, send email and read the results."
+---
+
+<Warning>
+  Both tools below queue **real email to real people** and require a paid ManyPI
+  plan. Nothing sent can be recalled.
+</Warning>
+
+## `enroll_leads`
+
+<Info>Destructive · reaches the web</Info>
+
+Enroll leads into a campaign, queuing the sequence for real sending and
+respecting the inbox's warmup and daily caps. Leads with no email, or already
+enrolled, are skipped.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `campaign_id` | uuid | **Required.** |
+| `lead_ids` | uuid[] (1–1000) | **Required.** From `search_leads`. |
+
+## `send_email`
+
+<Info>Destructive · reaches the web</Info>
+
+Send a single one-off email to a lead now, outside any sequence. Renders merge
+variables against the lead, respects the inbox's cap, and marks the lead
+contacted.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `smtp_config_id` | uuid | **Required.** From `list_inboxes`. |
+| `subject` | string | **Required.** Merge variables allowed. |
+| `html` | string | **Required.** Simple HTML. |
+| `lead_id` | uuid | Used for merge variables and as the default recipient. |
+| `to` | email | Explicit recipient; defaults to the lead's address. |
+
+## `outreach_stats`
+
+<Info>Read-only</Info>
+
+Workspace-wide activity: 14 days of sends (sent/failed/opened per day), replies
+per day, active enrollments, and `sent24h` against `capToday`, the combined cap
+of all inboxes. `sent24h` is a rolling 24 hours, the window the cap itself
+rolls over. Rates are percentages: a `bounceRate14d` of 9.2 means 9.2%. Takes no
+arguments.

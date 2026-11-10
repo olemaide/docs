@@ -1,0 +1,47 @@
+---
+title: "Agent tools"
+sidebarTitle: "Agent"
+description: "Start agent runs, follow them and answer their questions."
+---
+
+## `run_agent`
+
+<Info>Write · reaches the web</Info>
+
+Run the ManyPI agent on a natural-language goal: scrape sites, research,
+analyse data, turn a site into an API. Asynchronous — returns a `run_id` and
+`conversation_id`.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `goal` | string | **Required.** What you want ManyPI to do, in plain language. |
+
+For finding leads, prefer `generate_leads`.
+
+## `get_agent_run`
+
+<Info>Read-only</Info>
+
+Check the status and result of agent and lead-gen runs.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `conversation_id` | uuid | From `run_agent` / `generate_leads`. Omit for your most recent runs. |
+| `limit` | 1–50 | How many runs to return. |
+
+Statuses: `queued` / `planning` / `running` (working), `paused` (waiting on you
+— the question is in `result_summary`), `completed` / `failed` / `cancelled`
+(done — see `result_summary`).
+
+## `reply_to_agent`
+
+<Info>Write · reaches the web</Info>
+
+Answer an agent that is waiting for input, or send a follow-up to a finished
+run. Resumes the **same** run if it was paused; otherwise starts a follow-up run
+in the same conversation.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `run_id` | uuid | **Required.** The run to answer. |
+| `message` | string | **Required.** Your answer or follow-up, up to 8,000 characters. |

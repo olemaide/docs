@@ -1,0 +1,60 @@
+---
+title: "Outreach content tools"
+sidebarTitle: "Outreach content"
+description: "Inboxes, sequences and email drafts."
+---
+
+## `list_inboxes`
+
+<Info>Read-only</Info>
+
+List connected sending inboxes with per-inbox health: `sent24h` against the
+warmup-aware `cap`, 14-day delivered/failed/opened/bounced, and a 0–100 health
+score. `sent24h` is a rolling 24 hours, not a calendar day, so headroom is
+`cap - sent24h` at the moment you ask. Use an inbox `id` as `smtp_config_id`
+elsewhere. Takes no arguments.
+
+## `list_sequences`
+
+<Info>Read-only</Info>
+
+List saved email sequences with their inline steps. A `reply` step has an empty
+subject on purpose: it goes out as "Re:" the first step's subject. Takes no
+arguments.
+
+## `create_sequence`
+
+<Info>Write</Info>
+
+Create the email steps a campaign sends.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `name` | string | **Required.** Internal name. |
+| `description` | string | Optional. |
+| `steps` | array (1–10) | **Required.** Ordered steps. |
+
+Each step: `subject`, `body_html`, `wait_days` (0–90), `thread_mode`
+(`new` / `reply`). Step 0 goes out on enrollment and is always `new`; a `reply`
+step threads under the first email.
+
+Merge variables: `{{first_name}}`, `{{company}}`, `{{title}}`, `{{domain}}`,
+`{{location}}`. Bodies are simple HTML — `<p>`, `<br>`, `<strong>`, `<a>`.
+
+## `draft_email`
+
+<Info>Write · reaches the web</Info>
+
+AI-draft a cold email or a whole follow-up sequence. Returns
+`{subject, html}` or `{steps: […]}`. **Persists nothing**: feed the result
+into `create_sequence` or `send_email`.
+
+Annotated as a write because it spends the workspace's AI credits and calls a
+model, so clients ask before running it rather than auto-approving it as a read.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `instructions` | string | **Required.** What you are selling / your ask. |
+| `mode` | `email` \| `sequence` | Defaults to `email`. |
+| `steps` | 2–5 | Number of steps when `mode` is `sequence`. Defaults to 3. |
+| `lead_id` | uuid | An example lead to tailor the tone toward. |

@@ -1,0 +1,33 @@
+---
+title: "Scraping tools"
+sidebarTitle: "Scraping"
+description: "Run your scrapers and read their results."
+---
+
+## `list_scrapers`
+
+<Info>Read-only</Info>
+
+List the workspace's scrapers — id, name, target URL, type. Takes no arguments.
+
+## `run_scraper`
+
+<Info>Write · reaches the web</Info>
+
+Run a saved scraper. Asynchronous — returns a `runId`; read the extracted data
+with `get_scraper_runs`.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `scraper_id` | string | **Required.** From `list_scrapers`. |
+| `url` | url | Override the scraper's target for this run. |
+
+## `get_scraper_runs`
+
+<Info>Read-only</Info>
+
+Recent scraper runs with status and extracted data.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `limit` | 1–100 | |

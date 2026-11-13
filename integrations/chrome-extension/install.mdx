@@ -1,27 +1,111 @@
 ---
 title: "Install the Chrome extension"
 sidebarTitle: "Install"
-description: "Add ManyPI Email Finder and connect it to your ManyPI account."
+description: "Add ManyPI Email Finder to Chrome, from the Chrome Web Store or as a downloaded build, and connect it to your ManyPI account."
 icon: "download"
 ---
 
-<Note>
-  ManyPI Email Finder is coming soon to the Chrome Web Store.
-</Note>
+There are two ways to install ManyPI Email Finder. Both work the same once it
+is installed and need Chrome 116 or newer.
 
-<Steps>
-  <Step title="Add it to Chrome">
-    Find **ManyPI: Email Finder & Lead Extractor** in the Chrome Web Store and click **Add to Chrome**. Pin
-    it from the puzzle icon in the toolbar so it is one click away.
-  </Step>
-  <Step title="Open the side panel">
-    Click the ManyPI icon. The panel opens next to the page you are on.
-  </Step>
-  <Step title="Sign in with ManyPI">
-    Click **Sign in with ManyPI** and approve the connection. Leads you send
-    go to the workspace and brand you work in.
-  </Step>
-</Steps>
+- **Chrome Web Store**: one click, and Chrome keeps it up to date. The store listing is coming soon.
+- **Download**: until the listing is live, download the extension from
+  [manypi.com/chrome-extension](https://manypi.com/chrome-extension) and load it in Developer mode. It takes about a minute.
+
+<Tabs>
+  <Tab title="Download (Developer mode)">
+    <Steps>
+      <Step title="Download and unzip it">
+        On [manypi.com/chrome-extension](https://manypi.com/chrome-extension), click **Download for Chrome**. You get a
+        file named like `manypi-email-finder-0.1.1.zip`.
+
+        Unzip it into a folder you will keep, for example `Documents/ManyPI Email Finder`.
+        On Windows, right-click the file and choose **Extract All**; on a Mac, double-click it.
+
+        <Warning>
+          Chrome runs the extension from this folder. Don't delete or move it, or
+          the extension stops working. The Downloads folder is easy to clean out
+          by accident, so a folder in Documents is safer.
+        </Warning>
+      </Step>
+      <Step title="Turn on Developer mode">
+        Open `chrome://extensions` in the address bar and switch on **Developer mode** in the top right corner.
+      </Step>
+      <Step title="Load the folder">
+        Click **Load unpacked** and pick the folder you unzipped: the one that has
+        `manifest.json` directly inside it. **ManyPI: Email Finder & Lead Extractor** appears in the list.
+      </Step>
+      <Step title="Pin it and open the side panel">
+        Click the puzzle icon in the toolbar and pin ManyPI so it is one click
+        away. Click the ManyPI icon and the panel opens next to the page you are on.
+      </Step>
+      <Step title="Sign in with ManyPI">
+        Click **Sign in with ManyPI** and approve the connection. Leads you send
+        go to the workspace and brand you work in.
+      </Step>
+    </Steps>
+
+    ### Update to a new version
+
+    A downloaded build doesn't update itself. When a new version is out:
+
+    1. Download the new zip from [manypi.com/chrome-extension](https://manypi.com/chrome-extension).
+    2. Unzip it **into the same folder**, replacing the files that are there.
+    3. Open `chrome://extensions` and click the reload arrow on the ManyPI card.
+
+    You stay signed in and your scanned contacts stay where they are. The version
+    number on the card shows which build you are running.
+
+    <Note>
+      Update by reloading, not by removing the extension and loading it again.
+      Removing it from Chrome deletes the contacts it keeps in the browser and
+      signs you out.
+    </Note>
+
+    ### Move to the Chrome Web Store version
+
+    Once the store listing is live, install it from the store. Send any contacts you want to keep
+    to ManyPI first, then remove the downloaded version from `chrome://extensions` and delete its folder.
+    The two are separate installs and don't share contacts in the browser.
+
+    ### If something doesn't work
+
+    <AccordionGroup>
+      <Accordion title="Load unpacked says “Manifest file is missing or unreadable”">
+        You picked a folder one level too high or too low. Pick the folder
+        that has `manifest.json` directly inside it, next to `background.js`.
+      </Accordion>
+      <Accordion title="There is no Developer mode switch, or it is greyed out">
+        Your organization manages this Chrome and doesn't allow extensions to be
+        loaded by hand. Ask your IT team, or wait for the Chrome Web Store version.
+      </Accordion>
+      <Accordion title="The extension shows an error or stopped working">
+        Check that the folder is still where you unzipped it. If you moved it,
+        remove the extension, then click **Load unpacked** and pick the folder in its new place.
+      </Accordion>
+    </AccordionGroup>
+  </Tab>
+  <Tab title="Chrome Web Store">
+    <Note>
+      ManyPI Email Finder is coming soon to the Chrome Web Store. Until then,
+      use the **Download** tab.
+    </Note>
+
+    <Steps>
+      <Step title="Add it to Chrome">
+        Find **ManyPI: Email Finder & Lead Extractor** in the Chrome Web Store and click **Add to Chrome**. Pin
+        it from the puzzle icon in the toolbar so it is one click away.
+      </Step>
+      <Step title="Open the side panel">
+        Click the ManyPI icon. The panel opens next to the page you are on.
+      </Step>
+      <Step title="Sign in with ManyPI">
+        Click **Sign in with ManyPI** and approve the connection. Leads you send
+        go to the workspace and brand you work in.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
 
 ## Use an API key instead
 

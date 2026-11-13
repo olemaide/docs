@@ -1,0 +1,28 @@
+---
+title: "Get form responses"
+description: "Responses with answers as text, score, ending, email, lead and source. status=partial (unfinished) needs Pro or Business. Held responses (over the mon"
+---
+
+`GET /api/forms/{id}/responses`, API key scope `read`. Also available as the `get_form_responses` MCP tool.
+
+Responses with answers as text, score, ending, email, lead and source. `status=partial` (unfinished) needs Pro or Business. Held responses (over the monthly limit) have their answers hidden.
+
+| Parameter | In | Description |
+|---|---|---|
+| `id` | path | Form uuid, public id or key |
+| `status` | query | completed (default), partial, held, spam, all |
+| `q` | query | Filter by email |
+| `limit, offset` | query | Paging (limit up to 200) |
+
+## Example
+
+```bash
+curl "https://app.manypi.com/api/forms/{id}/responses" \
+  -H "Authorization: Bearer $MANYPI_API_KEY"
+```
+
+## Response
+
+```json
+{ "responses": [{ "id": "…", "status": "completed", "email": "jane@acme.com", "score": 80, "ending": "hot", "lead_id": "…", "answers": [{ "ref": "team_size", "label": "How big is your team?", "text": "11 to 50" }] }], "total": 418 }
+```

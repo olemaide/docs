@@ -1,0 +1,25 @@
+---
+title: "Get form"
+description: "One form's draft (definition, settings, lead settings, theme), its live URL and the publish checks. {id} is the uuid, the public id or the key."
+---
+
+`GET /api/forms/{id}`, API key scope `read`. Also available as the `get_form` MCP tool.
+
+One form's draft (definition, settings, lead settings, theme), its live URL and the publish checks. `{id}` is the uuid, the public id or the key.
+
+| Parameter | In | Description |
+|---|---|---|
+| `id` | path | Form uuid, public id or key |
+
+## Example
+
+```bash
+curl "https://app.manypi.com/api/forms/{id}" \
+  -H "Authorization: Bearer $MANYPI_API_KEY"
+```
+
+## Response
+
+```json
+{ "form": { "id": "…", "definition": { "version": 1, "blocks": [ … ] }, "settings": { … }, "lead_settings": { … }, "theme": { … } }, "url": "https://…/to/Ab3dE9xZ", "issues": [], "unpublishedChanges": false }
+```

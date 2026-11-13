@@ -1,0 +1,73 @@
+---
+title: "Embed and share"
+description: "Put a form on any website, prefill it from the URL, or use your own domain."
+---
+
+## Embed code
+
+Copy the snippet from the form's **Share** tab and paste it where the form
+should appear:
+
+```html
+<div data-manypi-form="https://k7m2qx9fha.usemanypi.eu/to/Ab3dE9xZ" data-manypi-mode="inline">
+  <a href="https://k7m2qx9fha.usemanypi.eu/to/Ab3dE9xZ">Open the form</a>
+  <p data-manypi-credit>Made with <a href="https://manypi.com/forms?utm_source=form-badge&utm_medium=referral&utm_campaign=Ab3dE9xZ">ManyPI</a></p>
+</div>
+<script src="https://embed.usemanypi.eu/v1.js" async></script>
+```
+
+Without JavaScript the link still works. On the free plan the `data-manypi-credit`
+line is required and must stay visible; you may add `rel="nofollow"` to its link.
+
+| Attribute | Values |
+|---|---|
+| `data-manypi-mode` | `inline`, `popup`, `slider`, `popover`, `sidetab` |
+| `data-manypi-button` | Button text for popup, slider, popover and side tab |
+| `data-manypi-hidden` | Hidden field values: `plan=pro,source=pricing` |
+| `data-manypi-forward` | Page query parameters to pass on (default `utm_source,utm_medium,utm_campaign`) |
+| `data-manypi-height` | Fixed height in pixels (inline auto-resizes without it) |
+| `data-manypi-open` | Open a popup by itself: `load`, `exit`, `scroll`, `time` |
+| `data-manypi-open-value` | Scroll percent or milliseconds for `scroll` / `time` |
+| `data-manypi-datalayer` | Push `manypi_form_started` and `manypi_form_submit` to your `dataLayer` |
+| `data-manypi-credit-rel` | `rel` for a credit link the script has to put back |
+
+The container fires `manypi:ready`, `manypi:started`, `manypi:step` and
+`manypi:submit` events (bubbling `CustomEvent`s) for your own tracking. Answers
+are never sent to your page.
+
+If your site has a Content-Security-Policy, allow `https://embed.usemanypi.eu`
+in `script-src` and your form's host in `frame-src`.
+
+**Let your coding agent do it:** the Share tab has **Copy for your coding agent**,
+a ready prompt with the snippet and these steps.
+
+## Prefill from the URL
+
+Any question can read its answer from the URL (Build tab, **Prefill from URL**):
+`?email=jane@acme.com`. Put personal data in the hash instead, so it never
+reaches server logs: `#email=jane@acme.com`. Hidden fields work the same way.
+
+Per question you choose to show the prefilled answer, skip the question when
+the value is valid, or lock it.
+
+## Personal links in outreach
+
+A lead link (Share tab, or `get_form_embed_code` with `lead_id`) adds a signed
+reference: the response is attached to that lead even if they type another
+email. A reference copied to another form, or a guessed one, is ignored.
+
+## Custom domains
+
+Paid plans can serve forms on their own subdomain (1 domain on Starter, 3 on
+Pro, 10 on Business). In **Share > Manage domains**, add `forms.yourcompany.com`,
+then create the two records it shows:
+
+| Type | Name | Value |
+|---|---|---|
+| CNAME | `forms.yourcompany.com` | `domains.usemanypi.eu` |
+| TXT | `_manypi.forms.yourcompany.com` | `manypi-verify=...` |
+
+The certificate is issued automatically once the records resolve. Root domains
+(`yourcompany.com`) are not supported. On a custom domain a form can also have
+a readable address like `forms.yourcompany.com/demo`, and you may let search
+engines index it.

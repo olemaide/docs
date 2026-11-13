@@ -1,0 +1,30 @@
+---
+title: "Update form"
+description: "Changes the draft. Live forms only change after Publish. Plan-gated fields answer 403 with a code (form_branding_locked, form_close_locked, form_parti"
+---
+
+`PATCH /api/forms/{id}`, API key scope `write`. Also available as the `update_form` MCP tool.
+
+Changes the draft. Live forms only change after Publish. Plan-gated fields answer 403 with a code (form_branding_locked, form_close_locked, form_partials_locked, outreach_locked).
+
+| Parameter | In | Description |
+|---|---|---|
+| `id` | path | Form uuid, public id or key |
+| `name, definition, settings, lead_settings, theme` | body | Any of them; settings, lead settings and theme are merged |
+| `closes_at, response_limit` | body | Close controls (paid plans) |
+| `domain_id, slug` | body | Custom domain and readable address |
+
+## Example
+
+```bash
+curl -X PATCH "https://app.manypi.com/api/forms/{id}" \
+  -H "Authorization: Bearer $MANYPI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "settings": { "language": "de", "privacyUrl": "https://acme.com/privacy" } }'
+```
+
+## Response
+
+```json
+{ "ok": true }
+```

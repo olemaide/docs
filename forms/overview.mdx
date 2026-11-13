@@ -1,0 +1,94 @@
+---
+title: "Forms"
+description: "Conversational forms that put every response straight into your lead lists."
+---
+
+ManyPI Forms are one-question-at-a-time forms with logic and scoring. Every
+response can become a lead in the list you choose, ready for outreach.
+
+## Build a form
+
+Open **Forms** in the sidebar and pick a template (Blank, Demo request, Lead
+magnet, Customer feedback). The editor has five tabs:
+
+| Tab | What you do there |
+|---|---|
+| Build | Add and order questions, edit each one, set the design and form settings |
+| Logic | Branch, hide and score questions on a map or as rules |
+| Connect | Choose where responses go: lists, duplicates, metadata, notifications |
+| Share | Copy the link, the embed code, a prefilled link or a personal lead link |
+| Results | Views, completion, drop-off, responses, unfinished responses and drafts |
+
+Changes save as you type. **Publish** makes the current draft live as a new
+version; people who are halfway through keep the version they started.
+
+## Where forms live
+
+Every workspace gets its own random address: `https://k7m2qx9fha.usemanypi.eu/to/<form id>`.
+Paid plans can use their own domain, like `forms.yourcompany.com` (see
+[Embed and share](/forms/embed#custom-domains)).
+
+Hosted forms set no cookies, show no cookie banner and load nothing but the
+form. Views and drop-off are counted without cookies.
+
+## Questions
+
+Welcome screen, statement, short and long text, email (optionally work email
+only), phone, website, number, multiple choice, dropdown, yes/no, consent,
+contact info (name, email, phone, company, job title, LinkedIn, website),
+rating, opinion scale, NPS, date and partial submit points.
+
+Each question can **save to a lead field** (email, name, company, job title,
+phone, website, LinkedIn, location, or a custom variable) and can be
+**prefilled from the URL**.
+
+## Logic
+
+Rules run when someone leaves a question:
+
+- **Go to** a later question or an ending when conditions match
+- **Hide** a question when conditions match
+- **Calculate**: add, subtract, multiply, divide or set a variable (`score` is built in)
+- **Tag** the response
+
+In **Lead qualification** mode, choices carry points, and Hot and Warm
+thresholds pick the ending and the lead status. The server replays the whole
+form on submit, so scores and endings can't be faked.
+
+## Leads and lists
+
+With **Create leads** on, each completed response becomes a lead (or updates
+the existing one, deduplicated by email) in the lists you pick. Hidden fields,
+UTM parameters and templates like `{{hidden.utm_source}}` can be saved to lead
+fields as metadata. The lead's source URL is the page the form was filled on.
+
+## Partial submit points and drafts
+
+On Pro and Business, a **partial submit point** saves what someone has answered
+so far. If they gave an email or phone number and then leave, the response
+waits in **Drafts** (Results tab). Drafts are not leads: merge them into a list
+when you want them, or discard them. Open drafts are deleted after 90 days.
+
+## Events
+
+`form.submitted`, `form.partial_submitted` and `form.closed` are available to
+[webhooks](/integrations/webhooks) and workflow triggers.
+
+## Plans
+
+| | Free | Starter | Pro | Business |
+|---|---|---|---|---|
+| Live forms | 3 | 25 | Unlimited | Unlimited |
+| Responses per month | 10 | 2,500 | 15,000 | 75,000 |
+| "Made with ManyPI" credit | Shown | Optional | Optional | Optional |
+| Drop-off per question | | Yes | Yes | Yes |
+| Partial submit points, drafts | | | 1 per form | 3 per form |
+| Custom domains | | 1 | 3 | 10 |
+
+Past the monthly limit, responses are still saved but held until you upgrade
+or the month turns; at twice the limit forms stop taking responses.
+
+## Abuse
+
+Forms can't ask for passwords, card numbers, PINs, one-time codes or recovery
+phrases. Every hosted form has a **Report abuse** link.

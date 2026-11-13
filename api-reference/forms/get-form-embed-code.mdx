@@ -1,0 +1,28 @@
+---
+title: "Get form embed code"
+description: "The live URL, the HTML snippet for a website, and a prompt for a coding agent. With lead_id, a signed personal link that attaches the response to that"
+---
+
+`GET /api/forms/{id}/embed`, API key scope `read`. Also available as the `get_form_embed_code` MCP tool.
+
+The live URL, the HTML snippet for a website, and a prompt for a coding agent. With `lead_id`, a signed personal link that attaches the response to that lead.
+
+| Parameter | In | Description |
+|---|---|---|
+| `id` | path | Form uuid, public id or key |
+| `mode` | query | inline (default), popup, slider, popover, sidetab |
+| `button` | query | Button text for non-inline modes |
+| `lead_id` | query | A lead id for a personal link |
+
+## Example
+
+```bash
+curl "https://app.manypi.com/api/forms/{id}/embed" \
+  -H "Authorization: Bearer $MANYPI_API_KEY"
+```
+
+## Response
+
+```json
+{ "url": "https://…/to/Ab3dE9xZ", "snippet": "<div data-manypi-form=…>…</div>", "scriptUrl": "https://embed.usemanypi.eu/v1.js", "credit": true, "agentPrompt": "Add the ManyPI form …", "leadLink": null }
+```

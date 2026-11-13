@@ -1,0 +1,25 @@
+---
+title: "Publish form"
+description: "Snapshots the draft as a new live version. Fails with 400 form_issues (the first publish-check error), 400 form_blocked (the form asks for passwords, "
+---
+
+`POST /api/forms/{id}/publish`, API key scope `write`. Also available as the `publish_form` MCP tool.
+
+Snapshots the draft as a new live version. Fails with 400 form_issues (the first publish-check error), 400 form_blocked (the form asks for passwords, card numbers or similar) or 403 forms_limit.
+
+| Parameter | In | Description |
+|---|---|---|
+| `id` | path | Form uuid, public id or key |
+
+## Example
+
+```bash
+curl "https://app.manypi.com/api/forms/{id}/publish" \
+  -H "Authorization: Bearer $MANYPI_API_KEY"
+```
+
+## Response
+
+```json
+{ "version": 2, "url": "https://k7m2qx9fha.usemanypi.eu/to/Ab3dE9xZ", "reviewState": "none", "warnings": [] }
+```

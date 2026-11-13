@@ -1,0 +1,29 @@
+---
+title: "Merge or discard drafts"
+description: "merge turns drafts into leads (deduplicated like any import) in list_id, or in each form's own lists when omitted. discard closes them without a lead."
+---
+
+`POST /api/forms/drafts`, API key scope `write`. Also available as the `merge_form_drafts` MCP tool.
+
+`merge` turns drafts into leads (deduplicated like any import) in `list_id`, or in each form's own lists when omitted. `discard` closes them without a lead. Pro and Business.
+
+| Parameter | In | Description |
+|---|---|---|
+| `action` | body | merge or discard |
+| `ids` | body | Draft ids (up to 500) |
+| `list_id` | body | A lead list id (merge only, optional) |
+
+## Example
+
+```bash
+curl -X POST "https://app.manypi.com/api/forms/drafts" \
+  -H "Authorization: Bearer $MANYPI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "action": "merge", "ids": ["…"], "list_id": "…" }'
+```
+
+## Response
+
+```json
+{ "merged": 1, "skipped": [], "leadIds": ["…"] }
+```

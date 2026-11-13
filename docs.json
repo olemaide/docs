@@ -30,6 +30,13 @@
             ]
           },
           {
+            "group": "Forms",
+            "pages": [
+              "forms/overview",
+              "forms/embed"
+            ]
+          },
+          {
             "group": "Email outreach",
             "pages": [
               "outreach/overview",
@@ -236,6 +243,22 @@
               "api-reference/agent/cancel-run",
               "api-reference/agent/list-skills",
               "api-reference/agent/create-skill"
+            ]
+          },
+          {
+            "group": "Forms",
+            "pages": [
+              "api-reference/forms/list-forms",
+              "api-reference/forms/get-form",
+              "api-reference/forms/create-form",
+              "api-reference/forms/update-form",
+              "api-reference/forms/publish-form",
+              "api-reference/forms/close-form",
+              "api-reference/forms/get-form-responses",
+              "api-reference/forms/get-form-analytics",
+              "api-reference/forms/get-form-embed-code",
+              "api-reference/forms/list-form-drafts",
+              "api-reference/forms/merge-form-drafts"
             ]
           },
           {

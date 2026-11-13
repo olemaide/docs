@@ -1,0 +1,26 @@
+---
+title: "Get form analytics"
+description: "Totals, a daily series, drop-off per question (paid plans), sources, campaigns, devices and links clicked. Counted without cookies."
+---
+
+`GET /api/forms/{id}/analytics`, API key scope `read`. Also available as the `get_form_analytics` MCP tool.
+
+Totals, a daily series, drop-off per question (paid plans), sources, campaigns, devices and links clicked. Counted without cookies.
+
+| Parameter | In | Description |
+|---|---|---|
+| `id` | path | Form uuid, public id or key |
+| `from, to` | query | YYYY-MM-DD (default: the last 30 days) |
+
+## Example
+
+```bash
+curl "https://app.manypi.com/api/forms/{id}/analytics" \
+  -H "Authorization: Bearer $MANYPI_API_KEY"
+```
+
+## Response
+
+```json
+{ "totals": { "views": 1240, "starts": 612, "completes": 418, "completionRate": 68.3, "medianSeconds": 74, "leads": 402 }, "daily": [ … ], "funnel": [{ "block": "team_size", "reached": 590, "leftHere": 31 }], "sources": [{ "label": "acme.com/pricing", "count": 801 }] }
+```

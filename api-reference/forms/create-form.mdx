@@ -1,0 +1,32 @@
+---
+title: "Create form"
+description: "Creates a draft. Without a definition it starts empty: a welcome screen and a thank-you ending. Definitions follow the JSON Schema at https://embed.usemany"
+---
+
+`POST /api/forms`, API key scope `write`. Also available as the `create_form` MCP tool.
+
+Creates a draft. Without a `definition` it starts empty: a welcome screen and a thank-you ending. Definitions follow the JSON Schema at https://embed.usemanypi.eu/schemas/form.v1.json. A `key` that already exists answers 409 with the existing id.
+
+| Parameter | In | Description |
+|---|---|---|
+| `name` | body | Form name |
+| `key` | body | Stable slug for later updates (optional) |
+| `definition` | body | Form definition, schema version 1 (optional) |
+| `settings, lead_settings, theme` | body | Partial objects (optional) |
+| `brand_id` | body | Brand (optional) |
+| `publish` | body | Publish right away (optional) |
+
+## Example
+
+```bash
+curl -X POST "https://app.manypi.com/api/forms" \
+  -H "Authorization: Bearer $MANYPI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "Demo request", "key": "demo-request", "publish": true }'
+```
+
+## Response
+
+```json
+{ "id": "…", "key": "demo-request", "published": { "version": 1, "url": "https://…/to/Ab3dE9xZ", "reviewState": "none", "warnings": [] } }
+```

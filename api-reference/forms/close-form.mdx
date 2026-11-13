@@ -1,0 +1,28 @@
+---
+title: "Close or reopen form"
+description: "open: false stops a live form from taking responses; open: true reopens it."
+---
+
+`POST /api/forms/{id}/close`, API key scope `write`. Also available as the `close_form` MCP tool.
+
+`open: false` stops a live form from taking responses; `open: true` reopens it.
+
+| Parameter | In | Description |
+|---|---|---|
+| `id` | path | Form uuid, public id or key |
+| `open` | body | true to reopen, false to close |
+
+## Example
+
+```bash
+curl -X POST "https://app.manypi.com/api/forms/{id}/close" \
+  -H "Authorization: Bearer $MANYPI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "open": false }'
+```
+
+## Response
+
+```json
+{ "ok": true, "status": "closed" }
+```

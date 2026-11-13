@@ -1,0 +1,26 @@
+---
+title: "List form drafts"
+description: "Unfinished responses that passed a partial submit point with an email or phone. They are not leads until merged."
+---
+
+`GET /api/forms/drafts`, API key scope `read`. Also available as the `list_form_drafts` MCP tool.
+
+Unfinished responses that passed a partial submit point with an email or phone. They are not leads until merged.
+
+| Parameter | In | Description |
+|---|---|---|
+| `form_id` | query | Only this form (uuid) |
+| `limit, offset` | query | Paging |
+
+## Example
+
+```bash
+curl "https://app.manypi.com/api/forms/drafts" \
+  -H "Authorization: Bearer $MANYPI_API_KEY"
+```
+
+## Response
+
+```json
+{ "drafts": [{ "id": "…", "form_name": "Demo request", "email": "sam@globex.com", "last_block": "timeline", "answers": [ … ] }], "total": 3 }
+```

@@ -1,0 +1,21 @@
+---
+title: "List forms"
+description: "The workspace's forms with status, live URL, views, starts, completed responses and open drafts, plus the plan's form usage."
+---
+
+`GET /api/forms`, API key scope `read`. Also available as the `list_forms` MCP tool.
+
+The workspace's forms with status, live URL, views, starts, completed responses and open drafts, plus the plan's form usage.
+
+## Example
+
+```bash
+curl "https://app.manypi.com/api/forms" \
+  -H "Authorization: Bearer $MANYPI_API_KEY"
+```
+
+## Response
+
+```json
+{ "available": true, "forms": [{ "id": "…", "key": "demo-request", "public_id": "Ab3dE9xZ", "name": "Demo request", "status": "live", "url": "https://k7m2qx9fha.usemanypi.eu/to/Ab3dE9xZ", "views": 1240, "starts": 612, "completes": 418, "drafts": 3 }], "usage": { "liveForms": 1, "maxLiveForms": 25, "submissionsThisMonth": 418, "submissionsPerMonth": 2500 } }
+```

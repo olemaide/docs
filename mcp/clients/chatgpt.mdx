@@ -4,10 +4,11 @@ description: "Add ManyPI to ChatGPT as a custom connector in developer mode."
 icon: "/images/logos/openai.png"
 ---
 
-import KeyNote from "/snippets/mcp-key-note.mdx";
 import Next from "/snippets/mcp-next.mdx";
 
 Custom connectors need a paid ChatGPT plan with developer mode turned on.
+
+## Sign in with your browser
 
 <Steps>
   <Step title="Turn on developer mode">
@@ -19,13 +20,14 @@ Custom connectors need a paid ChatGPT plan with developer mode turned on.
     ```
     https://mcp.manypi.com/mcp
     ```
-  </Step>
-  <Step title="Add your key">
-    Add a custom header so every call is authenticated:
 
-    ```
-    Authorization: Bearer mpi_your_api_key
-    ```
+    Choose **OAuth** as the authentication. ChatGPT reads the rest from
+    ManyPI, so there is no client ID or key to enter.
+  </Step>
+  <Step title="Connect">
+    ChatGPT opens ManyPI in a new window. Sign in, click **Approve**, and the
+    connector goes live. You can revoke it any time under **Connected apps**
+    on the MCP page of the ManyPI dashboard.
   </Step>
   <Step title="Use it in a chat">
     Start a new chat, open the **+** menu, choose **Developer mode**, and pick
@@ -33,6 +35,10 @@ Custom connectors need a paid ChatGPT plan with developer mode turned on.
   </Step>
 </Steps>
 
-<KeyNote />
+<Note>
+  No API key is needed in ChatGPT: signing in connects your workspace. API
+  keys are for clients that let you set a header, such as
+  [Cursor](/mcp/clients/cursor) or [Claude Code](/mcp/clients/claude-code).
+</Note>
 
 <Next />

@@ -2656,7 +2656,7 @@
     "/api/user": {
       "get": {
         "summary": "Validate a key / get account info",
-        "description": "The quickest way to confirm a key works. Returns the owning user, the workspace and brand these credentials act in (where imported leads land) and, for an API key, its permissions and rate limit. Accepts an API key or an OAuth access token.\n\nAn API key needs **Account & usage: Read** (`account:read`), or the legacy `read` permission. A key without it gets `403`, so a key made only for scrapers or outreach fails this check even though it works on its own routes.",
+        "description": "The quickest way to confirm a key works. Returns the owning user, the workspace and brand these credentials act in (where imported leads land) and, for an API key, its permissions and rate limit. Accepts an API key or an OAuth access token.\n\nAny valid, active API key gets this answer, whatever permissions it has, so it works for checking a key made only for scrapers or outreach too. A revoked, expired or unknown key gets `401`.",
         "operationId": "getUser",
         "tags": ["Account"],
         "responses": {
@@ -2688,12 +2688,6 @@
             }
           },
           "401": { "$ref": "#/components/responses/Unauthorized" },
-          "403": {
-            "description": "This API key does not have the permission this route needs.",
-            "content": {
-              "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
-            }
-          },
           "404": {
             "description": "No profile exists for this account.",
             "content": {

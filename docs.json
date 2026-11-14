@@ -185,9 +185,12 @@
               "api-reference/leads/import-leads",
               "api-reference/leads/find-company-sites",
               "api-reference/leads/export-leads",
+              "api-reference/leads/export-chosen-leads",
               "api-reference/leads/get-capacity",
               "api-reference/leads/list-fields",
-              "api-reference/leads/create-field"
+              "api-reference/leads/create-field",
+              "api-reference/leads/update-field",
+              "api-reference/leads/delete-field"
             ]
           },
           {
@@ -204,10 +207,13 @@
               "api-reference/outreach/list-inboxes",
               "api-reference/outreach/list-sequences",
               "api-reference/outreach/create-sequence",
+              "api-reference/outreach/update-sequence",
+              "api-reference/outreach/delete-sequence",
               "api-reference/outreach/generate-email",
               "api-reference/outreach/list-campaigns",
               "api-reference/outreach/create-campaign",
               "api-reference/outreach/update-campaign",
+              "api-reference/outreach/launch-campaign",
               "api-reference/outreach/delete-campaign",
               "api-reference/outreach/get-campaign",
               "api-reference/outreach/enroll-leads",
@@ -216,6 +222,7 @@
               "api-reference/outreach/get-stats",
               "api-reference/outreach/list-replies",
               "api-reference/outreach/get-insights",
+              "api-reference/outreach/generate-insights",
               "api-reference/outreach/list-suppressions",
               "api-reference/outreach/add-suppressions",
               "api-reference/outreach/remove-suppression"
@@ -238,11 +245,14 @@
               "api-reference/agent/create-run",
               "api-reference/agent/list-runs",
               "api-reference/agent/get-run",
+              "api-reference/agent/list-run-events",
               "api-reference/agent/delete-run",
               "api-reference/agent/reply-to-run",
               "api-reference/agent/cancel-run",
               "api-reference/agent/list-skills",
-              "api-reference/agent/create-skill"
+              "api-reference/agent/create-skill",
+              "api-reference/agent/update-skill",
+              "api-reference/agent/delete-skill"
             ]
           },
           {

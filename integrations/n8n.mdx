@@ -1,6 +1,6 @@
 ---
 title: "n8n"
-description: "The ManyPI node for n8n: find and verify leads, run campaigns, and start workflows when a lead, reply or run arrives."
+description: "The ManyPI node for n8n: find and verify leads, run campaigns, read form responses, and start workflows when a lead, reply, form response or run arrives."
 icon: "/images/logos/n8n.png"
 ---
 
@@ -31,8 +31,9 @@ Pick **Authentication** on the node:
   </Tab>
   <Tab title="API key">
     Create a key under **API Access** in the ManyPI profile menu and add a
-    **ManyPI API** credential with it. Untick permissions the workflow never
-    needs. See [API keys and permissions](/platform/api-keys).
+    **ManyPI API** credential with it. Give the key only the areas and actions
+    the workflow uses, plus **Account & usage: Read**, which n8n needs to test
+    the key. See [API keys and permissions](/platform/api-keys).
   </Tab>
 </Tabs>
 
@@ -41,10 +42,10 @@ Pick **Authentication** on the node:
 | Resource | Operations |
 | --- | --- |
 | Lead | Create or Update, Delete, Delete Many, Export, Get, Get Capacity, Get Many, Import, Update, Update Many |
-| Lead Search | Create or Update, Delete, Get Many, Start |
+| Lead Search | Create or Update, Delete, Get Many, Get Status, Start |
 | Lead Column | Create, Get Many |
 | Email Verification | Get, Get Many, Verify |
-| Campaign | Create, Delete, Enroll Leads, Get, Get Many, Get Stats, Remove Leads, Update |
+| Campaign | Create, Delete, Enroll Leads, Get, Get Many, Get Stats, Launch, Remove Leads, Update |
 | Sequence | Create, Get Many |
 | Email | Draft With AI, Send |
 | Inbox | Get Many |
@@ -55,6 +56,7 @@ Pick **Authentication** on the node:
 | Scraper | Get Many, Run |
 | Scraper Run | Get, Get Data, Get Many |
 | Endpoint | Create, Delete, Get, Get Many, Get Result, Invoke |
+| Form | Close, Create, Get, Get Analytics, Get Many, Get Responses, Publish, Reopen |
 
 ## ManyPI Trigger
 
@@ -67,6 +69,8 @@ workflow when:
 | New Reply | A campaign gets a reply, auto-reply or bounce, optionally filtered by campaign and sentiment |
 | Email Verification Reached Status | A verification job finishes |
 | Agent Run Reached Status | An agent run reaches a status you pick. Add Paused to hear when it is waiting for an answer |
+| Lead Search Reached Status | A lead search reaches a status you pick, Completed by default. Optionally one search only, by its run ID |
+| Form Submitted | Someone submits a form you pick. Each answer is also under `fields`, keyed by the question |
 | New Campaign | A campaign is created |
 | Scraper Run Reached Status | A scraper run reaches a status, Completed by default |
 
@@ -79,11 +83,32 @@ fires only for what appears or changes after that.
   at its production URL.
 </Tip>
 
+## Leads from one lead search
+
+**Lead Search → Start** returns the search's `runId` and `status` at once.
+A search takes a few minutes, so continue in one of two ways:
+
+- Turn on **Wait for Completion**. The node holds the workflow until the
+  search finishes, fails, or stops to ask a question, then returns `status`,
+  `done`, `waitingForAnswer`, `leadsSaved` and `leadsWithEmail`. Searches
+  still running after **Max Wait** come back with `waitTimedOut: true`.
+- Or end the workflow there, and start a second one from the trigger's
+  **Lead Search Reached Status** event.
+
+Then add **Lead → Get Many** and set **Lead Search** to `{{ $json.runId }}`.
+You get only the leads that search saved. **Lead Search → Get Status**
+checks any search by its run ID.
+
+**Number of Leads** sets how many leads a search finds, up to 250. Without
+it, ManyPI finds 20.
+
 ## Example workflows
 
-- **Weekly lead search**: Schedule Trigger → ManyPI **Lead Search → Start** →
-  wait for **Agent Run Reached Status** (Completed) → **Campaign → Enroll
-  Leads**.
+- **Weekly lead search**: Schedule Trigger → ManyPI **Lead Search → Start**
+  with **Wait for Completion** on → **Lead → Get Many** with **Lead Search**
+  set to `{{ $json.runId }}` → **Campaign → Enroll Leads**.
+- **Form responses to your CRM**: ManyPI Trigger **Form Submitted** → your
+  CRM node, mapping `email` and `fields.<question>`.
 - **Positive replies to your CRM**: ManyPI Trigger **New Reply** with
   sentiment Positive → your CRM node.
 - **Verify before import**: Google Sheets → ManyPI **Email Verification →

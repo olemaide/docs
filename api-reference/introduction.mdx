@@ -60,11 +60,14 @@ Each endpoint below states which permission it needs.
 
 ## Rate limits
 
-**60 requests per minute** per active key. OAuth tokens get the same. Exceeding
-the limit returns `429`; the window is one minute, so back off and retry.
+Limited per workspace by plan, shared by every key and OAuth token in it:
+**60** requests a minute on Free, **120** on Starter, **300** on Pro and **600**
+on Business. A key can be held lower in its settings.
 
-How many keys you can keep active in parallel depends on your plan. Revoked keys
-stop counting toward that limit.
+Responses carry `X-RateLimit-Limit`, `X-RateLimit-Remaining` and
+`X-RateLimit-Reset`. Going over returns `429` with `Retry-After`; the window is
+one minute, so back off and retry. Keys can also carry daily, weekly or monthly
+usage limits. See [API keys](/platform/api-keys#usage-limits).
 
 ## Responses
 
@@ -94,10 +97,10 @@ it — a machine-readable `code`.
 | `400` | The body or parameters failed validation. The message says which field. |
 | `401` | Missing, invalid or expired credential — or a key lacking the required permission. |
 | `402` | Out of credits, with overage off. |
-| `403` | A plan gate, a seat limit, or a permission the key does not hold. |
+| `403` | A plan gate, a seat limit, a permission the key does not hold, or something the key owner's role doesn't allow (`permission_denied`). |
 | `404` | No such resource in this workspace. |
 | `409` | A conflict — a slug already in use, or a run that is still working. |
-| `429` | Rate limited. |
+| `429` | Rate limited, or a usage limit or budget was reached. |
 | `5xx` | Something broke on our side. Retry with backoff. |
 
 ### Codes worth handling
@@ -107,6 +110,11 @@ it — a machine-readable `code`.
 | `lead_limit` | Lead storage is full. | Archive leads, or upgrade. |
 | `outreach_locked` | Sending requires a paid plan. | Upgrade. |
 | `validation_credits_exhausted` | Out of validation credits. | Buy credits or enable overage. |
+| `rate_limited` | Too many requests this minute, for the key or the workspace. | Wait `retry_after` seconds. |
+| `api_key_limit` | The key reached a usage limit set on it. | Wait for `resets_at`, or raise the key's limit. |
+| `permission_denied` | The key owner's [role](/platform/roles-and-permissions) doesn't allow this. `area` and `action` say what is missing. | Ask a workspace admin to change the role. |
+| `member_limit` | The key owner reached their usage limit in this workspace. | Wait for `resets_at`, or ask an admin to raise it. |
+| `brand_limit` | The brand reached its budget. | Wait for `resets_at`, or ask an admin to raise it. |
 
 ## Asynchronous work
 

@@ -28,6 +28,13 @@ be — so when a key that works elsewhere gets a `401`, check its permissions
 before you replace it. The scraper routes (`/api/scrape*`) and published
 endpoints (`/v1/e/…`) say so explicitly with a `403` instead.
 
+A key is also held to its owner's [role](/platform/roles-and-permissions). It
+never does more than that role allows, whatever permissions it carries, and
+narrowing the role narrows the key. A call the role doesn't allow returns `403`
+with `code: "permission_denied"`, the `area` and, when an action is missing, the
+`action`; `error` says why. Once the owner leaves a workspace, their keys no
+longer reach it.
+
 | Permission | Grants |
 | --- | --- |
 | `read` | View scrapers, runs, results, leads and usage. Read-only — a key with only this can never change anything. |
@@ -75,15 +82,52 @@ a bare `write` key cannot run up a validation bill.
 
 ## Rate limits
 
-**60 requests per minute** per active key by default. OAuth access tokens get
-the same 60/minute.
+Requests are limited per **workspace**, by its plan. Every key and OAuth token
+acting in the workspace draws from the same budget, so adding keys adds no
+capacity.
 
-How many keys you can keep active in parallel depends on your plan. Revoked keys
-stay associated with your account for the audit trail but stop counting toward
-that limit.
+| Plan | Requests per minute |
+| --- | --- |
+| Free | 60 |
+| Starter | 120 |
+| Pro | 300 |
+| Business | 600 |
 
-Exceeding the limit returns `429`. Back off and retry — the window is one
-minute.
+A change of plan applies from the next request. You can also hold a single key
+below its plan's limit in its settings, so one integration cannot use up what
+the others need.
+
+Every response to a key or OAuth token carries `X-RateLimit-Limit`,
+`X-RateLimit-Remaining` and `X-RateLimit-Reset` (seconds until the one-minute
+window resets). Going over returns `429` with a `Retry-After` header:
+
+```json
+{
+  "error": "This workspace's plan allows 600 API requests a minute, shared by all its keys. Try again in 17 seconds.",
+  "code": "rate_limited",
+  "scope": "workspace",
+  "limit": 600,
+  "retry_after": 17
+}
+```
+
+`scope` is `key` when the key's own limit was reached and `workspace` when the
+plan's was.
+
+## Usage limits
+
+Each key can carry spend limits per day, week or month (UTC) for **AI credits**,
+**crawls** and **email validations**. They count the agent runs, lead searches,
+scrapes and validation jobs that key starts.
+
+Once a limit is reached, starting more returns `429` with
+`code: "api_key_limit"` and `resets_at`. An agent run already going stops at its
+next step with `error: "api_key_limit"`, keeping every lead it saved. Your
+workspace's credits still apply on top: a usage limit can only lower what a key
+may spend.
+
+Set both kinds of limit when you create a key, or later from the key's panel
+under **Developers → API keys**.
 
 ## Rotating and revoking
 

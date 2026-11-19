@@ -1,0 +1,264 @@
+---
+title: "Roles and permissions"
+description: "What each member can see, change and spend, and how brands, clients, limits and budgets fit in."
+---
+
+Every member of a workspace has a **role**. A role sets a level for each area of
+the product, and switches on the actions that spend credits or reach people.
+
+## Roles
+
+Thirteen roles, grouped by job. To see exactly what one allows, open the profile
+menu, click your workspace, go to **Roles** and click the role.
+
+| Role | For | Seat |
+| --- | --- | --- |
+| Owner | Everything, including the plan and deleting the workspace. | Paid |
+| Admin | Everything except the plan and deleting the workspace. | Paid |
+| Manager | Runs the work and the team, without workspace settings. | Paid |
+| Member | Works in every area and spends credits. No team or billing. | Paid |
+| Sales | Leads, campaigns, inbox, CRM and calls. | Paid |
+| Marketing | Forms, pages, campaigns, workflows and social. | Paid |
+| Research | Finds and qualifies leads. Never sends. | Paid |
+| Developer | API, MCP, webhooks, scrapers and integrations. | Paid |
+| Finance | Plan, invoices, usage and credit packs. No work areas. | Paid |
+| Viewer | Sees everything in their brands, changes nothing. | Free |
+| Client | Your client: sees results in their brand, changes nothing. | Free |
+| Client editor | Your client, who also answers replies and works deals. | Paid |
+| Freelancer | Does the work in their brands, without team or settings. | Paid |
+
+Client, Client editor and Freelancer always work in
+[chosen brands](#brands-and-clients).
+
+## Levels and actions
+
+Each area, such as Leads, Campaigns, Inbox, CRM or Billing, gets one level:
+
+| Level | Allows |
+| --- | --- |
+| No access | Nothing. The area is hidden from the sidebar. |
+| View | Seeing it. |
+| Edit | Creating and changing things. |
+| Manage | Also the area's settings and other people's work. |
+
+Actions are switched on one by one, whatever the levels say:
+
+| Group | Actions |
+| --- | --- |
+| Spending credits | Use AI, search the database and map, run scrapers, verify email addresses |
+| Reaching people | Launch campaigns and send, reply from the inbox, place AI calls |
+| Going public | Publish forms and pages, share templates publicly |
+| Data | Import, export and download, delete in bulk |
+| Automation & usage | Run and switch on workflows, allocate usage |
+
+## Rules
+
+- Nobody can give a role with more rights than their own, or remove someone who
+  has more. Roles and levels above yours are locked.
+- The owner can't be changed or removed by anyone else.
+- Inviting and removing people needs **Team** at **Edit**. Changing roles needs
+  **Team** at **Manage** (Owner, Admin, or a custom role with it).
+- Areas a role can't open are left out of the sidebar. A link into one shows a
+  page saying it isn't part of the role.
+
+## Guest seats
+
+A role that only views, and can't spend credits, send, call or publish, takes no
+paid seat. Viewer and Client are guest roles, and so is any custom role that
+follows the same rule. Guest seats are free on every paid plan, up to 100 per
+workspace.
+
+## Only their own records
+
+By default everyone sees every record in the brands they reach. On Pro and
+Business, a member can be limited to their own: open the menu next to them under
+**Members** and tick **Only their own records**. On Business, a custom role can
+make this its default. A member's own setting wins over the role's.
+
+| Record | Theirs when |
+| --- | --- |
+| Lead | They own it, or it has no owner and they added it. |
+| Deal | They own it or created it. |
+| Task | It is assigned to them or they created it. |
+| Conversation | It is assigned to them, or it is with one of their leads. |
+| Campaign, chat | They created it. |
+
+Owners and admins always see every record.
+
+## API keys, MCP, the agent and workflows
+
+Keys, OAuth tokens and the agent act as the person behind them, and are held to
+that person's role on every call.
+
+- A [key](/platform/api-keys) never does more than its owner's role allows,
+  whatever permissions it carries. Narrow the role and the key narrows with it.
+- An [MCP connection](/mcp/authentication) gets the role of the person who
+  signed in.
+- The agent only gets the tools the role allows. A Viewer's agent can't send
+  email.
+- A [workflow](/agent/workflows) runs as its owner. Its **Find leads**, **Check
+  their website**, **Ask AI**, **Run an agent** and **Have AI call them** steps
+  check the owner's role every time they run, and fail with the reason in the
+  run log if it no longer allows them.
+
+A call the role doesn't allow returns `403`:
+
+```json
+{
+  "error": "Your role (Sales) can't export and download. Ask an admin.",
+  "code": "permission_denied",
+  "area": "leads",
+  "action": "export"
+}
+```
+
+`action` is there when the role has the area but not the action.
+
+## Brands and clients
+
+On Pro and Business, people can be limited to some brands. They then see only
+those brands, everywhere in the app. Owners and admins always reach every brand.
+
+- **When inviting**: pick the brands next to the role.
+- **Later**: open the menu next to the member under **Members**, then
+  **Brand access**.
+
+Both show once the workspace has more than one brand. An invite for Client,
+Client editor or Freelancer needs at least one brand.
+
+### A different role per brand
+
+On Pro and Business, a member can have another role in a specific brand, for
+example Manager in "Client A" and Viewer everywhere else. It applies while they
+work in that brand. Set it from the menu next to the member under **Members**,
+then **Brand roles**. **Workspace role** clears it.
+
+A brand role decides the work in that brand. Team, billing, workspace settings,
+developer access and **Allocate usage** always follow the workspace role.
+
+## Who can use a connection
+
+When you connect an integration, pick under **Who can use it**. Change it later
+in the connection's settings. The choice shows when your role allows more than
+one.
+
+| Setting | Used by | Who can pick it |
+| --- | --- | --- |
+| Everyone | Everyone in the workspace. | **Integrations** at **Manage**, without a brand limit. |
+| This brand | People who work in the brand. | **Integrations** at **Manage** in that brand. A brand role counts. |
+| Only me | Only the person who connected it. | **Integrations** at **Edit**. |
+
+Admins see a teammate's **Only me** connection so they can disconnect it, but
+can't use it. Automations, such as adding positive replies to your CRM, never
+use an **Only me** connection. Payment providers and the lead intake URL always
+serve the whole workspace.
+
+[Inboxes](/outreach/inboxes) belong to a brand. The person who connected one can
+open it under **Email accounts** and turn on **Only me** under **Sending**. Then
+only they see it, pick it for campaigns and read its replies.
+
+## Usage limits and budgets
+
+Both cap AI credits, crawls and email validations per day, week or month, on top
+of the workspace's own credits.
+
+### Per member
+
+On Pro and Business, cap what one person starts themselves. Open the menu next
+to the member under **Members**, then **Usage limit**.
+
+- Work they start past a limit gets `429` with `code: "member_limit"` and
+  `resets_at`. An agent run already going stops.
+- Automations running in the background, such as personalization, reply
+  analysis and AI steps in workflows, count against the workspace, never against
+  one person's limit.
+- Owners are never limited.
+- Only roles with **Allocate usage** can set limits, and never above their own.
+
+### Per brand
+
+On Business, give each brand its own budget. Open the brand (in the Workspaces
+dialog, **Brands**, then the brand), then **Settings**, then **Budget and
+usage**.
+
+- A brand's budget counts everything done in it, automations included. Past it,
+  work in the brand gets `429` with `code: "brand_limit"`.
+- Below the budget is the brand's usage per month: AI credits, crawls,
+  validations, emails sent and call minutes. **Download CSV** exports it, to
+  bill the client.
+
+| | Who |
+| --- | --- |
+| See it | The owner, and roles with **Allocate usage** or **Billing** at **View** |
+| Download it | The same, with **Export and download** |
+| Set the budget | The owner, and roles with **Allocate usage** and **Brands** at **Manage** |
+
+Client, Client editor and Freelancer never see a brand's budget.
+
+## Removing a member
+
+Open the menu next to them under **Members** and choose **Remove**. If they own
+work, the dialog lists it and asks what happens to it:
+
+| Option | Does |
+| --- | --- |
+| Hand over to | A teammate takes over their campaigns, workflows, agents, brand inboxes, shared app connections, MCP connectors, deals, tasks and leads. |
+| Pause what runs in their name | With nobody to hand it to: their sending campaigns pause, active workflows switch off, running agents pause and personal inboxes stop sending. |
+| Disconnect their personal apps | Their **Only me** connections are disconnected. |
+
+Personal inboxes and connections never move to someone else. Their API keys
+stay theirs, but no longer reach this workspace.
+
+## Activity log
+
+Open the profile menu, click your workspace, then **Activity**. It lists, newest
+first:
+
+- role, brand access, brand role, usage limit and own-records changes,
+- invites sent and withdrawn, and people who joined, left, were removed or
+  handed over,
+- custom roles created, changed or deleted,
+- ownership offered, accepted or withdrawn,
+- apps connected, disconnected, or opened to more or fewer people.
+
+Pro shows the last 30 days, Business the last year. It is recorded on every
+plan. People with **Team** at **Edit** or more can see it.
+
+## Custom roles
+
+On Business, copy a role under **Roles**, or click **New role**, and set each
+area and action yourself. A custom role can also be limited to chosen brands,
+and can make **Only their own records** its default.
+
+Built-in roles can't be edited. A workspace can have up to 50 custom roles, and
+one can't be deleted while members still have it.
+
+## Handing over the workspace
+
+<Steps>
+  <Step title="Offer it">
+    As the owner, open the menu next to a member under **Members** and choose
+    **Make owner**. Guests can't be offered the workspace.
+  </Step>
+  <Step title="They accept">
+    They open the workspace from their profile menu and accept or decline. The
+    offer lasts 7 days, and you can withdraw it until then.
+  </Step>
+  <Step title="Done">
+    They own the workspace, its plan and its billing. You stay on as an admin.
+  </Step>
+</Steps>
+
+## Plans
+
+| | Free | Starter | Pro | Business |
+| --- | --- | --- | --- | --- |
+| Ready-made roles | Owner only | Yes | Yes | Yes |
+| Free guest seats | No | Up to 100 | Up to 100 | Up to 100 |
+| Brand access, brand roles, client invites | No | No | Yes | Yes |
+| Only their own records | No | No | Yes | Yes |
+| Usage limits per member | No | No | Yes | Yes |
+| Activity log | No | No | 30 days | 1 year |
+| Custom roles | No | No | No | Yes |
+| Budgets and usage report per brand | No | No | No | Yes |
+| Transfer ownership | Yes | Yes | Yes | Yes |

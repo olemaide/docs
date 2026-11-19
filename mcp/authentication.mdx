@@ -90,8 +90,12 @@ sending under your own control.
 One credential means one ManyPI workspace. The tools act on whichever workspace
 that credential belongs to, using the brand you are currently working in.
 
+A connection acts as the person who signed in and can't do more than their
+[role](/platform/roles-and-permissions) allows.
+
 ## Rate limits
 
-60 requests per minute, whether you authenticate with a key or an OAuth token.
-A burst of tool calls in one conversation is well inside that; a runaway loop is
-not, and will start receiving `429`.
+Your workspace's plan sets the limit (60 requests a minute on Free, up to 600 on
+Business), shared by every key and OAuth token in the workspace. A burst of tool
+calls in one conversation is well inside that; a runaway loop is not, and will
+start receiving `429`.

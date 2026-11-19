@@ -28,6 +28,13 @@ Build them in **Data → Workflows**.
 | Pro | 20 | ✓ |
 | Business | Unlimited | ✓ |
 
+## Whose rights a workflow uses
+
+A workflow runs as its owner. Its **Find leads**, **Check their website**,
+**Ask AI**, **Run an agent** and **Have AI call them** steps check the owner's
+[role](/platform/roles-and-permissions) every time they run. If the role no
+longer allows the step, it fails and the run log says why.
+
 ## Running one over the API
 
 ```bash

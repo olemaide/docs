@@ -44,7 +44,43 @@
               "outreach/inboxes",
               "outreach/sequences",
               "outreach/campaigns",
+              "outreach/steps-and-tracking",
               "outreach/replies"
+            ]
+          },
+          {
+            "group": "CRM & inbox",
+            "pages": [
+              "crm/pipeline",
+              "crm/deals-and-tasks",
+              "crm/inbox"
+            ]
+          },
+          {
+            "group": "AI calls",
+            "pages": [
+              "calls/overview",
+              "calls/placing-calls",
+              "calls/rules",
+              "calls/after-a-call"
+            ]
+          },
+          {
+            "group": "Landing pages & websites",
+            "pages": [
+              "pages/landing-pages",
+              "pages/sites",
+              "pages/website-plans",
+              "pages/custom-domains"
+            ]
+          },
+          {
+            "group": "Agencies",
+            "pages": [
+              "agencies/overview",
+              "agencies/client-access",
+              "agencies/sharing",
+              "agencies/budgets"
             ]
           },
           {

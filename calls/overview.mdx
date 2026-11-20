@@ -1,0 +1,82 @@
+---
+title: "AI phone calls"
+description: "An AI agent that calls the leads who asked to hear from you, books meetings and writes up every call."
+---
+
+<Info>AI calls are in beta and on paid plans.</Info>
+
+**Calls** in the sidebar puts an AI agent on the phone for you. It calls leads
+who asked to be called, works towards a goal you set (book a meeting, check
+interest), offers times from your calendar, and leaves a transcript, a summary
+and an outcome on the lead.
+
+## Set up
+
+Until the workspace is ready, the Calls page shows three steps.
+
+<Steps>
+  <Step title="Accept the calling terms">
+    An owner or admin reads and accepts them once for the workspace.
+  </Step>
+  <Step title="Connect a phone line">
+    Bring a number from your SIP provider. It is the caller ID people see. See
+    [Connect a phone line](#connect-a-phone-line).
+  </Step>
+  <Step title="Add call minutes">
+    Buy a minute pack, or switch on pay as you go. See [Pricing](#pricing).
+  </Step>
+</Steps>
+
+## Connect a phone line
+
+You bring the line and pay your provider for it. The AI voice is included in
+ManyPI, so you need no voice-provider account.
+
+Under **Phone lines**, click **Connect a line**:
+
+| Step | What you enter |
+| --- | --- |
+| Provider | **Twilio** (Elastic SIP Trunking), **Telnyx** or **Another provider**. The trunk must support TLS and a username and password. |
+| Trunk | **Trunk address**, **Username**, **Password**. **Where do I find these?** shows where your provider keeps them. |
+| Number | The **Phone number**, with `+` and the country code, and an optional name. |
+| Answering | **Only place calls**, or **Answer calls too**. |
+
+With **Answer calls too**, describe what the agent should do for a caller,
+point the number's calls at the SIP address shown under **Send the number's
+calls here**, and choose whether it answers **Always** or **In my calling
+hours**. Callers who withhold their number are not answered.
+
+Only owners and admins can connect lines.
+
+## Teach the agent
+
+Under **Settings**:
+
+| Section | What you set |
+| --- | --- |
+| The agent | Company name, voice (11 to choose from), longest call (1–30 minutes, default 5), calls a day (1–2,000, default 50). |
+| What it knows | Up to 20,000 characters about your offer. Switch on **Brand profile** to use the brand, and **Meeting times** to offer slots from your calendar (meeting length 10–240 minutes). |
+| Calling hours | When calls may go out. See [Calling rules](/calls/rules). |
+| After a call | Deals, bookings and callbacks. See [After a call](/calls/after-a-call). |
+
+Lines, settings and what the agent knows belong to one brand, so each brand
+gets its own number and its own pitch.
+
+## Pricing
+
+| | |
+| --- | --- |
+| Price | $0.35 per minute, billed per second, 15-second minimum |
+| Minute pack | 100 minutes for $35, valid 365 days, used first |
+| Pay as you go | Monthly plans; the owner sets a limit ($50 to start, $5–$5,000). Calls pause at the limit. |
+| Plans | Paid plans |
+| Permissions | Settings and lines: owners and admins. Placing calls: the `place_calls` action. |
+
+<CardGroup cols={2}>
+  <Card title="Place a call" icon="phone" href="/calls/placing-calls">
+    One call, many leads, or an automation.
+  </Card>
+  <Card title="Calling rules" icon="shield-check" href="/calls/rules">
+    Hours, consent and do not call.
+  </Card>
+</CardGroup>

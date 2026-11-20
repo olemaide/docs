@@ -1,0 +1,99 @@
+---
+title: "Landing pages"
+description: "Describe a page and the AI builds it, or start from a template or a form."
+---
+
+**Forms & Pages → Landing pages** lists your pages with their status:
+**Live**, **Live, changes not published**, or **Draft**.
+
+## Create a page
+
+Click **New page**.
+
+<Steps>
+  <Step title="Describe it">
+    Write a sentence or two under **Describe your page**, or start from an idea
+    like **Product waitlist** or **Book a call**. Optionally pick your type of
+    business, and a **Form** to build the page around.
+  </Step>
+  <Step title="Watch it write">
+    The page opens in the editor straight away, and the AI writes it section by
+    section.
+  </Step>
+</Steps>
+
+Or start from **Templates** (one per type of business: food and drink, shops,
+services and more) or a **Blank page**. From a form, **Share → Landing page**
+builds a page around it.
+
+## Edit
+
+The toolbar has **Add section**, **Design**, a **Desktop / Phone** switch,
+**Preview**, **Page settings** and undo/redo.
+
+| Section | Layouts |
+| --- | --- |
+| Navigation | Always at the top |
+| Hero | Text, Image, Form, Cover |
+| Features, Text and image, Gallery, Testimonials, Menu and prices, Form, FAQ, Call to action, Visit us | |
+| Footer | Always at the bottom |
+
+Hover a section to move it, duplicate it, remove it, or give it a **Plain**,
+**Soft** or **Accent** background. The **Ask AI** bar on the canvas changes
+the page in plain words:
+
+```text
+Make the hero shorter and add an FAQ about pricing and delivery times.
+```
+
+**Design** has nine themes (Snow, Paper, Espresso, Sky, Sage, Terracotta,
+Butter, Blush, Ink) and sets the accent colour, type (Clean, Classic, Bold,
+Mono), buttons (Square, Rounded, Pill) and heading alignment.
+
+## Page settings
+
+| Setting | |
+| --- | --- |
+| Name | Tab icon on paid plans |
+| Address | The page's path |
+| Search and sharing | Title (60 characters), description (160), picture for shared links |
+| Take offline | **Unpublish** |
+
+A page on your [own domain](/pages/custom-domains) can be indexed by search
+engines. The shared `usemanypi.eu` address never is.
+
+## Publish
+
+Click **Publish**. Later edits stay in the draft until **Publish changes**.
+Publishing is blocked while:
+
+- a bracketed placeholder is still on the page,
+- a form section has no form,
+- a form on the page isn't published, or belongs to another brand.
+
+Form responses on the page become leads in the form's lists, like any other
+[form](/forms/overview).
+
+| Address | |
+| --- | --- |
+| Default | `https://<workspace host>.usemanypi.eu/p/<page id>` |
+| Your domain | `https://go.yourcompany.com/<slug>` |
+
+The **Share** tab has the link, a QR code, a [preview link](/agencies/sharing)
+and your domain.
+
+## Plans
+
+| | Free | Starter | Pro | Business |
+| --- | --- | --- | --- | --- |
+| Live landing pages | Build only | 5 | 25 | Unlimited |
+| Visits per month | | 10k | 100k | 1M |
+| AI runs per day | 20 | 200 | 200 | 200 |
+
+AI building and editing uses no credits. A page pauses at 125% of its monthly
+visits until the month turns or you upgrade.
+
+## From the agent
+
+The agent has `pages_list`, `pages_get`, `pages_create`, `pages_change`,
+`pages_update`, `pages_publish` and `pages_archive`.

@@ -1,0 +1,81 @@
+---
+title: "Placing calls"
+description: "One call, up to 25 leads at once, an automation, or a form that calls back by itself."
+---
+
+## One call
+
+<Steps>
+  <Step title="Open New call">
+    Click **New call** and stay on **One call**.
+  </Step>
+  <Step title="Pick who">
+    Search for a lead, or type a number like `+49 30 1234567`.
+  </Step>
+  <Step title="Say why you may call">
+    **A callback** when they asked you to call. **Proactive** when you are
+    calling first, with their **consent** as the basis.
+  </Step>
+  <Step title="Set the goal">
+    **What the call is for** is a goal, not a script. Start from **Book a
+    meeting**, **Check interest** or **Preview follow-up**, then pick the
+    language: **theirs**, or a fixed one.
+  </Step>
+  <Step title="Record the consent and place it">
+    Note where they asked and where that is kept, tick the confirmation, and
+    click **Place call**.
+  </Step>
+</Steps>
+
+The call is queued right away, or for the next opening in your
+[calling hours](/calls/rules#calling-hours). Every call opens with the same
+line: *"This is an AI assistant calling for {company}, and this call is
+transcribed."*
+
+## Several leads
+
+Select up to 25 leads in the leads table and click **Call with AI**. The call
+form opens with all of them, and the button reads **Call N**. Leads that can't
+be called yet are skipped with the reason (for example a missing location),
+and the toast says how many were queued.
+
+## Automations
+
+Switch **New call** to **Automation** and pick a trigger:
+
+- A form is submitted
+- A lead replies, interested
+- A campaign ends, no reply
+- A deal reaches a stage
+- A lead is added
+
+Add an optional **Wait** (1 hour, 4 hours, 1 day, 3 days, or 1–72 hours /
+1–30 days), write the goal, and click **Turn on**. Automations can be paused,
+and each one is also an ordinary workflow (**Open in Workflows**).
+
+## From a form
+
+Add a **Call consent** block to a [form](/forms/overview) and turn on **Call
+them automatically**. Whoever ticks it is called within your calling hours.
+
+| Limit | |
+| --- | --- |
+| Automatic form calls | 20 per workspace per hour |
+| Per number | One per 7 days |
+
+## From the agent
+
+```text
+Call Jana Weber from the Berlin dental list and book a 20-minute demo next week.
+```
+
+The agent's `calls_place` tool calls one saved lead at a time and asks you to
+approve every call. `calls_status`, `calls_list`, `calls_get` and
+`calls_cancel` read and cancel calls.
+
+## The calls list
+
+Filter by **All**, **Outgoing**, **Incoming** or **Waiting**, or search. A call
+shows its **Transcript**, its **Brief** (or **Instructions** for an incoming
+call) and the **Consent** it was placed on. The row menu has **Cancel this
+call** (while it waits) and **Never call this number**.

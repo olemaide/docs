@@ -1,0 +1,59 @@
+---
+title: "Step types, tracking and personalization"
+description: "Branch on replies, update leads, track clicks, and write a line for every lead."
+---
+
+A campaign holds its own emails under **Outreach → Campaigns → Editor**.
+Besides emails, a sequence can wait, branch and act on the lead.
+
+## Step types
+
+| Step | What it does |
+| --- | --- |
+| Email | A message, as a new thread or a reply under the first email |
+| Reply bait | A short question. A reply to it does not stop the sequence. |
+| Wait | Pause before the next step |
+| If/else | Branch on replied, reply sentiment, or opened |
+| Only continue if | Stop the lead here unless a condition holds |
+| Update the lead | Set a field or status |
+| Move to another campaign | Hand the lead to another sequence |
+| Webhook | Send the lead to your URL |
+
+## Variables
+
+`{{first_name}}`, `{{last_name}}`, `{{full_name}}`, `{{company}}`,
+`{{title}}`, `{{email}}`, `{{phone}}`, `{{domain}}`, `{{location}}`, plus
+`{{unsubscribe_url}}`, `{{signature}}` and `{{booking_link}}`.
+
+Custom columns: `{{custom.industry}}`. Fallbacks after a bar:
+`{{first_name|there}}`. Spellings from other tools (`FirstName`) are
+recognised.
+
+## AI personalization
+
+| | Cost |
+| --- | --- |
+| Drafting an email or a sequence with AI | Free |
+| A personal line written for each lead as it sends | AI credits, by tokens used |
+
+If credits run out, the campaign keeps sending the email as written.
+
+## Sending window
+
+Off by default. Switched on, it starts at Monday–Friday, 09:00–17:00, in your
+time zone or **each lead's**. Each campaign also has a daily limit and a
+priority.
+
+## Tracking
+
+| | Default | |
+| --- | --- | --- |
+| Opens | On | A hidden image; slightly lowers inbox placement |
+| Clicks | Off | Switch on per campaign |
+| UTM tags | Off | Added to your links |
+
+## Replies
+
+Choose **Stop when they reply**, or **Let AI read the reply first** so an
+out-of-office keeps the sequence going and an unsubscribe stops and
+suppresses it. See [Replies](/outreach/replies).

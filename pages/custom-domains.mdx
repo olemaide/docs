@@ -1,0 +1,43 @@
+---
+title: "Custom domains"
+description: "Serve your landing pages, sites and forms from your own domain."
+---
+
+One domain serves both pages and forms. Open **Forms & Pages → Domains** (or
+**Share → Manage domains** on a form) and click **Add domain**.
+
+## DNS records
+
+| Type | Name | Value |
+| --- | --- | --- |
+| `CNAME` | `go.yourcompany.com` | `domains.usemanypi.eu` |
+| `TXT` | `_manypi.go.yourcompany.com` | `manypi-verify=…` (shown in the app) |
+
+For a root domain (`yourcompany.com`), use an `ALIAS` record (also called
+`ANAME` or a flattened `CNAME`) to `domains.usemanypi.eu` instead of the
+`CNAME`. Your DNS provider may be asked for an extra `TXT` record to validate
+the certificate; the app shows it if so.
+
+The certificate is issued automatically.
+
+## Statuses
+
+| Status | Meaning |
+| --- | --- |
+| Waiting for DNS | The records aren't visible yet |
+| Verifying | Checking the `TXT` record |
+| Issuing certificate | Almost there |
+| Live | Serving your pages and forms |
+| Failed | Check the records and click **Check now** |
+| Paused on your plan | Over the plan's domain limit |
+
+Pending domains are checked on every run, live ones daily. **Check now**
+checks straight away.
+
+## Limits
+
+| | Starter | Pro | Business |
+| --- | --- | --- | --- |
+| Domains | 1 | 3 | 10 |
+
+[Websites](/pages/website-plans) get 2 domains each on top of these.

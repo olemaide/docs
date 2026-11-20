@@ -1,0 +1,37 @@
+---
+title: "After a call"
+description: "Transcripts, summaries, outcomes, booked meetings, deals and callbacks."
+---
+
+Every call keeps a **transcript**, a written **summary** and an **outcome**.
+Calls are transcribed, not recorded.
+
+## Outcomes
+
+Meeting agreed · Interested · Call back later · Not interested · Asked not to
+be called · Wrong person · Voicemail · Nobody spoke · No answer · Did not
+connect
+
+## On the lead
+
+- The summary is added as a CRM note.
+- The lead gets three fields you can filter by or merge into emails:
+  `call_outcome`, `call_at` and `call_summary`.
+- Someone who asks not to be called goes on **Do not call**.
+
+## Follow-up, switched on under Settings → After a call
+
+| Toggle | What it does |
+| --- | --- |
+| Create a deal | For an interested or meeting outcome. Never a second open deal for the same lead. |
+| Book the meeting | When they agree to a time the agent offered. Needs [Google Calendar](/integrations/google-calendar), [Cal.com](/integrations/calcom) or [Calendly](/integrations/calendly). Any other time becomes a task. |
+| Call back when asked | At the time they name, at most twice in a row and within 60 days. Otherwise a task. |
+
+## Voicemail
+
+On a callback the agent leaves one short message. A proactive call leaves none.
+
+## Events
+
+`call.completed` (**A call ends**) fires for [workflows](/agent/workflows) and
+[webhooks](/integrations/webhooks).

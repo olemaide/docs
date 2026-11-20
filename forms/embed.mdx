@@ -67,7 +67,9 @@ then create the two records it shows:
 | CNAME | `forms.yourcompany.com` | `domains.usemanypi.eu` |
 | TXT | `_manypi.forms.yourcompany.com` | `manypi-verify=...` |
 
-The certificate is issued automatically once the records resolve. Root domains
-(`yourcompany.com`) are not supported. On a custom domain a form can also have
+The certificate is issued automatically once the records resolve. For a root
+domain (`yourcompany.com`), use an `ALIAS` or `ANAME` record instead of the
+`CNAME`; see [Custom domains](/pages/custom-domains). The same domain serves
+your landing pages too. On a custom domain a form can also have
 a readable address like `forms.yourcompany.com/demo`, and you may let search
 engines index it.

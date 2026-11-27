@@ -7,6 +7,8 @@ description: "Creates a draft. Without a definition it starts empty: a welcome s
 
 Creates a draft. Without a `definition` it starts empty: a welcome screen and a thank-you ending. Definitions follow the JSON Schema at https://embed.usemanypi.eu/schemas/form.v1.json. A `key` that already exists answers 409 with the existing id.
 
+An [instant quote](/forms/instant-quote) definition created with an API key keeps its prices marked as examples until [confirmed](/api-reference/forms/confirm-form-prices), and can't turn on booking or deposits (403 `owner_only`).
+
 | Parameter | In | Description |
 |---|---|---|
 | `name` | body | Form name |

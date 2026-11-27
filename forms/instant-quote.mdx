@@ -1,0 +1,212 @@
+---
+title: "Instant quotes"
+description: "Forms that measure on a satellite map or count answers, then show a price range and capture the lead."
+---
+
+An **instant quote** is a form that prices the job while people answer it.
+They type their address, trace a roof, lawn or fence on a satellite map (or
+answer a few questions), and the form ends on a quote with a price range,
+line items and a PDF to keep. Every quote is also a response, so the lead
+lands in your lists like any other form.
+
+It works wherever forms work: as a link, embedded on any website, and as a
+block on ManyPI Sites and landing pages.
+
+## Make one
+
+Open **Forms** and pick **Instant quote: measure on a map** or **Price
+calculator**, or start from one of the 24 templates under **Instant quotes**
+(roofing, lawn care, fencing, painting, cleaning, solar, moving and more).
+
+An existing form becomes a quote form in its form settings: set the mode to
+**Instant quote**. Quote forms get a **Pricing** tab next to Content.
+
+<Warning>
+Templates come with example prices. A form with example prices can't be
+published: set your own prices, then press **My prices are set** on the
+Pricing tab.
+</Warning>
+
+## Questions that measure
+
+| Question | What people do |
+|---|---|
+| Address | Type and pick their address. Optionally limit it to countries or to a service area around you |
+| Measure on a map | Trace shapes on satellite imagery of their address |
+
+A **Measure** question has a kind:
+
+| Kind | Traces | For |
+|---|---|---|
+| Roof | Roof sections, then the pitch | Roofing, solar, gutters |
+| Area | Areas | Lawn, turf, driveways, patios, sealing |
+| Line | Runs | Fences, gutters, edging, lights |
+| Walls | The building outline | Exterior painting, siding |
+| Count | Pins | Windows, trees, stumps |
+| Volume | Areas, with the depth asked in its own question | Mulch, gravel, concrete |
+
+**Find my building** draws the building's outline from OpenStreetMap, ready to
+adjust. **Let them type instead** lets people who know their numbers skip the
+map. Measurements show in feet in the US and in metres elsewhere, or in the
+units you set.
+
+**Service area**: with a radius set on the Address question, addresses further
+away go to the ending you pick (for example "We don't cover your area yet").
+
+### Map visits
+
+Satellite imagery is counted in map visits: one visitor opening the map
+counts once per 30 minutes.
+
+| | Free | Starter | Pro | Business |
+|---|---|---|---|---|
+| Map visits per month | 25 | 500 | 2,500 | 10,000 |
+
+Past the limit, the map step asks for typed measurements instead, so the form
+keeps working.
+
+## Pricing
+
+The **Pricing** tab is where the quote is built. **Try it** on the right shows
+the quote for sample answers as you edit.
+
+### Price lines
+
+Each line is **quantity × rate**, and both are formulas. A line can have a
+unit (sq ft, m², roofing squares, ft, m, cubic yards, hours, visits, months,
+each, flat), its own range, a minimum and a note, and can show only when a
+condition matches.
+
+```text
+Quantity:  measure.roof.squares * pitch(30)
+Rate:      choice.material.rate
+```
+
+### Option values
+
+Choices can carry numbers (`rate`, `multiplier`, `hours`, any name you like)
+and a picture. Pictures turn the options into cards. Formulas read the picked
+option's values as `choice.<question>.<value>`.
+
+### Packages
+
+Up to four packages (Good, Better, Best). People switch between them on the
+quote, and formulas read the chosen package's values as `tier.<value>`.
+
+### Quote settings
+
+| Setting | Options |
+|---|---|
+| The price reads | A range, exactly, or "from" |
+| Show the price | At the end, live while they answer, only after their contact details, or never (you send it) |
+| Range below and above | How far the range reaches, in percent |
+| Round to | Whole amounts up to the nearest 1,000 |
+| Minimum job | The lowest total a quote shows |
+| Tax | A rate, a name, added or included |
+| Monthly price | APR and months, shown as "from $X/month" |
+| Valid for | Days the quote is valid |
+| Small print | Shown under the quote and in the PDF |
+
+## Formulas
+
+Formulas use numbers, `+ - * / % ^`, comparisons (`< <= > >= == !=`),
+`and`, `or`, `not`, parentheses and these names:
+
+| Name | Is |
+|---|---|
+| `answer.<ref>` or `<ref>` | A number answer, yes/no as 1 or 0, or how many options were picked |
+| `choice.<ref>.<value>` | The picked options' value, added up |
+| `picked.<ref>.<option>` | 1 when that option was picked, else 0 |
+| `measure.<ref>.<key>` | `area_sqft`, `area_m2`, `squares`, `length_ft`, `length_m`, `perimeter_ft`, `perimeter_m`, `count`, `shapes` |
+| `tier.<value>` | The chosen package's value |
+| `item.<ref>` | Another price line's amount |
+| `var.<key>`, `hidden.<name>` | Logic variables and hidden fields |
+
+| Function | Does |
+|---|---|
+| `min(a, b, ...)`, `max(a, b, ...)` | Smallest, largest |
+| `round(x, step)`, `ceil(x, step)`, `floor(x, step)` | To a step (default 1) |
+| `clamp(x, low, high)` | Keeps x between low and high |
+| `if(condition, then, otherwise)` | Picks a value |
+| `fallback(x, d)` | x, or d when x is 0 |
+| `tiers(qty, up_to1, rate1, ..., rate_after)` | A graduated price |
+| `band(x, up_to1, value1, ..., value_after)` | The value of the band x falls in |
+| `pitch(degrees)`, `slope(rise)` | Roof surface factor for a pitch, or a rise per 12 |
+| `abs`, `sqrt`, `pow` | The usual |
+
+Unknown names count as 0 and are flagged before you publish. Dividing by zero
+gives 0. Formulas can't run code.
+
+## The quote
+
+The quote ending shows the total, the line items, what they picked, the shapes
+they traced and your small print, plus:
+
+- **Download PDF**: a one-page quote in your colours, in Letter or A4
+- **Packages** to switch between, when you have them
+- Your **booking** and **deposit** sections, when they're on (below)
+
+The server recomputes every quote from the answers when the form is submitted,
+so a changed price in the browser is never what you get. The stored quote is
+on the response (Results tab and CSV) and in the `form.submitted` event.
+
+**Leads**: create custom lead fields named `quote_low`, `quote_high`,
+`quote_total` or `quote_currency` and the quote is saved to them.
+
+**Recall**: use `{{quote.total}}`, `{{quote.low}}`, `{{quote.high}}` and
+`{{quote.monthly}}` in endings. Notification emails include the quote.
+
+## Experimental
+
+These three are switched off until ManyPI turns them on for your workspace,
+and each is marked **Experimental** in the editor.
+
+### Draft prices with AI
+
+Paste your prices as you have them (a price list, a spreadsheet, an old quote)
+and the AI drafts questions and price lines. You see the draft before anything
+changes, **Apply** puts it in the editor, and **Undo AI draft** takes it back.
+
+- AI prices are always marked as examples: you confirm them before publishing
+- Lines with formulas that don't work are left out and listed, never guessed
+- The AI can't touch tax, monthly price, booking or deposits
+- Uses AI credits
+
+### Book a visit
+
+People pick a visit time under their quote, from your connected
+[Google Calendar](/integrations/google-calendar) or [Cal.com](/integrations/calcom),
+and get the invitation.
+
+- Needs **Create leads** on and an email question
+- One visit per quote; the time is checked against your calendar again before it's booked
+- Set the visit length, how far ahead, the earliest time and the event title
+- Fires `form.booking_created`
+
+### Take a deposit
+
+People pay a deposit under their quote, straight into your own Stripe account.
+
+- Connect Stripe under [Integrations](/integrations/overview) with a key that
+  can create Checkout Sessions
+- Paid plans only
+- A percent of the quote (1 to 50%) or a fixed amount, taken on the low end of
+  the quote and never more than half of it
+- Your deposit terms are shown before people pay, and you confirm you're
+  responsible for the deposits
+- A deposit is paid only once Stripe says so; fires `form.deposit_paid`
+
+<Note>
+ManyPI doesn't receive, hold or split deposits and takes no fee. Refunds,
+receipts and taxes are handled in your Stripe account.
+</Note>
+
+## Events
+
+| Event | When |
+|---|---|
+| `form.submitted` | A quote form is completed (with the quote) |
+| `form.booking_created` | A visit is booked from a quote (experimental) |
+| `form.deposit_paid` | Stripe confirms a deposit (experimental) |
+
+Use them in [webhooks](/integrations/webhooks) and workflow triggers.

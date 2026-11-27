@@ -1,0 +1,162 @@
+---
+title: "Forms tools"
+sidebarTitle: "Forms"
+description: "Create, publish and read forms, and change the prices of instant quote forms."
+---
+
+## `list_forms`
+
+<Info>Read-only</Info>
+
+The workspace's forms with status, live URL, views, starts, completed
+responses and open drafts, plus the plan's form usage. Takes no arguments.
+
+## `get_form`
+
+<Info>Read-only</Info>
+
+One form's draft definition, settings, lead settings, theme, live URL and
+publish checks (errors block publishing, warnings don't).
+
+| Argument | Type | |
+| --- | --- | --- |
+| `form_id` | string | **Required.** Uuid, public id or key. |
+
+## `create_form`
+
+<Info>Write</Info>
+
+Creates a draft form, empty or from a definition.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `name` | string | **Required.** |
+| `key` | slug | A stable key for updating the same form later. |
+| `definition` | object | The form definition JSON. |
+| `lead_settings` | object | Where responses go. |
+| `publish` | boolean | Publish right away. |
+
+## `update_form`
+
+<Info>Write</Info>
+
+Changes the draft's name, definition, settings, lead settings or theme. The
+live form changes after `publish_form`.
+
+A definition sent here keeps the draft's booking, deposit and example-price
+settings: those are the owner's, in the editor.
+
+## `publish_form`
+
+<Info>Write</Info>
+
+Publishes the draft as a new live version and returns the URL. Fails with the
+first publish check that's an error, for example unconfirmed example prices.
+
+## `close_form`
+
+<Info>Write</Info>
+
+Closes a live form (`open: false`) or reopens it (`open: true`).
+
+## `get_form_responses`, `get_form_analytics`, `get_form_embed_code`
+
+<Info>Read-only</Info>
+
+Responses with answers, score, ending and lead; views, completion and
+drop-off; the embed snippet for a website.
+
+## `list_form_drafts`, `merge_form_drafts`
+
+Unfinished responses with contact details, and turning them into leads.
+`merge_form_drafts` is annotated destructive.
+
+## Instant quotes
+
+These work on [instant quote](/forms/instant-quote) forms. They change the
+**draft's** prices only, and `publish_form` puts them live. No tool turns on
+booking or deposits.
+
+### `create_quote_form`
+
+<Info>Write</Info>
+
+Creates a quote form as a draft, from a starter or a template. Its prices are
+examples until confirmed.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `kind` | `map` \| `calculator` | Measure on a map, or price from answers. |
+| `template_slug` | string | An instant quotes template (roofing, fencing, cleaning and more). Not with `kind`. |
+| `name` | string | Default: the starter's or template's. |
+
+### `get_form_pricing`
+
+<Info>Read-only</Info>
+
+The draft's price book: price lines with their formulas, settings, packages,
+the names formulas can use, each option's values, the pricing problems that
+block publishing, whether the prices are still examples, whether booking and
+deposits are on, and a quote for sample answers.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `form_id` | string | **Required.** |
+
+### `update_form_pricing`
+
+<Info>Write</Info>
+
+Changes prices with a `patch` (price lines added, changed or removed by
+`ref`, option values, packages, settings) or replaces the whole price book
+with `pricing`. Every formula and every name it reads is checked, and nothing
+is saved when one fails.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `form_id` | string | **Required.** |
+| `patch` | object | Only what changes: `items_upsert`, `items_remove`, `option_values`, `tiers`, `currency`, `display`, `format`, `range`, `rounding`, `minimum`, `tax`, `financing`, `validDays`, `disclaimer`. |
+| `pricing` | object | The whole price book, as `get_form_pricing` returns it. Not with `patch`. |
+
+### `adjust_form_prices`
+
+<Info>Write</Info>
+
+Raises or lowers prices by a percentage and returns a sample total before and
+after. "Raise all prices 5%" is `percent: 5, scope: "all"`.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `form_id` | string | **Required.** |
+| `percent` | -50 to 200 | **Required.** |
+| `scope` | `all` \| `items` \| `option_values` | **Required.** Every line's rate and the minimums, only the lines in `items`, or the option prices the lines read. |
+| `items` | string[] | Price line refs. |
+
+Each call compounds. A line that both reads another line and adds its own
+amount is left as it is and listed for you to check.
+
+### `preview_form_quote`
+
+<Info>Read-only</Info>
+
+The quote the draft gives for some answers: each line, the total as the form
+shows it, the monthly price, tax and packages. Answers left out get sample
+values.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `form_id` | string | **Required.** |
+| `answers` | object | Question ref to answer: a number (a map measure in the form's units), true or false, an option's ref or label, or `null`. |
+| `tier` | string | A package ref. |
+
+### `confirm_form_prices`
+
+<Info>Destructive</Info>
+
+Marks example prices as the owner's own, which publishing needs. It's the
+owner's statement that these are their prices, so it's annotated destructive
+and MCP clients confirm it with you first. It doesn't publish.
+
+| Argument | Type | |
+| --- | --- | --- |
+| `form_id` | string | **Required.** |

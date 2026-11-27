@@ -1,0 +1,48 @@
+---
+title: "Get form pricing"
+description: "An instant quote form's draft price book, the names its formulas can use, its pricing checks, and a quote for sample or given answers."
+---
+
+`GET /api/forms/{id}/pricing`, API key scope `read`. Also available as the `get_form_pricing` and `preview_form_quote` MCP tools.
+
+Returns the draft's price lines and settings, the names formulas can use, each
+option's values, the pricing problems that block publishing, whether the prices
+are still unconfirmed examples, whether booking and deposits are on, and a
+quote for sample answers. Booking and deposit details aren't returned.
+
+| Parameter | In | Description |
+|---|---|---|
+| `id` | path | Form uuid, public id or key |
+| `answers` | query | JSON object, question ref to answer, merged over the sample answers (optional) |
+| `tier` | query | A package ref (optional) |
+
+## Example
+
+```bash
+curl "https://app.manypi.com/api/forms/{id}/pricing?answers=%7B%22area%22%3A2000%7D" \
+  -H "Authorization: Bearer $MANYPI_API_KEY"
+```
+
+## Response
+
+```json
+{
+  "form": { "id": "…", "name": "Roof quote", "status": "draft", "published_version": null },
+  "mode": "quote",
+  "pricing": { "currency": "USD", "format": "range", "items": [ … ] },
+  "example_prices": true,
+  "owner_settings": { "booking_enabled": false, "deposit_enabled": false },
+  "names": ["measure.area.area_sqft", "choice.material.rate", "…"],
+  "option_values": [ … ],
+  "issues": [{ "level": "error", "message": "…" }],
+  "preview": {
+    "priced": true,
+    "sample_answers": false,
+    "currency": "USD",
+    "format": "range",
+    "lines": [{ "ref": "install", "label": "Installation", "quantity": 2000, "unit": "sqft", "rate": 6, "low": 10800, "mid": 12000, "high": 13800 }],
+    "total": { "low": 10800, "mid": 12000, "high": 13800 },
+    "formatted_total": "$10,800 to $13,800"
+  }
+}
+```

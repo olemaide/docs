@@ -7,6 +7,8 @@ description: "Changes the draft. Live forms only change after Publish. Plan-gate
 
 Changes the draft. Live forms only change after Publish. Plan-gated fields answer 403 with a code (form_branding_locked, form_close_locked, form_partials_locked, outreach_locked).
 
+On [instant quote](/forms/instant-quote) forms, booking, deposits and confirming example prices are the owner's, in the editor. A `definition` sent with an API key keeps the draft's as they are, and changing them answers 403 `owner_only`. Change prices with [Update form pricing](/api-reference/forms/update-form-pricing).
+
 | Parameter | In | Description |
 |---|---|---|
 | `id` | path | Form uuid, public id or key |

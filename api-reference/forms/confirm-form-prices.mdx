@@ -1,0 +1,31 @@
+---
+title: "Confirm form prices"
+description: "Marks an instant quote form's example prices as the owner's own, which publishing needs."
+---
+
+`POST /api/forms/{id}/pricing` with `action: "confirm"`, API key scope `write`. Also available as the `confirm_form_prices` MCP tool.
+
+Templates and AI drafts come with example prices, and a form with example
+prices can't be published. This is the owner's statement that the prices are
+theirs: call it only after they have seen them. It doesn't publish, and
+confirming twice changes nothing.
+
+| Parameter | In | Description |
+|---|---|---|
+| `id` | path | Form uuid, public id or key |
+| `action` | body | `confirm` |
+
+## Example
+
+```bash
+curl -X POST "https://app.manypi.com/api/forms/{id}/pricing" \
+  -H "Authorization: Bearer $MANYPI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "action": "confirm" }'
+```
+
+## Response
+
+```json
+{ "ok": true, "form": { … }, "already_confirmed": false, "example_prices": false, "issues": [], "sample_total": "$10,800 to $13,800", "draft_only": true }
+```

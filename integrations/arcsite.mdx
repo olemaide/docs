@@ -1,0 +1,96 @@
+---
+title: "ArcSite"
+description: "Every quote from your forms lands in ArcSite as a project, with the quote as a drawing."
+icon: "/images/logos/arcsite.jpg"
+---
+
+ArcSite is drawing and proposal software for contractors. With it connected,
+each [instant quote](/forms/instant-quote) becomes an ArcSite project: the
+customer and job site come from the answers, and the quote PDF (with the
+shapes they traced on the map) is its first drawing. When the proposal is
+approved or paid in ArcSite, ManyPI hears about it.
+
+## Connect
+
+<Steps>
+  <Step title="Create an API token in ArcSite">
+    In the ArcSite web app, open **Admin → Developers → API tokens**, create a
+    token and copy it. Your ArcSite plan needs the Developer API.
+  </Step>
+  <Step title="Paste it in ManyPI">
+    Open **Integrations**, then **ArcSite** under CRM. Paste the token, enter
+    the **Project owner** (the email of the ArcSite user who owns new
+    projects) and, if you like, **Tags** for every new project. Click
+    **Connect**.
+  </Step>
+</Steps>
+
+ArcSite connects for the whole workspace, so it needs someone who can manage
+integrations. For the whole setup from quote form to won deal, follow
+[Send quotes to ArcSite](/forms/quotes-to-arcsite).
+
+## Send quotes to ArcSite
+
+Open the form, go to **Workflow**, add an automation and pick **Send quotes to
+ArcSite**. Save it and switch it on. The step is also in any workflow as
+**Create an ArcSite project**, after **Someone submits a form**.
+
+Each response becomes one project:
+
+| In ArcSite | From |
+|---|---|
+| Project name | The customer's name, the city and a short quote reference |
+| Customer | Name, email, phone and company from the answers |
+| Job site | The address they picked |
+| Tags | `ManyPI`, the form's name and your tags (`Test` for test responses) |
+| Drawing | The quote PDF |
+
+Running the step again for the same response finds the project it already
+made instead of making a second one. A form without prices makes the project
+without a drawing.
+
+## Get approvals and payments back
+
+This part is optional.
+
+<Steps>
+  <Step title="Copy the webhook URL">
+    In ManyPI, open **ArcSite** under Integrations and copy the **Webhook URL**.
+  </Step>
+  <Step title="Add the webhook in ArcSite">
+    In ArcSite, open **Admin → Developers → Webhooks** and add a webhook with
+    that URL for `proposal.status_changed` and `proposal.payment.received`.
+  </Step>
+  <Step title="Paste the secret in ManyPI">
+    Copy the webhook's secret from ArcSite, paste it into **Webhook secret**
+    in ManyPI and click **Save**.
+  </Step>
+</Steps>
+
+Then:
+
+- A proposal update adds a line to the lead's timeline
+- An approved or paid proposal marks their open deal won
+- A payment is recorded on the lead, like payments from Stripe
+- `arcsite.proposal_status_changed` is available to [webhooks](/integrations/webhooks) and workflow triggers
+
+Deliveries without a valid signature, or older than five minutes, are refused.
+
+## Settings
+
+| Setting | Default |
+|---|---|
+| Stop cold email to paying customers | On: their campaigns end and they go on do-not-contact |
+| Mark their open deal won | On: when a proposal is approved or paid |
+| Project owner and tags | Under **More settings**, changeable without reconnecting |
+
+ArcSite payments don't carry a currency, so they are recorded in the quote's
+currency (or USD without a quote).
+
+## Troubleshooting
+
+| You see | Do this |
+|---|---|
+| ArcSite refused the token | Create a new token in ArcSite and connect again |
+| ArcSite has no user with that email | Set **Project owner** to the email of an ArcSite user |
+| Nothing arrives from ArcSite | Check the webhook URL and that the secret in ManyPI is the one ArcSite shows |

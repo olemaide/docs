@@ -33,6 +33,8 @@
             "group": "Forms",
             "pages": [
               "forms/overview",
+              "forms/instant-quote",
+              "forms/quotes-to-arcsite",
               "forms/embed",
               "forms/share-as-template"
             ]
@@ -159,7 +161,8 @@
               "integrations/hubspot",
               "integrations/pipedrive",
               "integrations/attio",
-              "integrations/close"
+              "integrations/close",
+              "integrations/arcsite"
             ]
           },
           {
@@ -306,7 +309,11 @@
               "api-reference/forms/get-form-analytics",
               "api-reference/forms/get-form-embed-code",
               "api-reference/forms/list-form-drafts",
-              "api-reference/forms/merge-form-drafts"
+              "api-reference/forms/merge-form-drafts",
+              "api-reference/forms/get-form-pricing",
+              "api-reference/forms/update-form-pricing",
+              "api-reference/forms/adjust-form-prices",
+              "api-reference/forms/confirm-form-prices"
             ]
           },
           {
@@ -360,6 +367,7 @@
               "mcp/tools/lead-generation",
               "mcp/tools/outreach-content",
               "mcp/tools/campaigns",
+              "mcp/tools/forms",
               "mcp/tools/sending",
               "mcp/tools/imports",
               "mcp/tools/scraping"

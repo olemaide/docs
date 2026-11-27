@@ -1,0 +1,35 @@
+---
+title: "Update form pricing"
+description: "Changes an instant quote form's draft prices with a patch or a whole price book. Every formula is checked and nothing is saved when one fails."
+---
+
+`POST /api/forms/{id}/pricing` with `action: "update"`, API key scope `write`. Also available as the `update_form_pricing` MCP tool.
+
+Changes the **draft's** prices; the live form changes after
+[Publish](/api-reference/forms/publish-form). Every formula and every name it
+reads is checked, and nothing is saved when one fails: the 400 lists each
+problem in `errors`. It never confirms example prices and never sets booking
+or deposits. A form saved by someone else since it was read answers 409
+`form_changed`.
+
+| Parameter | In | Description |
+|---|---|---|
+| `id` | path | Form uuid, public id or key |
+| `action` | body | `update` |
+| `patch` | body | Only what changes: `items_upsert` (lines by `ref`, with `after` to move one), `items_remove`, `option_values` (`null` removes a value), `tiers`, `currency`, `display`, `format`, `range`, `rounding`, `minimum`, `tax`, `financing`, `validDays`, `disclaimer` |
+| `pricing` | body | The whole price book, as Get form pricing returns it. Not with `patch` |
+
+## Example
+
+```bash
+curl -X POST "https://app.manypi.com/api/forms/{id}/pricing" \
+  -H "Authorization: Bearer $MANYPI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "action": "update", "patch": { "items_upsert": [{ "ref": "gates", "label": "Gates", "unit": "each", "quantity": "answer.gates", "rate": "450" }], "minimum": 1500 } }'
+```
+
+## Response
+
+```json
+{ "ok": true, "form": { … }, "changes": ["added gates", "set minimum"], "example_prices": true, "issues": [ … ], "sample_total": "$8,200 to $10,400", "draft_only": true }
+```

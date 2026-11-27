@@ -1,0 +1,54 @@
+---
+title: "Adjust form prices"
+description: "Raises or lowers an instant quote form's draft prices by a percentage and returns a sample total before and after."
+---
+
+`POST /api/forms/{id}/pricing` with `action: "adjust"`, API key scope `write`. Also available as the `adjust_form_prices` MCP tool.
+
+`all` changes every price line's rate, line minimums and the job minimum.
+`items` changes only the lines named. `option_values` changes the option
+prices the lines read (`rate`, `price`, `cost`, `rate_low`, `rate_high`).
+Each call compounds. A line that reads another adjusted line moves with it
+(`following`). A line that mixes other lines' amounts with its own numbers is
+left unchanged and listed in `review`.
+
+| Parameter | In | Description |
+|---|---|---|
+| `id` | path | Form uuid, public id or key |
+| `action` | body | `adjust` |
+| `percent` | body | -50 to 200, not 0 |
+| `scope` | body | `all`, `items` or `option_values` |
+| `items` | body | Price line refs, for `items` and `option_values` |
+
+## Example
+
+```bash
+curl -X POST "https://app.manypi.com/api/forms/{id}/pricing" \
+  -H "Authorization: Bearer $MANYPI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "action": "adjust", "percent": 5, "scope": "all" }'
+```
+
+## Response
+
+```json
+{
+  "ok": true,
+  "form": { … },
+  "factor": 1.05,
+  "changed": {
+    "formulas": [{ "ref": "install", "field": "rate", "before": "choice.material.rate", "after": "(choice.material.rate) * 1.05" }],
+    "option_values": [],
+    "line_minimums": [],
+    "minimum": { "before": 1500, "after": 1575 }
+  },
+  "following": [],
+  "review": [],
+  "notes": [],
+  "sample": { "before": "$10,800 to $13,800", "after": "$11,340 to $14,490" },
+  "example_prices": false,
+  "issues": [],
+  "sample_total": "$11,340 to $14,490",
+  "draft_only": true
+}
+```

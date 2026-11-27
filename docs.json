@@ -55,6 +55,7 @@
             "pages": [
               "crm/pipeline",
               "crm/deals-and-tasks",
+              "crm/calendar",
               "crm/inbox"
             ]
           },

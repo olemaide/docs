@@ -34,6 +34,7 @@
             "pages": [
               "forms/overview",
               "forms/instant-quote",
+              "forms/quotes-to-arcsite",
               "forms/embed",
               "forms/share-as-template"
             ]
